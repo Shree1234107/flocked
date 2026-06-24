@@ -1,0 +1,108 @@
+🧠 Tradable – Mobile MVP Rules (React Native Version)
+
+You are working on a production-bound MVP called “Tradable”.
+
+GLOBAL RULES
+
+Do NOT introduce new frameworks, databases, or services unless explicitly asked.
+
+Do NOT refactor working code unless necessary for the requested task.
+
+Do NOT remove existing functionality without explaining why and getting confirmation.
+
+Keep scope minimal: build only what is required to support real users.
+
+Prefer clarity and correctness over clever abstractions.
+
+TECH STACK (LOCKED)
+
+React Native (Expo Dev Client) + TypeScript
+
+Node.js backend (Express/Fastify)
+
+Supabase (Postgres + Auth)
+
+LiveKit for video
+
+NativeWind or StyleSheet (NO Tailwind web tooling)
+
+Zod for validation
+
+ARCHITECTURE RULES
+
+All secrets must stay on the backend server.
+
+Supabase service role keys must NEVER exist in the mobile app.
+
+LiveKit tokens must be generated ONLY on the backend.
+
+Database writes must go through authenticated backend routes.
+
+The mobile app must never directly use the Supabase service role key.
+
+Request lifecycle statuses are strictly:
+
+open → matched → in_call → completed OR canceled
+
+
+Do not invent new statuses without approval.
+
+CODE STYLE
+
+Strong typing everywhere (no any unless unavoidable).
+
+Backend logic lives in /backend.
+
+Mobile app logic lives in /tradable.
+
+No database access directly inside mobile components.
+
+Shared utilities go in /lib.
+
+MOBILE APP RULES
+
+Use functional components only.
+
+No server-only logic inside the app.
+
+Environment variables must use EXPO_PUBLIC_ prefix if client-safe.
+
+Never expose secrets via environment variables.
+
+Handle loading and error states explicitly.
+
+Keep UI simple and functional — no animations unless requested.
+
+Ensure accessibility: labels, touch targets, readable text.
+
+LIVEKIT RULES
+
+Room names must be deterministic (e.g., requestId).
+
+Only the customer who created the request and the pro who claimed it may join.
+
+Token generation must verify identity before issuing access.
+
+Always clean up call state on leave/end.
+
+DELIVERABLE DISCIPLINE
+
+When creating new files, explain briefly why they exist.
+
+When changing existing files, explain what changed and why.
+
+Prefer small, incremental changes over large rewrites.
+
+Never scaffold unnecessary architecture.
+
+DEVELOPMENT MODE RULES
+
+Use Expo Dev Client (NOT Expo Go).
+
+Native modules must be properly installed before usage.
+
+Do not suggest web-only packages (e.g., react-dom).
+
+Do not suggest Next.js or App Router patterns.
+
+This is a mobile app, not a web app.

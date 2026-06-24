@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Flocked",
+    "slug": "flocked",
+    "scheme": "flocked",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc",
+      "expo-router",
+      ["expo-web-browser", {"experimentalLauncherActivity": false}],
+      ["expo-location", {
+        "locationWhenInUsePermission": "Flocked needs your location to find rooms near you."
+      }],
+      ["expo-image-picker", {
+        "photosPermission": "Flocked needs access to your photos to set a profile picture."
+      }]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.akshayjoshi.flocked",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Flocked needs your location to find rooms near you.",
+        "NSCameraUsageDescription": "Flocked needs camera access for live rooms.",
+        "NSMicrophoneUsageDescription": "Flocked needs microphone access for live rooms.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.akshayjoshi.flocked",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    }
+  }
+}
