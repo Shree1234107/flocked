@@ -1,10 +1,19 @@
 import { supabase } from "./supabase";
-import { Room, HostProfile, StudentProfile, InstructorApplicationStatus, ScheduledClass, ClassReview, InstructorPublicProfile } from "./types";
+import {
+  Room,
+  HostProfile,
+  StudentProfile,
+  InstructorApplicationStatus,
+  ScheduledClass,
+  ClassReview,
+} from "./types";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.access_token) return {};
   return { Authorization: `Bearer ${session.access_token}` };
 }
@@ -23,7 +32,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   }).finally(() => clearTimeout(timeout));
 
-  const body = await response.json().catch(() => ({ ok: false, message: "Invalid server response." }));
+  const body = await response
+    .json()
+    .catch(() => ({ ok: false, message: "Invalid server response." }));
 
   if (!body.ok) {
     throw new Error(body.message || "Request failed");
@@ -88,6 +99,17 @@ export async function updateStudentProfile(params: {
   });
 }
 
+export async function uploadAvatarToStorage(userId: string, localUri: string): Promise<string> {
+  const response = await fetch(localUri);
+  const blob = await response.blob();
+  const filePath = `${userId}/avatar.jpg`;
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, blob, { contentType: "image/jpeg", upsert: true });
+  if (error) throw new Error(error.message);
+  const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+  return data.publicUrl;
+}
 
 // ─── Host profile ──────────────────────────────────────────────────────────────
 
@@ -99,7 +121,9 @@ export async function getHostProfile(): Promise<HostProfile | null> {
 
   if (response.status === 404) return null;
 
-  const body = await response.json().catch(() => ({ ok: false, message: "Invalid server response." }));
+  const body = await response
+    .json()
+    .catch(() => ({ ok: false, message: "Invalid server response." }));
   if (!body.ok) throw new Error(body.message || "Failed to load profile.");
   return body.data as HostProfile;
 }
@@ -187,21 +211,21 @@ export async function listClasses(params?: {
   category?: string;
   start?: string;
   end?: string;
-  hostId?: string;
-  sort?: "smart";
 }): Promise<ScheduledClass[]> {
   const qp = new URLSearchParams();
   if (params?.category) qp.set("category", params.category);
   if (params?.start) qp.set("start", params.start);
   if (params?.end) qp.set("end", params.end);
-  if (params?.hostId) qp.set("hostId", params.hostId);
-  if (params?.sort) qp.set("sort", params.sort);
   const qs = qp.toString() ? `?${qp.toString()}` : "";
   return apiFetch<ScheduledClass[]>(`/api/classes${qs}`);
 }
 
 export async function listMyClasses(): Promise<ScheduledClass[]> {
   return apiFetch<ScheduledClass[]>("/api/classes/mine");
+}
+
+export async function listEnrolledClasses(): Promise<ScheduledClass[]> {
+  return apiFetch<ScheduledClass[]>("/api/classes/enrolled");
 }
 
 export async function createClass(params: {
@@ -219,9 +243,10 @@ export async function createClass(params: {
 }
 
 export async function cancelClass(id: string): Promise<void> {
-  await apiFetch<{ id: string; cancelled: boolean }>(`/api/classes/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  await apiFetch<{ id: string; cancelled: boolean }>(
+    `/api/classes/${encodeURIComponent(id)}`,
+    { method: "DELETE" }
+  );
 }
 
 export async function joinClass(id: string): Promise<ScheduledClass> {
@@ -255,14 +280,82 @@ export async function getInstructorReviews(instructorId: string): Promise<{
 // ─── Waitlist ─────────────────────────────────────────────────────────────────
 
 export async function joinWaitlist(classId: string): Promise<{ position: number }> {
-  return apiFetch<{ position: number }>(`/api/classes/${encodeURIComponent(classId)}/waitlist`, {
-    method: "POST",
-  });
+  return apiFetch<{ position: number }>(
+    `/api/classes/${encodeURIComponent(classId)}/waitlist`,
+    { method: "POST" }
+  );
 }
 
 export async function leaveWaitlist(classId: string): Promise<void> {
-  await apiFetch<{ removed: boolean }>(`/api/classes/${encodeURIComponent(classId)}/waitlist`, {
-    method: "DELETE",
+  await apiFetch<{ removed: boolean }>(
+    `/api/classes/${encodeURIComponent(classId)}/waitlist`,
+    { method: "DELETE" }
+  );
+}
+
+export async function getWaitlistPosition(
+  classId: string
+): Promise<{ on_waitlist: boolean; position: number | null }> {
+  return apiFetch(`/api/classes/${encodeURIComponent(classId)}/waitlist/position`);
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+export type StudentAnalytics = {
+  total_enrolled: number;
+  total_attended: number;
+  total_reviews_given: number;
+  unique_instructors: number;
+  category_breakdown: Record<string, number>;
+  recent_classes: {
+    id: string;
+    title: string;
+    category: string;
+    scheduled_at: string;
+    instructor_name: string;
+  }[];
+};
+
+export type InstructorAnalytics = {
+  total_classes: number;
+  completed_classes: number;
+  upcoming_classes: number;
+  total_students: number;
+  avg_rating: number | null;
+  total_reviews: number;
+  estimated_revenue: number;
+  category_breakdown: Record<string, number>;
+  monthly_enrollments: { month: string; count: number }[];
+  top_classes: {
+    id: string;
+    title: string;
+    category: string;
+    enrollment_count: number;
+  }[];
+  recent_reviews: {
+    rating: number;
+    review_text: string | null;
+    created_at: string;
+  }[];
+};
+
+export async function getStudentAnalytics(): Promise<StudentAnalytics> {
+  return apiFetch<StudentAnalytics>("/api/analytics/student");
+}
+
+export async function getInstructorAnalytics(): Promise<InstructorAnalytics> {
+  return apiFetch<InstructorAnalytics>("/api/analytics/instructor");
+}
+
+// ─── Newsletter ───────────────────────────────────────────────────────────────
+
+export async function signUpForNewsletter(params: {
+  email: string;
+  name?: string;
+}): Promise<void> {
+  await apiFetch<{ subscribed: boolean }>("/api/newsletter/signup", {
+    method: "POST",
+    body: JSON.stringify(params),
   });
 }
 
@@ -281,46 +374,4 @@ export async function uploadAvatar(localUri: string, userId: string): Promise<st
 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
   return data.publicUrl;
-}
-
-// ─── Enrolled classes ─────────────────────────────────────────────────────────
-
-export async function listEnrolledClasses(): Promise<ScheduledClass[]> {
-  return apiFetch<ScheduledClass[]>("/api/classes/enrolled");
-}
-
-// ─── Instructor follow system ─────────────────────────────────────────────────
-
-export async function followInstructor(hostId: string): Promise<void> {
-  await apiFetch<{ following: boolean; follower_count: number }>(
-    `/api/instructors/${encodeURIComponent(hostId)}/follow`,
-    { method: "POST" }
-  );
-}
-
-export async function unfollowInstructor(hostId: string): Promise<void> {
-  await apiFetch<{ following: boolean; follower_count: number }>(
-    `/api/instructors/${encodeURIComponent(hostId)}/follow`,
-    { method: "DELETE" }
-  );
-}
-
-export async function getFollowStatus(hostId: string): Promise<{ following: boolean; follower_count: number }> {
-  return apiFetch<{ following: boolean; follower_count: number }>(
-    `/api/instructors/${encodeURIComponent(hostId)}/follow`
-  );
-}
-
-export async function listFollowingClasses(): Promise<ScheduledClass[]> {
-  return apiFetch<ScheduledClass[]>("/api/classes/following");
-}
-
-export async function getInstructorPublicProfile(hostId: string): Promise<InstructorPublicProfile> {
-  return apiFetch<InstructorPublicProfile>(
-    `/api/instructors/${encodeURIComponent(hostId)}/profile`
-  );
-}
-
-export async function getMyFollowers(): Promise<Array<{ user_id: string; display_name: string | null; followed_at: string }>> {
-  return apiFetch("/api/instructors/me/followers");
 }

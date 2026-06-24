@@ -17,7 +17,28 @@ import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri } from "../lib/auth-helpers";
 
-const DEV_BYPASS_EMAIL = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
+// ── Friendly error messages for common Supabase auth errors ──────────────────
+
+function friendlyAuthError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  const lower = msg.toLowerCase();
+
+  if (lower.includes("email rate limit") || lower.includes("rate limit")) {
+    return "Too many sign-in attempts. Please wait a minute and try again.";
+  }
+  if (lower.includes("email already") || lower.includes("already registered")) {
+    return "This email is already registered. Check your inbox for a sign-in link, or try a different email.";
+  }
+  if (lower.includes("invalid email")) {
+    return "Please enter a valid email address.";
+  }
+  if (lower.includes("network") || lower.includes("fetch")) {
+    return "Network error — please check your connection and try again.";
+  }
+  return msg || "Failed to send sign-in link. Please try again.";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -28,31 +49,15 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-
-  const handleDevBypass = async () => {
-    if (!DEV_BYPASS_EMAIL) return;
-    setEmail(DEV_BYPASS_EMAIL);
-    setSending(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: DEV_BYPASS_EMAIL,
-        options: { emailRedirectTo: getAuthRedirectUri() },
-      });
-      if (error) throw error;
-      setSent(true);
-    } catch (err) {
-      Alert.alert("Error", err instanceof Error ? err.message : "Failed to send magic link.");
-    } finally {
-      setSending(false);
-    }
-  };
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSendMagicLink = async () => {
     const trimmed = email.trim();
     if (!trimmed || !trimmed.includes("@")) {
-      Alert.alert("Invalid email", "Please enter a valid email address.");
+      setErrorMsg("Please enter a valid email address.");
       return;
     }
+    setErrorMsg(null);
     setSending(true);
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -62,7 +67,27 @@ export default function LoginScreen() {
       if (error) throw error;
       setSent(true);
     } catch (err) {
-      Alert.alert("Error", err instanceof Error ? err.message : "Failed to send magic link.");
+      setErrorMsg(friendlyAuthError(err));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Dev bypass — set DEV_BYPASS_EMAIL in your .env to enable
+  const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
+  const handleDevBypass = async () => {
+    if (!devEmail) return;
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: devEmail,
+        options: { emailRedirectTo: getAuthRedirectUri() },
+      });
+      if (error) throw error;
+      setEmail(devEmail);
+      setSent(true);
+    } catch (err) {
+      Alert.alert("Dev bypass failed", friendlyAuthError(err));
     } finally {
       setSending(false);
     }
@@ -97,8 +122,11 @@ export default function LoginScreen() {
               We sent a sign-in link to{"\n"}
               <Text style={styles.sentEmail}>{email.trim()}</Text>
             </Text>
+            <Text style={styles.sentHint}>
+              Didn't get it? Check your spam folder, or tap below to try again.
+            </Text>
             <TouchableOpacity
-              onPress={() => { setSent(false); setEmail(""); }}
+              onPress={() => { setSent(false); setEmail(""); setErrorMsg(null); }}
               activeOpacity={0.7}
               style={styles.resendBtn}
             >
@@ -110,18 +138,26 @@ export default function LoginScreen() {
             <TextInput
               label="Email address"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(t) => { setEmail(t); setErrorMsg(null); }}
               autoCapitalize="none"
               keyboardType="email-address"
               returnKeyType="send"
               onSubmitEditing={handleSendMagicLink}
               mode="outlined"
               style={styles.emailInput}
-              outlineColor="#EEEEEE"
-              activeOutlineColor="#87A878"
+              outlineColor={errorMsg ? "#E05555" : "#EEEEEE"}
+              activeOutlineColor={errorMsg ? "#E05555" : "#87A878"}
               textColor="#2C2C2C"
               theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
             />
+
+            {/* Error message inline */}
+            {errorMsg && (
+              <View style={styles.errorBox}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={15} color="#E05555" />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            )}
 
             <TouchableOpacity
               style={[styles.primaryBtn, sending && styles.btnDisabled]}
@@ -174,13 +210,16 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {!!DEV_BYPASS_EMAIL && (
+            {/* Dev bypass button — only rendered when env var is set */}
+            {devEmail && (
               <TouchableOpacity
-                style={styles.devBypassBtn}
+                style={styles.devBtn}
                 onPress={handleDevBypass}
+                disabled={sending}
                 activeOpacity={0.7}
               >
-                <Text style={styles.devBypassText}>Dev: sign in as {DEV_BYPASS_EMAIL}</Text>
+                <MaterialCommunityIcons name="code-tags" size={13} color="#AAA" />
+                <Text style={styles.devBtnText}>Dev bypass ({devEmail})</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -191,10 +230,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
   container: {
     flex: 1,
     alignItems: "center",
@@ -202,60 +238,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 32,
   },
-  brandSection: {
-    alignItems: "center",
-    gap: 8,
+  brandSection: { alignItems: "center", gap: 8 },
+  logoMark: { marginBottom: 2 },
+  wordmark: { fontSize: 32, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.5 },
+  tagline: { fontSize: 14, color: "#888888", fontWeight: "400" },
+
+  formSection: { width: "100%", gap: 12 },
+  emailInput: { backgroundColor: "#FFFFFF" },
+
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    backgroundColor: "#FFF0F0",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  logoMark: {
-    marginBottom: 2,
-  },
-  wordmark: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#2C2C2C",
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    fontSize: 14,
-    color: "#888888",
-    fontWeight: "400",
-  },
-  formSection: {
-    width: "100%",
-    gap: 12,
-  },
-  emailInput: {
-    backgroundColor: "#FFFFFF",
-  },
+  errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
+
   primaryBtn: {
     backgroundColor: "#87A878",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
   },
-  btnDisabled: {
-    opacity: 0.5,
-  },
-  primaryBtnText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginVertical: 4,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#EEEEEE",
-  },
-  dividerText: {
-    fontSize: 13,
-    color: "#888888",
-  },
+  btnDisabled: { opacity: 0.5 },
+  primaryBtnText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
+
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#EEEEEE" },
+  dividerText: { fontSize: 13, color: "#888888" },
+
   roleCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -284,24 +298,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  roleTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  roleTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  roleSub: {
-    fontSize: 12,
-    color: "#888888",
-  },
-  roleSep: {
-    height: 1,
-    backgroundColor: "#EEEEEE",
-    marginLeft: 64,
-  },
+  roleTextWrap: { flex: 1, gap: 2 },
+  roleTitle: { fontSize: 14, fontWeight: "600", color: "#2C2C2C" },
+  roleSub: { fontSize: 12, color: "#888888" },
+  roleSep: { height: 1, backgroundColor: "#EEEEEE", marginLeft: 64 },
+
   sentCard: {
     width: "100%",
     alignItems: "center",
@@ -326,39 +327,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
-  sentTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#2C2C2C",
-  },
-  sentBody: {
-    fontSize: 14,
-    color: "#888888",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  sentEmail: {
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  resendBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginTop: 4,
-  },
-  resendText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#87A878",
-  },
-  devBypassBtn: {
+  sentTitle: { fontSize: 20, fontWeight: "700", color: "#2C2C2C" },
+  sentBody: { fontSize: 14, color: "#888888", textAlign: "center", lineHeight: 22 },
+  sentEmail: { fontWeight: "600", color: "#2C2C2C" },
+  sentHint: { fontSize: 12, color: "#AAA", textAlign: "center", lineHeight: 18 },
+  resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
+  resendText: { fontSize: 14, fontWeight: "500", color: "#87A878" },
+
+  devBtn: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    marginTop: 4,
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 10,
+    opacity: 0.6,
   },
-  devBypassText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#87A878",
-  },
+  devBtnText: { fontSize: 12, color: "#AAA" },
 });

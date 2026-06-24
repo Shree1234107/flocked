@@ -1,47 +1,54 @@
 import { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Text } from "react-native-paper";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
-import { RoleGuard } from "../../../components/RoleGuard";
 import { FollowButton } from "../../../components/FollowButton";
 import {
   getInstructorPublicProfile,
   getFollowStatus,
   getInstructorReviews,
   listClasses,
+  type InstructorPublicProfile,
 } from "../../../lib/api";
-import type { InstructorPublicProfile, ScheduledClass } from "../../../lib/types";
+import type { ScheduledClass, ClassReview } from "../../../lib/types";
 
-const CATEGORY_COLORS: Record<string, { bg: string; dot: string; label: string }> = {
-  Yoga:     { bg: "#F0F5EE", dot: "#87A878", label: "#4A7A40" },
-  Dance:    { bg: "#FDF0F2", dot: "#F4B8C1", label: "#A04060" },
-  Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", label: "#3A5F80" },
+const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
+  Yoga: { bg: "#F0F5EE", dot: "#87A878", text: "#4A7A40" },
+  Dance: { bg: "#FDF0F2", dot: "#F4B8C1", text: "#A04060" },
+  Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
-const MONTHS_ABB = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
   const h = d.getHours();
   const m = d.getMinutes();
-  const ampm = h >= 12 ? "PM" : "AM";
-  return `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${ampm}`;
+  return `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  return `${days[d.getDay()]}, ${MONTHS_ABB[d.getMonth()]} ${d.getDate()}`;
+function StarRow({ rating }: { rating: number }) {
+  return (
+    <View style={{ flexDirection: "row", gap: 2 }}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <MaterialCommunityIcons
+          key={i}
+          name={i <= Math.round(rating) ? "star" : "star-outline"}
+          size={13}
+          color="#F4A200"
+        />
+      ))}
+    </View>
+  );
 }
 
 export default function InstructorProfileScreen() {
@@ -50,535 +57,289 @@ export default function InstructorProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [profile, setProfile] = useState<InstructorPublicProfile | null>(null);
-  const [followStatus, setFollowStatus] = useState<{ following: boolean; follower_count: number } | null>(null);
-  const [reviews, setReviews] = useState<Array<{ id: string; rating: number; review_text: string | null; created_at: string; student_id: string }>>([]);
-  const [classes, setClasses] = useState<ScheduledClass[]>([]);
+  const [following, setFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [upcomingClasses, setUpcomingClasses] = useState<ScheduledClass[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [bioExpanded, setBioExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bioExpanded, setBioExpanded] = useState(false);
-
-  const loadData = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [profileData, followData, reviewData, classData] = await Promise.all([
-        getInstructorPublicProfile(id),
-        getFollowStatus(id).catch(() => ({ following: false, follower_count: 0 })),
-        getInstructorReviews(id).catch(() => ({ reviews: [], total: 0, avg_rating: null })),
-        listClasses({ hostId: id }).catch(() => [] as ScheduledClass[]),
-      ]);
-      setProfile(profileData);
-      setFollowStatus(followData);
-      setReviews(reviewData.reviews.slice(0, 5));
-      setClasses(classData);
-    } catch {
-      setError("Failed to load instructor profile.");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
-    }, [loadData])
+      if (!id) return;
+      let active = true;
+      setLoading(true);
+      setError(null);
+
+      Promise.all([
+        getInstructorPublicProfile(id),
+        getFollowStatus(id),
+        getInstructorReviews(id),
+        listClasses(),
+      ])
+        .then(([prof, followStatus, reviewData, allClasses]) => {
+          if (!active) return;
+          setProfile(prof);
+          setFollowing(followStatus.following);
+          setfollowerCount(followStatus.follower_count);
+          setReviews(reviewData.reviews.slice(0, 5));
+          setTotalReviews(reviewData.total);
+          const now = new Date();
+          setUpcomingClasses(
+            allClasses
+              .filter((c) => c.host_id === id && new Date(c.scheduled_at) > now)
+              .slice(0, 5)
+          );
+          setLoading(false);
+        })
+        .catch((err) => {
+          if (!active) return;
+          setError(err instanceof Error ? err.message : "Failed to load profile.");
+          setLoading(false);
+        });
+
+      return () => { active = false; };
+    }, [id])
   );
 
-  const displayName = profile?.display_name ?? "Instructor";
-  const initials = displayName.trim().slice(0, 2).toUpperCase();
-
-  if (loading) {
-    return (
-      <AuthGate>
-        <RoleGuard requiredRole="guest">
-          <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
-            <ActivityIndicator color="#87A878" />
-          </View>
-        </RoleGuard>
-      </AuthGate>
-    );
-  }
-
-  if (error || !profile) {
-    return (
-      <AuthGate>
-        <RoleGuard requiredRole="guest">
-          <View style={[styles.container, { paddingTop: insets.top }]}>
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
-              <MaterialCommunityIcons name="arrow-left" size={20} color="#2C2C2C" />
-            </TouchableOpacity>
-            <View style={styles.centered}>
-              <MaterialCommunityIcons name="account-off-outline" size={40} color="#C0C0C0" />
-              <Text style={styles.errorText}>{error ?? "Instructor not found."}</Text>
-              <TouchableOpacity style={styles.retryBtn} onPress={loadData} activeOpacity={0.7}>
-                <MaterialCommunityIcons name="refresh" size={14} color="#87A878" />
-                <Text style={styles.retryText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </RoleGuard>
-      </AuthGate>
-    );
-  }
-
-  const bioText = profile.bio ?? "";
-  const bioLines = bioText.split("\n");
-  const bioPreview = bioLines.slice(0, 3).join("\n");
-  const bioTruncated = !bioExpanded && bioLines.length > 3;
+  const initials = profile?.display_name
+    ? profile.display_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+    : "?";
 
   return (
     <AuthGate>
-      <RoleGuard requiredRole="guest">
-        <View style={[styles.container, { paddingTop: insets.top }]}>
-          {/* Back button */}
-          <TouchableOpacity
-            style={[styles.backBtn, { marginHorizontal: 20, marginTop: 12 }]}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={20} color="#2C2C2C" />
-          </TouchableOpacity>
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Back button */}
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="arrow-left" size={22} color="#333" />
+        </TouchableOpacity>
 
-          <ScrollView
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
-            showsVerticalScrollIndicator={false}
-          >
+        {loading && (
+          <View style={styles.centerBox}>
+            <ActivityIndicator color="#87A878" />
+          </View>
+        )}
+
+        {error && !loading && (
+          <View style={styles.centerBox}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#F4B8C1" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        {profile && !loading && (
+          <>
             {/* Hero */}
-            <View style={styles.heroSection}>
+            <View style={styles.hero}>
               <View style={styles.avatar}>
-                <Text style={styles.avatarInitials}>{initials}</Text>
+                {profile.photo_url ? (
+                  <View style={styles.avatarImg} />
+                ) : (
+                  <Text style={styles.avatarInitials}>{initials}</Text>
+                )}
               </View>
-              <Text style={styles.displayName}>{displayName}</Text>
 
-              {profile.interest_tags.length > 0 && (
-                <View style={styles.tagsRow}>
-                  {profile.interest_tags.map((tag) => {
-                    const colors = CATEGORY_COLORS[tag];
-                    return (
-                      <View key={tag} style={[styles.tagPill, { backgroundColor: colors?.bg ?? "#F9F9F9" }]}>
-                        <View style={[styles.tagDot, { backgroundColor: colors?.dot ?? "#EEEEEE" }]} />
-                        <Text style={[styles.tagText, { color: colors?.label ?? "#888888" }]}>{tag}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
+              <Text style={styles.name}>{profile.display_name ?? "Instructor"}</Text>
 
-              {bioText ? (
-                <View style={styles.bioWrap}>
-                  <Text style={styles.bioText}>{bioTruncated ? bioPreview : bioText}</Text>
-                  {bioLines.length > 3 && (
+              {/* Interest tags */}
+              <View style={styles.tagRow}>
+                {profile.interest_tags.map((tag) => {
+                  const colors = CATEGORY_COLORS[tag] ?? { bg: "#F5F5F5", dot: "#CCC", text: "#666" };
+                  return (
+                    <View key={tag} style={[styles.tagPill, { backgroundColor: colors.bg }]}>
+                      <View style={[styles.tagDot, { backgroundColor: colors.dot }]} />
+                      <Text style={[styles.tagText, { color: colors.text }]}>{tag}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Bio */}
+              {profile.bio ? (
+                <View>
+                  <Text
+                    style={styles.bio}
+                    numberOfLines={bioExpanded ? undefined : 3}
+                  >
+                    {profile.bio}
+                  </Text>
+                  {profile.bio.length > 100 && (
                     <TouchableOpacity onPress={() => setBioExpanded((e) => !e)} activeOpacity={0.7}>
-                      <Text style={styles.bioToggle}>{bioTruncated ? "Read more" : "Show less"}</Text>
+                      <Text style={styles.readMore}>
+                        {bioExpanded ? "Show less" : "Read more"}
+                      </Text>
                     </TouchableOpacity>
                   )}
                 </View>
               ) : null}
-            </View>
 
-            {/* Stats row */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {profile.avg_rating != null ? `★ ${profile.avg_rating.toFixed(1)}` : "—"}
-                </Text>
-                <Text style={styles.statLabel}>Rating</Text>
+              {/* Stats */}
+              <View style={styles.statsRow}>
+                {profile.avg_rating != null && (
+                  <>
+                    <Text style={styles.stat}>★ {profile.avg_rating.toFixed(1)}</Text>
+                    <Text style={styles.statDot}>·</Text>
+                  </>
+                )}
+                <Text style={styles.stat}>{profile.total_reviews} reviews</Text>
+                <Text style={styles.statDot}>·</Text>
+                <Text style={styles.stat}>{followerCount} followers</Text>
+                <Text style={styles.statDot}>·</Text>
+                <Text style={styles.stat}>{profile.upcoming_classes} classes</Text>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{profile.total_reviews}</Text>
-                <Text style={styles.statLabel}>Reviews</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{followStatus?.follower_count ?? profile.follower_count}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{profile.upcoming_classes}</Text>
-                <Text style={styles.statLabel}>Classes</Text>
-              </View>
-            </View>
 
-            {/* Follow button */}
-            {followStatus && (
-              <View style={styles.followSection}>
+              {/* Follow button */}
+              <View style={styles.followWrap}>
                 <FollowButton
                   hostId={id!}
-                  initialFollowing={followStatus.following}
-                  initialCount={followStatus.follower_count}
+                  initialFollowing={following}
+                  initialCount={followerCount}
                   size="md"
-                  onFollowChange={(f) =>
-                    setFollowStatus((s) => s ? { ...s, following: f, follower_count: s.follower_count + (f ? 1 : -1) } : s)
-                  }
+                  onFollowChange={(f) => {
+                    setFollowing(f);
+                    setFollowerCount((c) => c + (f ? 1 : -1));
+                  }}
                 />
               </View>
-            )}
+            </View>
 
-            {/* Upcoming Classes */}
-            {classes.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Upcoming Classes</Text>
-                <View style={styles.classList}>
-                  {classes.map((cls) => {
-                    const colors = CATEGORY_COLORS[cls.category];
-                    const spotsLeft = cls.max_students - cls.current_students;
-                    const full = spotsLeft <= 0;
-                    return (
-                      <TouchableOpacity
-                        key={cls.id}
-                        style={styles.classCard}
-                        onPress={() => router.push(`/guest/class/${cls.id}`)}
-                        activeOpacity={0.85}
-                      >
-                        <View style={[styles.classCardBar, { backgroundColor: colors?.dot ?? "#EEEEEE" }]} />
-                        <View style={styles.classCardBody}>
-                          <View style={styles.classCardTop}>
-                            <Text style={styles.classCardTime}>{formatTime(cls.scheduled_at)}</Text>
-                            <View style={[styles.categoryBadge, { backgroundColor: colors?.bg ?? "#F9F9F9" }]}>
-                              <Text style={[styles.categoryBadgeText, { color: colors?.label ?? "#888888" }]}>
-                                {cls.category}
-                              </Text>
-                            </View>
-                          </View>
-                          <Text style={styles.classCardTitle} numberOfLines={1}>{cls.title}</Text>
-                          <View style={styles.classCardMeta}>
-                            <Text style={styles.classCardDate}>{formatDate(cls.scheduled_at)}</Text>
-                            <View style={[styles.spotsBadge, full && styles.spotsBadgeFull]}>
-                              <Text style={[styles.spotsText, full && styles.spotsTextFull]}>
-                                {full ? "Full" : `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+            {/* Upcoming classes */}
+            <Text style={styles.sectionTitle}>Upcoming Classes</Text>
+            {upcomingClasses.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>No classes scheduled yet</Text>
               </View>
+            ) : (
+              upcomingClasses.map((cls) => {
+                const colors = CATEGORY_COLORS[cls.category];
+                const spotsLeft = cls.max_students - cls.current_students;
+                return (
+                  <TouchableOpacity
+                    key={cls.id}
+                    style={styles.classCard}
+                    onPress={() => router.push(`/guest/class/${cls.id}`)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[styles.classBar, { backgroundColor: colors?.dot ?? "#EEE" }]} />
+                    <View style={styles.classBody}>
+                      <View style={styles.classTop}>
+                        <Text style={styles.classTime}>{formatTime(cls.scheduled_at)}</Text>
+                        <View style={[styles.catBadge, { backgroundColor: colors?.bg ?? "#F5F5F5" }]}>
+                          <Text style={[styles.catBadgeText, { color: colors?.text ?? "#666" }]}>
+                            {cls.category}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.classTitle}>{cls.title}</Text>
+                      <Text style={styles.classMeta}>
+                        {formatDate(cls.scheduled_at)} · {spotsLeft > 0 ? `${spotsLeft} spots left` : "Full"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
             )}
 
             {/* Reviews */}
             {reviews.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Reviews</Text>
-                <View style={styles.classList}>
-                  {reviews.map((r) => {
-                    const d = new Date(r.created_at);
-                    const dateStr = `${MONTHS_ABB[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-                    const initials2 = r.student_id.slice(0, 2).toUpperCase();
-                    return (
-                      <View key={r.id} style={styles.reviewCard}>
-                        <View style={styles.reviewTop}>
-                          <View style={styles.reviewAvatar}>
-                            <Text style={styles.reviewInitials}>{initials2}</Text>
-                          </View>
-                          <View style={styles.reviewMeta}>
-                            <View style={styles.reviewStarsRow}>
-                              {[1, 2, 3, 4, 5].map((i) => (
-                                <MaterialCommunityIcons
-                                  key={i}
-                                  name={i <= r.rating ? "star" : "star-outline"}
-                                  size={11}
-                                  color="#F4A200"
-                                />
-                              ))}
-                              <Text style={styles.reviewDate}>{dateStr}</Text>
-                            </View>
-                          </View>
-                        </View>
-                        {r.review_text ? (
-                          <Text style={styles.reviewText}>{r.review_text}</Text>
-                        ) : null}
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
+              <>
+                <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Reviews</Text>
+                {reviews.map((r, i) => (
+                  <View key={i} style={styles.reviewCard}>
+                    <View style={styles.reviewHeader}>
+                      <StarRow rating={r.rating} />
+                      <Text style={styles.reviewDate}>{formatDate(r.created_at)}</Text>
+                    </View>
+                    {r.review_text && (
+                      <Text style={styles.reviewText}>{r.review_text}</Text>
+                    )}
+                  </View>
+                ))}
+                {totalReviews > 5 && (
+                  <TouchableOpacity activeOpacity={0.7} style={styles.seeAllBtn}>
+                    <Text style={styles.seeAllText}>See all {totalReviews} reviews</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
-          </ScrollView>
-        </View>
-      </RoleGuard>
+          </>
+        )}
+      </ScrollView>
     </AuthGate>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
+  root: { flex: 1, backgroundColor: "#FAFAF8" },
+  content: { paddingHorizontal: 20 },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F9F9F9",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 36, height: 36, borderRadius: 18, backgroundColor: "#F0F0F0",
+    alignItems: "center", justifyContent: "center", marginBottom: 16,
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    gap: 0,
-  },
-  heroSection: {
-    alignItems: "center",
-    paddingVertical: 20,
-    gap: 8,
-  },
+  centerBox: { alignItems: "center", paddingVertical: 60, gap: 12 },
+  errorText: { color: "#888", fontSize: 14, textAlign: "center" },
+
+  hero: { alignItems: "center", gap: 10, marginBottom: 28 },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#87A878",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
+    width: 80, height: 80, borderRadius: 40, backgroundColor: "#87A878",
+    alignItems: "center", justifyContent: "center",
   },
-  avatarInitials: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FFFFFF",
+  avatarImg: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#DDD" },
+  avatarInitials: { fontSize: 28, fontWeight: "700", color: "#fff" },
+  name: { fontSize: 22, fontWeight: "800", color: "#1A1A1A", textAlign: "center" },
+
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "center" },
+  tagPill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  tagDot: { width: 6, height: 6, borderRadius: 3 },
+  tagText: { fontSize: 12, fontWeight: "600" },
+
+  bio: { fontSize: 14, color: "#666", lineHeight: 20, textAlign: "center" },
+  readMore: { fontSize: 13, color: "#87A878", fontWeight: "600", textAlign: "center", marginTop: 4 },
+
+  statsRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" },
+  stat: { fontSize: 13, color: "#555", fontWeight: "500" },
+  statDot: { fontSize: 13, color: "#CCC" },
+
+  followWrap: { width: "100%", marginTop: 4 },
+
+  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#1A1A1A", marginBottom: 12 },
+
+  emptyCard: {
+    backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center",
+    shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  displayName: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#2C2C2C",
-    letterSpacing: -0.3,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginTop: 2,
-  },
-  tagPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  tagDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  bioWrap: {
-    width: "100%",
-    gap: 4,
-  },
-  bioText: {
-    fontSize: 14,
-    color: "#888888",
-    lineHeight: 21,
-    textAlign: "center",
-  },
-  bioToggle: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#87A878",
-    textAlign: "center",
-  },
-  statsRow: {
-    flexDirection: "row",
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    paddingVertical: 16,
-    marginBottom: 16,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 3,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2C2C2C",
-  },
-  statLabel: {
-    fontSize: 10,
-    color: "#888888",
-    textAlign: "center",
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: "#EEEEEE",
-    marginVertical: 4,
-  },
-  followSection: {
-    marginBottom: 24,
-  },
-  section: {
-    marginBottom: 24,
-    gap: 10,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  classList: {
-    gap: 8,
-  },
+  emptyText: { fontSize: 14, color: "#888" },
+
   classCard: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    flexDirection: "row", backgroundColor: "#fff", borderRadius: 12,
+    borderWidth: 1, borderColor: "#EEEEEE", overflow: "hidden", marginBottom: 10,
   },
-  classCardBar: {
-    width: 4,
-    alignSelf: "stretch",
-  },
-  classCardBody: {
-    flex: 1,
-    padding: 12,
-    gap: 3,
-  },
-  classCardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  classCardTime: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#888888",
-  },
-  categoryBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  categoryBadgeText: {
-    fontSize: 10,
-    fontWeight: "600",
-  },
-  classCardTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  classCardMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 2,
-  },
-  classCardDate: {
-    fontSize: 12,
-    color: "#888888",
-  },
-  spotsBadge: {
-    backgroundColor: "#F0F5EE",
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  spotsBadgeFull: {
-    backgroundColor: "#FEF2F2",
-  },
-  spotsText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#4A7A40",
-  },
-  spotsTextFull: {
-    color: "#EF4444",
-  },
+  classBar: { width: 4, alignSelf: "stretch" },
+  classBody: { flex: 1, padding: 12, gap: 3 },
+  classTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  classTime: { fontSize: 12, fontWeight: "600", color: "#888" },
+  catBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  catBadgeText: { fontSize: 10, fontWeight: "600" },
+  classTitle: { fontSize: 14, fontWeight: "700", color: "#1A1A1A" },
+  classMeta: { fontSize: 12, color: "#888" },
+
   reviewCard: {
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    padding: 12,
-    gap: 8,
-  },
-  reviewTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  reviewAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F0F5EE",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  reviewInitials: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#87A878",
-  },
-  reviewMeta: {
-    flex: 1,
-  },
-  reviewStarsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-  },
-  reviewDate: {
-    fontSize: 11,
-    color: "#888888",
-    marginLeft: 6,
-  },
-  reviewText: {
-    fontSize: 13,
-    color: "#444444",
-    lineHeight: 19,
-  },
-  errorText: {
-    fontSize: 15,
-    color: "#888888",
-    textAlign: "center",
-  },
-  retryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
+    backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 10,
+    shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2,
     gap: 6,
-    backgroundColor: "#F0F5EE",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
   },
-  retryText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#4A7A40",
-  },
+  reviewHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  reviewDate: { fontSize: 12, color: "#AAA" },
+  reviewText: { fontSize: 13, color: "#555", lineHeight: 19 },
+  seeAllBtn: { alignItems: "center", paddingVertical: 12 },
+  seeAllText: { fontSize: 13, color: "#87A878", fontWeight: "600" },
 });

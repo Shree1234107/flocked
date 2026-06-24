@@ -4,7 +4,7 @@ import cors from "cors";
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { z } from "zod";
 
 // ─── Env validation ───────────────────────────────────────────────────────────
@@ -28,13 +28,14 @@ const livekitUrl = process.env.LIVEKIT_URL!;
 const livekitApiKey = process.env.LIVEKIT_API_KEY!;
 const livekitApiSecret = process.env.LIVEKIT_API_SECRET!;
 const adminSecret = process.env.ADMIN_SECRET ?? "";
+const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
+const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@flocked.app";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "shreevegesna@gmail.com";
 
 // ─── Shared constants ─────────────────────────────────────────────────────────
 
-const INTEREST_TAGS = [
-  "Yoga", "Tutoring", "Dance",
-] as const;
-type InterestTag = typeof INTEREST_TAGS[number];
+const INTEREST_TAGS = ["Yoga", "Tutoring", "Dance"] as const;
+type InterestTag = (typeof INTEREST_TAGS)[number];
 
 // ─── App setup ────────────────────────────────────────────────────────────────
 
@@ -49,10 +50,9 @@ app.use(
         /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
         /^https?:\/\/(?:10|192\.168)\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
         /\.railway\.app$/.test(origin) ||
-        /\.up\.railway\.app$/.test(origin);
-      allowed
-        ? callback(null, true)
-        : callback(new Error("Not allowed by CORS"));
+        /\.up\.railway\.app$/.test(origin) ||
+        /flocked\.app$/.test(origin);
+      allowed ? callback(null, true) : callback(new Error("Not allowed by CORS"));
     },
   })
 );
@@ -66,9 +66,16 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 
 const roomService = new RoomServiceClient(livekitUrl, livekitApiKey, livekitApiSecret);
 
+// Resend email client (optional — gracefully degrades if key not set)
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AuthedRequest = express.Request & { userId: string; userEmail: string; userRole?: string };
+type AuthedRequest = express.Request & {
+  userId: string;
+  userEmail: string;
+  userRole?: string;
+};
 
 // ─── Response helpers ─────────────────────────────────────────────────────────
 
@@ -78,8 +85,7 @@ const ok = <T>(res: express.Response, data: T, status = 200) =>
 const fail = (res: express.Response, message: string, status = 400) =>
   res.status(status).json({ ok: false, message });
 
-const zodMessage = (e: z.ZodError) =>
-  e.issues[0]?.message ?? "Invalid request.";
+const zodMessage = (e: z.ZodError) => e.issues[0]?.message ?? "Invalid request.";
 
 // ─── Auth middleware ──────────────────────────────────────────────────────────
 
@@ -105,51 +111,169 @@ const requireAuth = async (
 
 // ─── Role middleware ──────────────────────────────────────────────────────────
 
-const requireUserRole = (allowed: string[]) => async (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) => {
-  const userId = (req as AuthedRequest).userId;
+const requireUserRole =
+  (allowed: string[]) =>
+  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const userId = (req as AuthedRequest).userId;
 
-  const { data, error } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  if (error || !data) {
-    return fail(res, "Your account type could not be verified. Please sign in again.", 403);
+    if (error || !data) {
+      return fail(res, "Your account type could not be verified. Please sign in again.", 403);
+    }
+
+    if (!allowed.includes(data.role)) {
+      return fail(res, "You don't have permission to do this.", 403);
+    }
+
+    (req as AuthedRequest).userRole = data.role;
+    next();
+  };
+
+// ─── Email helpers ────────────────────────────────────────────────────────────
+
+async function sendEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<void> {
+  if (!resend) {
+    console.log(`[Email] Resend not configured — would send to ${params.to}:\n${params.text}`);
+    return;
   }
-
-  if (!allowed.includes(data.role)) {
-    return fail(res, "You don't have permission to do this.", 403);
+  try {
+    await resend.emails.send({
+      from: `Flocked <${FROM_EMAIL}>`,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    });
+    console.log(`[Email] Sent "${params.subject}" to ${params.to}`);
+  } catch (err) {
+    console.error("[Email] Failed to send:", err);
+    throw err;
   }
+}
 
-  (req as AuthedRequest).userRole = data.role;
-  next();
-};
+async function sendAdminApplicationEmail(params: {
+  applicantEmail: string;
+  whatToTeach: string;
+  whyTeach: string;
+  qualifications: string;
+}): Promise<void> {
+  const { applicantEmail, whatToTeach, whyTeach, qualifications } = params;
 
-// ─── Auth callback (magic link / OAuth redirect) ──────────────────────────────
-//
-// Supabase is configured to redirect to this endpoint after email magic links
-// and OAuth flows. We forward the tokens into the app via the flocked:// scheme.
-//
-// Supabase appends tokens as a URL fragment (#access_token=...) which browsers
-// never send to the server. A small HTML page reads the fragment client-side and
-// then performs the redirect to the deep link so the mobile app receives the
-// tokens either way.
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #87A878;">New Instructor Application — Flocked</h2>
+      <p><strong>Applicant:</strong> ${applicantEmail}</p>
+      <hr/>
+      <h3>What they want to teach:</h3>
+      <p>${whatToTeach}</p>
+      <h3>Why they want to teach this:</h3>
+      <p>${whyTeach}</p>
+      <h3>What qualifies them:</h3>
+      <p>${qualifications}</p>
+      <hr/>
+      <p style="color: #888; font-size: 13px;">
+        To approve: set <code>host_profiles.is_approved = true</code> for this user in Supabase,
+        or use the admin endpoint <code>PATCH /api/admin/hosts/:userId/approve</code>.
+      </p>
+    </div>
+  `;
+
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: "New Instructor Application — Flocked",
+    html,
+    text: `New Instructor Application\n\nApplicant: ${applicantEmail}\n\nWhat to teach:\n${whatToTeach}\n\nWhy:\n${whyTeach}\n\nQualifications:\n${qualifications}`,
+  });
+}
+
+async function sendWelcomeEmail(params: { to: string; displayName: string }): Promise<void> {
+  const { to, displayName } = params;
+  const name = displayName || "there";
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #87A878;">Welcome to Flocked, ${name}! 🌿</h1>
+      <p>You're now part of a community of people who love to learn and teach live.</p>
+      <p>Explore upcoming classes in yoga, dance, and tutoring — or apply to become an instructor yourself.</p>
+      <a href="https://flocked.app" style="display:inline-block; background:#87A878; color:#fff; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; margin-top:16px;">Open Flocked</a>
+      <p style="color:#888; font-size:13px; margin-top:32px;">You're receiving this because you signed up for Flocked.</p>
+    </div>
+  `;
+
+  await sendEmail({
+    to,
+    subject: "Welcome to Flocked 🌿",
+    html,
+    text: `Welcome to Flocked, ${name}!\n\nYou're now part of a community of people who love to learn and teach live.\n\nExplore upcoming classes at https://flocked.app`,
+  });
+}
+
+async function sendClassConfirmationEmail(params: {
+  to: string;
+  studentName: string;
+  classTitle: string;
+  instructorName: string;
+  scheduledAt: string;
+  durationMinutes: number;
+}): Promise<void> {
+  const { to, studentName, classTitle, instructorName, scheduledAt, durationMinutes } = params;
+  const date = new Date(scheduledAt);
+  const formattedDate = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+  const formattedTime = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #87A878;">You're enrolled! 🎉</h2>
+      <p>Hi ${studentName || "there"},</p>
+      <p>You've successfully enrolled in <strong>${classTitle}</strong>.</p>
+      <div style="background: #F9F9F9; border-radius: 12px; padding: 16px; margin: 20px 0;">
+        <p style="margin: 4px 0;"><strong>Class:</strong> ${classTitle}</p>
+        <p style="margin: 4px 0;"><strong>Instructor:</strong> ${instructorName}</p>
+        <p style="margin: 4px 0;"><strong>Date:</strong> ${formattedDate}</p>
+        <p style="margin: 4px 0;"><strong>Time:</strong> ${formattedTime}</p>
+        <p style="margin: 4px 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
+      </div>
+      <p>We'll remind you before the class starts. See you there!</p>
+      <a href="https://flocked.app" style="display:inline-block; background:#87A878; color:#fff; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">Open Flocked</a>
+    </div>
+  `;
+
+  await sendEmail({
+    to,
+    subject: `You're enrolled in ${classTitle}`,
+    html,
+    text: `You're enrolled in ${classTitle}!\n\nInstructor: ${instructorName}\nDate: ${formattedDate} at ${formattedTime}\nDuration: ${durationMinutes} minutes\n\nSee you there!`,
+  });
+}
+
+// ─── Auth callback ────────────────────────────────────────────────────────────
 
 app.get("/auth/callback", (req, res) => {
-  const { access_token, refresh_token, type, code, error, error_description } = req.query as Record<string, string>;
+  const { access_token, refresh_token, type, code, error, error_description } =
+    req.query as Record<string, string>;
 
   if (error) {
     return res.status(400).send(`Auth error: ${error_description ?? error}`);
   }
 
-  // Build the deep link server-side — code/token are already in req.query.
-  // Inject directly into the HTML so window.location.href fires in <head>
-  // before the body renders, with a visible button as tap fallback.
   let deepLink: string | null = null;
   if (code) {
     deepLink = `exp+flocked://auth/callback?code=${encodeURIComponent(code)}`;
@@ -209,12 +333,12 @@ app.get("/api/auth/role", requireAuth, async (req, res) => {
   }
 
   if (!data) return fail(res, "No account type set.", 404);
-
   return ok(res, { role: data.role });
 });
 
 app.post("/api/auth/role", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
+  const userEmail = (req as AuthedRequest).userEmail;
   const { role } = req.body;
 
   if (role !== "guest" && role !== "host") {
@@ -231,16 +355,59 @@ app.post("/api/auth/role", requireAuth, async (req, res) => {
     return ok(res, { role: existing.role });
   }
 
-  const { error } = await supabase
-    .from("user_profiles")
-    .insert({ user_id: userId, role });
+  const { error } = await supabase.from("user_profiles").insert({ user_id: userId, role });
 
   if (error) {
     console.error("[POST /api/auth/role]", error.message);
     return fail(res, "Failed to set account type.", 500);
   }
 
+  // Send welcome email to new users (best-effort)
+  sendWelcomeEmail({ to: userEmail, displayName: "" }).catch((err) =>
+    console.error("[Email] Welcome email failed:", err)
+  );
+
   return ok(res, { role }, 201);
+});
+
+// ─── Newsletter signup ────────────────────────────────────────────────────────
+
+app.post("/api/newsletter/signup", async (req, res) => {
+  const { email, name } = req.body ?? {};
+
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return fail(res, "A valid email address is required.");
+  }
+
+  // Store in newsletter_signups table
+  const { error } = await supabase
+    .from("newsletter_signups")
+    .upsert({ email: email.trim().toLowerCase(), name: name ?? null }, { onConflict: "email" });
+
+  if (error) {
+    console.error("[POST /api/newsletter/signup]", error.message);
+    // Don't fail hard — just log and continue
+  }
+
+  // Notify admin + send confirmation email (best-effort)
+  const confirmHtml = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #87A878;">You're on the list! 🌿</h2>
+      <p>Hi${name ? ` ${name}` : ""},</p>
+      <p>Thanks for signing up for Flocked updates. We'll let you know when we launch new features, add instructors, and go live in new areas.</p>
+      <p>In the meantime, download the app and explore what's already available.</p>
+      <a href="https://flocked.app" style="display:inline-block; background:#87A878; color:#fff; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">Open Flocked</a>
+    </div>
+  `;
+
+  sendEmail({
+    to: email.trim(),
+    subject: "You're on the Flocked list 🌿",
+    html: confirmHtml,
+    text: `Thanks for signing up for Flocked updates!\n\nWe'll keep you posted on launches, new instructors, and more.\n\nhttps://flocked.app`,
+  }).catch((err) => console.error("[Email] Newsletter confirm failed:", err));
+
+  return ok(res, { subscribed: true });
 });
 
 // ─── Student profile routes ───────────────────────────────────────────────────
@@ -295,6 +462,173 @@ app.put("/api/profile", requireAuth, async (req, res) => {
   }
 
   return ok(res, { displayName, photoUrl: photoUrl ?? null });
+});
+
+// ─── Student analytics ────────────────────────────────────────────────────────
+
+app.get("/api/analytics/student", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const [{ data: enrollments, error: eErr }, { data: reviews, error: rErr }] = await Promise.all([
+    supabase
+      .from("class_enrollments")
+      .select(`class_id, created_at, scheduled_classes ( title, category, scheduled_at, host_id, host:host_profiles(display_name) )`)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("class_reviews")
+      .select("class_id, rating, created_at")
+      .eq("student_id", userId),
+  ]);
+
+  if (eErr) {
+    console.error("[GET /api/analytics/student]", eErr.message);
+    return fail(res, "Failed to load analytics.", 500);
+  }
+
+  const allEnrollments = enrollments ?? [];
+  const allReviews = reviews ?? [];
+
+  // Classes attended (past scheduled_at)
+  const now = new Date();
+  const attended = allEnrollments.filter((e) => {
+    const cls = e.scheduled_classes as any;
+    return cls && new Date(cls.scheduled_at) < now;
+  });
+
+  // Category breakdown
+  const categoryCount: Record<string, number> = {};
+  for (const e of attended) {
+    const cat = (e.scheduled_classes as any)?.category ?? "Other";
+    categoryCount[cat] = (categoryCount[cat] ?? 0) + 1;
+  }
+
+  // Unique instructors
+  const instructorIds = new Set(
+    allEnrollments.map((e) => (e.scheduled_classes as any)?.host_id).filter(Boolean)
+  );
+
+  // Recent 5 classes
+  const recentClasses = attended.slice(0, 5).map((e) => {
+    const cls = e.scheduled_classes as any;
+    return {
+      id: e.class_id,
+      title: cls?.title ?? "Unknown",
+      category: cls?.category ?? "Unknown",
+      scheduled_at: cls?.scheduled_at ?? e.created_at,
+      instructor_name: cls?.host?.display_name ?? "Instructor",
+    };
+  });
+
+  return ok(res, {
+    total_enrolled: allEnrollments.length,
+    total_attended: attended.length,
+    total_reviews_given: allReviews.length,
+    unique_instructors: instructorIds.size,
+    category_breakdown: categoryCount,
+    recent_classes: recentClasses,
+  });
+});
+
+// ─── Instructor analytics ─────────────────────────────────────────────────────
+
+app.get("/api/analytics/instructor", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const [
+    { data: classes, error: cErr },
+    { data: reviews, error: rErr },
+    { data: enrollments, error: enErr },
+  ] = await Promise.all([
+    supabase
+      .from("scheduled_classes")
+      .select("id, title, category, scheduled_at, status, current_students, max_students")
+      .eq("host_id", userId)
+      .neq("status", "cancelled")
+      .order("scheduled_at", { ascending: false }),
+    supabase
+      .from("class_reviews")
+      .select("rating, review_text, created_at, class_id")
+      .eq("instructor_id", userId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("class_enrollments")
+      .select("class_id, created_at")
+      .in(
+        "class_id",
+        (
+          await supabase
+            .from("scheduled_classes")
+            .select("id")
+            .eq("host_id", userId)
+        ).data?.map((c) => c.id) ?? []
+      ),
+  ]);
+
+  if (cErr) {
+    console.error("[GET /api/analytics/instructor]", cErr.message);
+    return fail(res, "Failed to load analytics.", 500);
+  }
+
+  const allClasses = classes ?? [];
+  const allReviews = reviews ?? [];
+  const allEnrollments = enrollments ?? [];
+
+  const now = new Date();
+  const completedClasses = allClasses.filter((c) => new Date(c.scheduled_at) < now);
+  const upcomingClasses = allClasses.filter((c) => new Date(c.scheduled_at) >= now);
+
+  const totalStudents = allEnrollments.length;
+  const avgRating =
+    allReviews.length > 0
+      ? Math.round(
+          (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length) * 10
+        ) / 10
+      : null;
+
+  // Revenue estimate: $10 per enrollment (placeholder until Stripe is wired)
+  const estimatedRevenue = totalStudents * 10;
+
+  // Category breakdown
+  const categoryCount: Record<string, number> = {};
+  for (const c of completedClasses) {
+    categoryCount[c.category] = (categoryCount[c.category] ?? 0) + 1;
+  }
+
+  // Monthly enrollments (last 6 months)
+  const monthlyMap: Record<string, number> = {};
+  for (const e of allEnrollments) {
+    const key = e.created_at.slice(0, 7); // "2025-06"
+    monthlyMap[key] = (monthlyMap[key] ?? 0) + 1;
+  }
+  const monthly = Object.entries(monthlyMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6)
+    .map(([month, count]) => ({ month, count }));
+
+  // Top 3 classes by enrollment
+  const enrollmentsByClass: Record<string, number> = {};
+  for (const e of allEnrollments) {
+    enrollmentsByClass[e.class_id] = (enrollmentsByClass[e.class_id] ?? 0) + 1;
+  }
+  const topClasses = allClasses
+    .map((c) => ({ ...c, enrollment_count: enrollmentsByClass[c.id] ?? 0 }))
+    .sort((a, b) => b.enrollment_count - a.enrollment_count)
+    .slice(0, 3);
+
+  return ok(res, {
+    total_classes: allClasses.length,
+    completed_classes: completedClasses.length,
+    upcoming_classes: upcomingClasses.length,
+    total_students: totalStudents,
+    avg_rating: avgRating,
+    total_reviews: allReviews.length,
+    estimated_revenue: estimatedRevenue,
+    category_breakdown: categoryCount,
+    monthly_enrollments: monthly,
+    top_classes: topClasses,
+    recent_reviews: allReviews.slice(0, 5),
+  });
 });
 
 // ─── LiveKit routes ───────────────────────────────────────────────────────────
@@ -454,61 +788,8 @@ app.patch("/api/admin/hosts/:userId/approve", async (req, res) => {
   return ok(res, { userId, approved: true });
 });
 
-// ─── Email helper ─────────────────────────────────────────────────────────────
-
-const ADMIN_EMAIL = "shreevegesna@gmail.com";
-
-async function sendAdminApplicationEmail(params: {
-  applicantEmail: string;
-  whatToTeach: string;
-  whyTeach: string;
-  qualifications: string;
-}) {
-  const { applicantEmail, whatToTeach, whyTeach, qualifications } = params;
-  const body = [
-    "New Instructor Application — Flocked",
-    "",
-    `Applicant: ${applicantEmail}`,
-    "",
-    "What they want to teach:",
-    whatToTeach,
-    "",
-    "Why they want to teach this:",
-    whyTeach,
-    "",
-    "What qualifies them:",
-    qualifications,
-    "",
-    "—",
-    "Approve in Supabase: set host_profiles.is_approved = true for this user.",
-  ].join("\n");
-
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  if (!smtpUser || !smtpPass) {
-    console.log("[Email] SMTP not configured — application notification:\n", body);
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: smtpUser, pass: smtpPass },
-  });
-
-  await transporter.sendMail({
-    from: smtpUser,
-    to: ADMIN_EMAIL,
-    subject: "New Instructor Application - Flocked",
-    text: body,
-  });
-
-  console.log(`[Email] Admin notified of application from ${applicantEmail}`);
-}
-
 // ─── Instructor routes ────────────────────────────────────────────────────────
 
-// GET /api/instructor/application — no role gate (avoids timing race on first login)
 app.get("/api/instructor/application", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
 
@@ -518,11 +799,7 @@ app.get("/api/instructor/application", requireAuth, async (req, res) => {
       .select("id, status")
       .eq("user_id", userId)
       .maybeSingle(),
-    supabase
-      .from("host_profiles")
-      .select("is_approved")
-      .eq("user_id", userId)
-      .maybeSingle(),
+    supabase.from("host_profiles").select("is_approved").eq("user_id", userId).maybeSingle(),
   ]);
 
   return ok(res, {
@@ -533,9 +810,15 @@ app.get("/api/instructor/application", requireAuth, async (req, res) => {
 });
 
 const instructorApplicationSchema = z.object({
-  whatToTeach: z.string().min(10, "Please give a bit more detail about what you want to teach."),
-  whyTeach: z.string().min(10, "Please give a bit more detail about why you want to teach this."),
-  qualifications: z.string().min(10, "Please give a bit more detail about your qualifications."),
+  whatToTeach: z
+    .string()
+    .min(10, "Please give a bit more detail about what you want to teach."),
+  whyTeach: z
+    .string()
+    .min(10, "Please give a bit more detail about why you want to teach this."),
+  qualifications: z
+    .string()
+    .min(10, "Please give a bit more detail about your qualifications."),
 });
 
 app.post("/api/instructor/apply", requireAuth, async (req, res) => {
@@ -546,7 +829,6 @@ app.post("/api/instructor/apply", requireAuth, async (req, res) => {
   const userEmail = (req as AuthedRequest).userEmail;
   const { whatToTeach, whyTeach, qualifications } = parsed.data;
 
-  // Block duplicate submissions
   const { data: existing } = await supabase
     .from("instructor_applications")
     .select("id")
@@ -555,7 +837,6 @@ app.post("/api/instructor/apply", requireAuth, async (req, res) => {
 
   if (existing) return fail(res, "You have already submitted an application.");
 
-  // Ensure user_profiles row exists with role=host
   const { data: existingUserProfile } = await supabase
     .from("user_profiles")
     .select("user_id")
@@ -566,7 +847,6 @@ app.post("/api/instructor/apply", requireAuth, async (req, res) => {
     await supabase.from("user_profiles").insert({ user_id: userId, role: "host" });
   }
 
-  // Ensure host_profiles row exists (needed for is_approved check)
   const { data: existingProfile } = await supabase
     .from("host_profiles")
     .select("user_id")
@@ -577,7 +857,6 @@ app.post("/api/instructor/apply", requireAuth, async (req, res) => {
     await supabase.from("host_profiles").insert({ user_id: userId });
   }
 
-  // Save application
   const { error: insertError } = await supabase.from("instructor_applications").insert({
     user_id: userId,
     what_to_teach: whatToTeach,
@@ -590,13 +869,9 @@ app.post("/api/instructor/apply", requireAuth, async (req, res) => {
     return fail(res, "Failed to submit application.", 500);
   }
 
-  // Email admin — best-effort, never blocks the response
-  sendAdminApplicationEmail({
-    applicantEmail: userEmail,
-    whatToTeach,
-    whyTeach,
-    qualifications,
-  }).catch((err) => console.error("[Email] Admin notify failed:", err));
+  sendAdminApplicationEmail({ applicantEmail: userEmail, whatToTeach, whyTeach, qualifications }).catch(
+    (err) => console.error("[Email] Admin notify failed:", err)
+  );
 
   return ok(res, { submitted: true }, 201);
 });
@@ -647,19 +922,14 @@ app.get("/api/rooms", requireAuth, async (req, res) => {
 
   let query = supabase
     .from("rooms")
-    .select(`
-      *,
-      host:host_profiles (
-        user_id, display_name, full_name, photo_url, bio, interest_tags, is_approved, created_at
-      )
-    `)
+    .select(
+      `*, host:host_profiles ( user_id, display_name, full_name, photo_url, bio, interest_tags, is_approved, created_at )`
+    )
     .eq("status", "live")
     .order("participant_count", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (tag) {
-    query = query.eq("interest_tag", tag);
-  }
+  if (tag) query = query.eq("interest_tag", tag);
 
   const { data, error } = await query;
 
@@ -688,18 +958,13 @@ app.get("/api/rooms/:id", requireAuth, async (req, res) => {
 
   const { data, error } = await supabase
     .from("rooms")
-    .select(`
-      *,
-      host:host_profiles (
-        user_id, display_name, full_name, photo_url, bio, interest_tags, is_approved, created_at
-      )
-    `)
+    .select(
+      `*, host:host_profiles ( user_id, display_name, full_name, photo_url, bio, interest_tags, is_approved, created_at )`
+    )
     .eq("id", id)
     .single();
 
-  if (error || !data) {
-    return fail(res, "Room not found.", 404);
-  }
+  if (error || !data) return fail(res, "Room not found.", 404);
 
   const room = {
     ...data,
@@ -777,10 +1042,7 @@ app.post("/api/rooms/:id/join", requireAuth, async (req, res) => {
     .select("*", { count: "exact", head: true })
     .eq("room_id", id);
 
-  await supabase
-    .from("rooms")
-    .update({ participant_count: count ?? 0 })
-    .eq("id", id);
+  await supabase.from("rooms").update({ participant_count: count ?? 0 }).eq("id", id);
 
   return ok(res, { ok: true });
 });
@@ -789,21 +1051,14 @@ app.post("/api/rooms/:id/leave", requireAuth, async (req, res) => {
   const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
 
-  await supabase
-    .from("room_participants")
-    .delete()
-    .eq("room_id", id)
-    .eq("user_id", userId);
+  await supabase.from("room_participants").delete().eq("room_id", id).eq("user_id", userId);
 
   const { count } = await supabase
     .from("room_participants")
     .select("*", { count: "exact", head: true })
     .eq("room_id", id);
 
-  await supabase
-    .from("rooms")
-    .update({ participant_count: Math.max(0, count ?? 0) })
-    .eq("id", id);
+  await supabase.from("rooms").update({ participant_count: Math.max(0, count ?? 0) }).eq("id", id);
 
   return ok(res, { ok: true });
 });
@@ -816,28 +1071,22 @@ const createClassSchema = z.object({
   title: z.string().min(1, "Title is required.").max(100),
   category: z.enum(CLASS_CATEGORIES),
   scheduledAt: z.string().datetime({ message: "Invalid date/time." }),
-  durationMinutes: z
-    .number()
-    .int()
-    .refine((v) => [30, 45, 60, 90].includes(v), {
-      message: "Duration must be 30, 45, 60, or 90 minutes.",
-    }),
+  durationMinutes: z.number().int().refine((v) => [30, 45, 60, 90].includes(v), {
+    message: "Duration must be 30, 45, 60, or 90 minutes.",
+  }),
   maxStudents: z.number().int().min(1).max(50),
   description: z.string().max(500).optional(),
 });
 
-// GET /api/classes — upcoming classes for students, with optional category/date/hostId/sort filters
 app.get("/api/classes", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
   const category = req.query.category as string | undefined;
   const start = req.query.start as string | undefined;
   const end = req.query.end as string | undefined;
-  const hostId = req.query.hostId as string | undefined;
-  const sort = req.query.sort as string | undefined;
 
   let query = supabase
     .from("scheduled_classes")
-    .select(`*, host:host_profiles (display_name, full_name, photo_url, avg_rating)`)
+    .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
     .eq("status", "scheduled")
     .order("scheduled_at", { ascending: true })
     .limit(500);
@@ -847,7 +1096,6 @@ app.get("/api/classes", requireAuth, async (req, res) => {
   }
   if (start) query = query.gte("scheduled_at", start);
   if (end) query = query.lte("scheduled_at", end);
-  if (hostId) query = query.eq("host_id", hostId);
 
   const { data, error } = await query;
 
@@ -867,25 +1115,9 @@ app.get("/api/classes", requireAuth, async (req, res) => {
     : { data: [] as { class_id: string }[] };
 
   const enrolledSet = new Set((enrollments ?? []).map((e) => e.class_id));
-  let result = classes.map((c) => ({ ...c, is_enrolled: enrolledSet.has(c.id) }));
-
-  if (sort === "smart") {
-    const now = Date.now();
-    result = result.sort((a, b) => {
-      const score = (cls: typeof a) => {
-        const hoursUntil = (new Date(cls.scheduled_at).getTime() - now) / 3600000;
-        const spotsPct = 1 - (cls.current_students / cls.max_students);
-        const rating = (cls.host as { avg_rating?: number | null } | null)?.avg_rating ?? 3;
-        return (rating * 20) + (spotsPct * 30) + (hoursUntil < 24 ? 20 : 0) - (hoursUntil / 168 * 10);
-      };
-      return score(b) - score(a);
-    });
-  }
-
-  return ok(res, result);
+  return ok(res, classes.map((c) => ({ ...c, is_enrolled: enrolledSet.has(c.id) })));
 });
 
-// GET /api/classes/mine — instructor's own classes (non-cancelled), for home page
 app.get("/api/classes/mine", requireAuth, requireUserRole(["host"]), async (req, res) => {
   const userId = (req as AuthedRequest).userId;
 
@@ -904,70 +1136,26 @@ app.get("/api/classes/mine", requireAuth, requireUserRole(["host"]), async (req,
   return ok(res, data ?? []);
 });
 
-// GET /api/classes/following — scheduled classes from instructors the user follows
-app.get("/api/classes/following", requireAuth, async (req, res) => {
-  const userId = (req as AuthedRequest).userId;
-
-  const { data: follows, error: followError } = await supabase
-    .from("instructor_follows")
-    .select("host_id")
-    .eq("student_id", userId);
-
-  if (followError) {
-    console.error("[GET /api/classes/following]", followError.message);
-    return fail(res, "Failed to load following classes.", 500);
-  }
-
-  const hostIds = (follows ?? []).map((f: { host_id: string }) => f.host_id);
-  if (hostIds.length === 0) return ok(res, []);
-
-  const { data, error } = await supabase
-    .from("scheduled_classes")
-    .select(`*, host:host_profiles (display_name, full_name, photo_url, avg_rating)`)
-    .eq("status", "scheduled")
-    .in("host_id", hostIds)
-    .order("scheduled_at", { ascending: true })
-    .limit(200);
-
-  if (error) {
-    console.error("[GET /api/classes/following]", error.message);
-    return fail(res, "Failed to load following classes.", 500);
-  }
-
-  const classes = data ?? [];
-  const classIds = classes.map((c) => c.id);
-  const { data: enrollments } = classIds.length
-    ? await supabase
-        .from("class_enrollments")
-        .select("class_id")
-        .eq("user_id", userId)
-        .in("class_id", classIds)
-    : { data: [] as { class_id: string }[] };
-
-  const enrolledSet = new Set((enrollments ?? []).map((e: { class_id: string }) => e.class_id));
-  return ok(res, classes.map((c) => ({ ...c, is_enrolled: enrolledSet.has(c.id) })));
-});
-
-// GET /api/classes/enrolled — all classes the current user is enrolled in
+// GET /api/classes/enrolled — student's enrolled (upcoming) classes
 app.get("/api/classes/enrolled", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
 
-  const { data: enrollments, error: enrollError } = await supabase
+  const { data: enrollments, error: eErr } = await supabase
     .from("class_enrollments")
     .select("class_id")
     .eq("user_id", userId);
 
-  if (enrollError) {
-    console.error("[GET /api/classes/enrolled]", enrollError.message);
+  if (eErr) {
+    console.error("[GET /api/classes/enrolled]", eErr.message);
     return fail(res, "Failed to load enrolled classes.", 500);
   }
 
-  const classIds = (enrollments ?? []).map((e: { class_id: string }) => e.class_id);
-  if (classIds.length === 0) return ok(res, []);
+  const classIds = (enrollments ?? []).map((e) => e.class_id);
+  if (!classIds.length) return ok(res, []);
 
   const { data, error } = await supabase
     .from("scheduled_classes")
-    .select(`*, host:host_profiles (display_name, full_name, photo_url, avg_rating)`)
+    .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
     .in("id", classIds)
     .order("scheduled_at", { ascending: true });
 
@@ -976,10 +1164,9 @@ app.get("/api/classes/enrolled", requireAuth, async (req, res) => {
     return fail(res, "Failed to load enrolled classes.", 500);
   }
 
-  return ok(res, (data ?? []).map((c) => ({ ...c, is_enrolled: true })));
+  return ok(res, data ?? []);
 });
 
-// POST /api/classes — instructor creates a scheduled class
 app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res) => {
   const parsed = createClassSchema.safeParse(req.body);
   if (!parsed.success) return fail(res, zodMessage(parsed.error));
@@ -1015,7 +1202,6 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
   return ok(res, cls, 201);
 });
 
-// DELETE /api/classes/:id — instructor cancels a class
 app.delete("/api/classes/:id", requireAuth, requireUserRole(["host"]), async (req, res) => {
   const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
@@ -1043,14 +1229,16 @@ app.delete("/api/classes/:id", requireAuth, requireUserRole(["host"]), async (re
   return ok(res, { id, cancelled: true });
 });
 
-// POST /api/classes/:id/join — student enrolls in a class
 app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async (req, res) => {
   const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
+  const userEmail = (req as AuthedRequest).userEmail;
 
   const { data: cls, error: fetchError } = await supabase
     .from("scheduled_classes")
-    .select("id, status, max_students, current_students")
+    .select(
+      `id, status, max_students, current_students, title, host_id, host:host_profiles(display_name), scheduled_at, duration_minutes`
+    )
     .eq("id", id)
     .single();
 
@@ -1066,6 +1254,13 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
     .maybeSingle();
 
   if (existing) return fail(res, "You're already enrolled in this class.");
+
+  // Get student display name
+  const { data: studentProfile } = await supabase
+    .from("user_profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
 
   const { error: enrollError } = await supabase
     .from("class_enrollments")
@@ -1087,6 +1282,17 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
     .eq("id", id)
     .select()
     .single();
+
+  // Send confirmation email (best-effort)
+  const instructorName = (cls.host as any)?.display_name ?? "Your instructor";
+  sendClassConfirmationEmail({
+    to: userEmail,
+    studentName: studentProfile?.display_name ?? "",
+    classTitle: cls.title,
+    instructorName,
+    scheduledAt: cls.scheduled_at,
+    durationMinutes: cls.duration_minutes,
+  }).catch((err) => console.error("[Email] Enrollment confirm failed:", err));
 
   return ok(res, { ...(updated ?? cls), is_enrolled: true });
 });
@@ -1119,7 +1325,13 @@ app.post("/api/reviews", requireAuth, requireUserRole(["guest"]), async (req, re
   const { data: review, error } = await supabase
     .from("class_reviews")
     .upsert(
-      { class_id: classId, student_id: userId, instructor_id: instructorId, rating, review_text: reviewText ?? null },
+      {
+        class_id: classId,
+        student_id: userId,
+        instructor_id: instructorId,
+        rating,
+        review_text: reviewText ?? null,
+      },
       { onConflict: "class_id,student_id" }
     )
     .select()
@@ -1149,9 +1361,10 @@ app.get("/api/reviews/instructor/:instructorId", requireAuth, async (req, res) =
   }
 
   const reviews = data ?? [];
-  const avgRating = reviews.length
-    ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
-    : null;
+  const avgRating =
+    reviews.length
+      ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
+      : null;
 
   return ok(res, { reviews, total: reviews.length, avg_rating: avgRating });
 });
@@ -1170,7 +1383,8 @@ app.post("/api/classes/:id/waitlist", requireAuth, requireUserRole(["guest"]), a
 
   if (!cls) return fail(res, "Class not found.", 404);
   if (cls.status !== "scheduled") return fail(res, "This class is no longer available.");
-  if (cls.current_students < cls.max_students) return fail(res, "There are still open spots — join directly.");
+  if (cls.current_students < cls.max_students)
+    return fail(res, "There are still open spots — join directly.");
 
   const { data: existing } = await supabase
     .from("class_waitlist")
@@ -1181,9 +1395,7 @@ app.post("/api/classes/:id/waitlist", requireAuth, requireUserRole(["guest"]), a
 
   if (existing) return fail(res, "You're already on the waitlist.");
 
-  const { error } = await supabase
-    .from("class_waitlist")
-    .insert({ class_id: id, user_id: userId });
+  const { error } = await supabase.from("class_waitlist").insert({ class_id: id, user_id: userId });
 
   if (error) {
     console.error("[POST /api/classes/:id/waitlist]", error.message);
@@ -1216,166 +1428,40 @@ app.delete("/api/classes/:id/waitlist", requireAuth, async (req, res) => {
   return ok(res, { removed: true });
 });
 
-// ─── Instructor follow routes ─────────────────────────────────────────────────
-
-// GET /api/instructors/me/followers — list followers of the current host (must be before :hostId routes)
-app.get("/api/instructors/me/followers", requireAuth, requireUserRole(["host"]), async (req, res) => {
+app.get("/api/classes/:id/waitlist/position", requireAuth, async (req, res) => {
+  const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
 
-  const { data: follows, error } = await supabase
-    .from("instructor_follows")
-    .select("student_id, created_at")
-    .eq("host_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("[GET /api/instructors/me/followers]", error.message);
-    return fail(res, "Failed to load followers.", 500);
-  }
-
-  const followerIds = (follows ?? []).map((f: { student_id: string; created_at: string }) => f.student_id);
-  if (followerIds.length === 0) return ok(res, []);
-
-  const { data: profiles } = await supabase
-    .from("user_profiles")
-    .select("user_id, display_name")
-    .in("user_id", followerIds);
-
-  const profileMap = new Map(
-    (profiles ?? []).map((p: { user_id: string; display_name: string | null }) => [p.user_id, p])
-  );
-
-  return ok(
-    res,
-    (follows ?? []).map((f: { student_id: string; created_at: string }) => ({
-      user_id: f.student_id,
-      display_name: profileMap.get(f.student_id)?.display_name ?? null,
-      followed_at: f.created_at,
-    }))
-  );
-});
-
-// GET /api/instructors/:hostId/profile — public instructor profile
-app.get("/api/instructors/:hostId/profile", requireAuth, async (req, res) => {
-  const { hostId } = req.params;
-
-  const [
-    { data: hostData, error: hostError },
-    { data: reviews },
-    { count: followerCount },
-    { count: upcomingCount },
-  ] = await Promise.all([
-    supabase.from("host_profiles").select("*").eq("user_id", hostId).maybeSingle(),
-    supabase.from("class_reviews").select("rating").eq("instructor_id", hostId),
-    supabase.from("instructor_follows").select("*", { count: "exact", head: true }).eq("host_id", hostId),
-    supabase
-      .from("scheduled_classes")
-      .select("*", { count: "exact", head: true })
-      .eq("host_id", hostId)
-      .eq("status", "scheduled")
-      .gte("scheduled_at", new Date().toISOString()),
-  ]);
-
-  if (hostError || !hostData) return fail(res, "Instructor not found.", 404);
-
-  const reviewList = (reviews ?? []) as { rating: number }[];
-  const avgRating = reviewList.length
-    ? Math.round((reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length) * 10) / 10
-    : null;
-
-  return ok(res, {
-    user_id: hostData.user_id,
-    display_name: hostData.display_name,
-    photo_url: hostData.photo_url,
-    bio: hostData.bio,
-    interest_tags: hostData.interest_tags ? hostData.interest_tags.split(",").filter(Boolean) : [],
-    is_approved: hostData.is_approved,
-    avg_rating: avgRating,
-    total_reviews: reviewList.length,
-    follower_count: followerCount ?? 0,
-    upcoming_classes: upcomingCount ?? 0,
-  });
-});
-
-// POST /api/instructors/:hostId/follow — follow an instructor
-app.post("/api/instructors/:hostId/follow", requireAuth, async (req, res) => {
-  const { hostId } = req.params;
-  const userId = (req as AuthedRequest).userId;
-
-  if (userId === hostId) return fail(res, "You cannot follow yourself.");
-
-  const { data: host } = await supabase
-    .from("host_profiles")
-    .select("user_id")
-    .eq("user_id", hostId)
+  const { data: entry } = await supabase
+    .from("class_waitlist")
+    .select("id, created_at")
+    .eq("class_id", id)
+    .eq("user_id", userId)
     .maybeSingle();
 
-  if (!host) return fail(res, "Instructor not found.", 404);
+  if (!entry) return ok(res, { on_waitlist: false, position: null });
 
-  const { error } = await supabase
-    .from("instructor_follows")
-    .upsert({ student_id: userId, host_id: hostId }, { onConflict: "student_id,host_id" });
-
-  if (error) {
-    console.error("[POST /api/instructors/:hostId/follow]", error.message);
-    return fail(res, "Failed to follow instructor.", 500);
-  }
-
+  // Count people ahead of this user
   const { count } = await supabase
-    .from("instructor_follows")
+    .from("class_waitlist")
     .select("*", { count: "exact", head: true })
-    .eq("host_id", hostId);
+    .eq("class_id", id)
+    .lte("created_at", entry.created_at);
 
-  return ok(res, { following: true, follower_count: count ?? 0 }, 201);
+  return ok(res, { on_waitlist: true, position: count ?? 1 });
 });
 
-// DELETE /api/instructors/:hostId/follow — unfollow an instructor
-app.delete("/api/instructors/:hostId/follow", requireAuth, async (req, res) => {
-  const { hostId } = req.params;
-  const userId = (req as AuthedRequest).userId;
+// ─── Health check ─────────────────────────────────────────────────────────────
 
-  const { error } = await supabase
-    .from("instructor_follows")
-    .delete()
-    .eq("student_id", userId)
-    .eq("host_id", hostId);
-
-  if (error) {
-    console.error("[DELETE /api/instructors/:hostId/follow]", error.message);
-    return fail(res, "Failed to unfollow instructor.", 500);
-  }
-
-  const { count } = await supabase
-    .from("instructor_follows")
-    .select("*", { count: "exact", head: true })
-    .eq("host_id", hostId);
-
-  return ok(res, { following: false, follower_count: count ?? 0 });
-});
-
-// GET /api/instructors/:hostId/follow — check follow status
-app.get("/api/instructors/:hostId/follow", requireAuth, async (req, res) => {
-  const { hostId } = req.params;
-  const userId = (req as AuthedRequest).userId;
-
-  const [{ data: follow }, { count }] = await Promise.all([
-    supabase
-      .from("instructor_follows")
-      .select("student_id")
-      .eq("student_id", userId)
-      .eq("host_id", hostId)
-      .maybeSingle(),
-    supabase
-      .from("instructor_follows")
-      .select("*", { count: "exact", head: true })
-      .eq("host_id", hostId),
-  ]);
-
-  return ok(res, { following: !!follow, follower_count: count ?? 0 });
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "flocked-backend", ts: new Date().toISOString() });
 });
 
 // ─── Server ───────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
   console.log(`Flocked backend listening on port ${PORT}`);
+  if (!resend) {
+    console.warn("[Email] RESEND_API_KEY not set — emails will be logged only.");
+  }
 });

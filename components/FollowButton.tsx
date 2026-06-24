@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
-
 import { followInstructor, unfollowInstructor } from "../lib/api";
 
 type Props = {
@@ -26,6 +25,7 @@ export function FollowButton({
   const handlePress = async () => {
     if (loading) return;
     const next = !following;
+    // Optimistic update
     setFollowing(next);
     setCount((c) => c + (next ? 1 : -1));
     setLoading(true);
@@ -37,6 +37,7 @@ export function FollowButton({
       }
       onFollowChange?.(next);
     } catch {
+      // Revert on error
       setFollowing(!next);
       setCount((c) => c + (next ? -1 : 1));
     } finally {
@@ -47,14 +48,14 @@ export function FollowButton({
   if (size === "sm") {
     return (
       <TouchableOpacity
-        style={[styles.pillBtn, following && styles.pillBtnFollowing]}
+        style={[styles.smBtn, following && styles.smBtnFollowing]}
         onPress={handlePress}
         activeOpacity={0.7}
       >
         {loading ? (
-          <ActivityIndicator size="small" color={following ? "#87A878" : "#FFFFFF"} style={styles.pillSpinner} />
+          <ActivityIndicator size={10} color={following ? "#87A878" : "#fff"} />
         ) : (
-          <Text style={[styles.pillText, following && styles.pillTextFollowing]}>
+          <Text style={[styles.smText, following && styles.smTextFollowing]}>
             {following ? "Following" : "Follow"}
           </Text>
         )}
@@ -66,10 +67,10 @@ export function FollowButton({
     <TouchableOpacity
       style={[styles.mdBtn, following && styles.mdBtnFollowing]}
       onPress={handlePress}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={following ? "#87A878" : "#FFFFFF"} />
+        <ActivityIndicator size={16} color={following ? "#87A878" : "#fff"} />
       ) : (
         <Text style={[styles.mdText, following && styles.mdTextFollowing]}>
           {following ? "Following" : "Follow"}
@@ -86,44 +87,39 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    width: "100%",
   },
   mdBtnFollowing: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
     borderWidth: 1.5,
     borderColor: "#87A878",
   },
   mdText: {
     fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontWeight: "700",
+    color: "#fff",
   },
   mdTextFollowing: {
     color: "#87A878",
   },
-  pillBtn: {
+  smBtn: {
     backgroundColor: "#87A878",
-    borderRadius: 999,
+    borderRadius: 20,
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 4,
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 60,
   },
-  pillBtnFollowing: {
-    backgroundColor: "#FFFFFF",
+  smBtnFollowing: {
+    backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#87A878",
   },
-  pillText: {
+  smText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#fff",
   },
-  pillTextFollowing: {
+  smTextFollowing: {
     color: "#87A878",
-  },
-  pillSpinner: {
-    height: 16,
   },
 });
