@@ -255,6 +255,10 @@ export async function joinClass(id: string): Promise<ScheduledClass> {
   });
 }
 
+export async function listFollowingClasses(): Promise<ScheduledClass[]> {
+  return apiFetch<ScheduledClass[]>("/api/classes/following");
+}
+
 // ─── Reviews ──────────────────────────────────────────────────────────────────
 
 export async function submitReview(params: {

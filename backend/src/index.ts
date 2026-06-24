@@ -1079,43 +1079,48 @@ const createClassSchema = z.object({
 });
 
 app.get("/api/classes", requireAuth, async (req, res) => {
-  const userId = (req as AuthedRequest).userId;
-  const category = req.query.category as string | undefined;
-  const start = req.query.start as string | undefined;
-  const end = req.query.end as string | undefined;
+  try {
+    const userId = (req as AuthedRequest).userId;
+    const category = req.query.category as string | undefined;
+    const start = req.query.start as string | undefined;
+    const end = req.query.end as string | undefined;
 
-  let query = supabase
-    .from("scheduled_classes")
-    .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
-    .eq("status", "scheduled")
-    .order("scheduled_at", { ascending: true })
-    .limit(500);
+    let query = supabase
+      .from("scheduled_classes")
+      .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
+      .eq("status", "scheduled")
+      .order("scheduled_at", { ascending: true })
+      .limit(500);
 
-  if (category && (CLASS_CATEGORIES as readonly string[]).includes(category)) {
-    query = query.eq("category", category);
-  }
-  if (start) query = query.gte("scheduled_at", start);
-  if (end) query = query.lte("scheduled_at", end);
+    if (category && (CLASS_CATEGORIES as readonly string[]).includes(category)) {
+      query = query.eq("category", category);
+    }
+    if (start) query = query.gte("scheduled_at", start);
+    if (end) query = query.lte("scheduled_at", end);
 
-  const { data, error } = await query;
+    const { data, error } = await query;
 
-  if (error) {
-    console.error("[GET /api/classes]", error.message);
+    if (error) {
+      console.error("[GET /api/classes] Supabase error:", error.message, error);
+      return fail(res, "Failed to load classes.", 500);
+    }
+
+    const classes = data ?? [];
+    const classIds = classes.map((c) => c.id);
+    const { data: enrollments } = classIds.length
+      ? await supabase
+          .from("class_enrollments")
+          .select("class_id")
+          .eq("user_id", userId)
+          .in("class_id", classIds)
+      : { data: [] as { class_id: string }[] };
+
+    const enrolledSet = new Set((enrollments ?? []).map((e) => e.class_id));
+    return ok(res, classes.map((c) => ({ ...c, is_enrolled: enrolledSet.has(c.id) })));
+  } catch (err) {
+    console.error("[GET /api/classes] Unhandled exception:", err);
     return fail(res, "Failed to load classes.", 500);
   }
-
-  const classes = data ?? [];
-  const classIds = classes.map((c) => c.id);
-  const { data: enrollments } = classIds.length
-    ? await supabase
-        .from("class_enrollments")
-        .select("class_id")
-        .eq("user_id", userId)
-        .in("class_id", classIds)
-    : { data: [] as { class_id: string }[] };
-
-  const enrolledSet = new Set((enrollments ?? []).map((e) => e.class_id));
-  return ok(res, classes.map((c) => ({ ...c, is_enrolled: enrolledSet.has(c.id) })));
 });
 
 app.get("/api/classes/mine", requireAuth, requireUserRole(["host"]), async (req, res) => {
