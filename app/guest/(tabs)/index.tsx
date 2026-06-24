@@ -100,14 +100,23 @@ export default function GuestDiscoverTab() {
   const loadData = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
     setError(null);
+    const base = process.env.EXPO_PUBLIC_API_BASE_URL ?? "(no API_BASE_URL set)";
+    console.log("[Discover] loadData — API_BASE_URL:", base);
     try {
       const [forYou, following] = await Promise.all([
-        listClasses(),
-        listFollowingClasses(),
+        listClasses().catch((err) => {
+          console.error("[Discover] GET", `${base}/api/classes`, "→", err);
+          throw err;
+        }),
+        listFollowingClasses().catch((err) => {
+          console.error("[Discover] GET", `${base}/api/classes/following`, "→", err);
+          throw err;
+        }),
       ]);
       setForYouClasses(forYou);
       setFollowingClasses(following);
     } catch (err) {
+      console.error("[Discover] loadData failed:", err);
       setError(err instanceof Error ? err.message : "Failed to load classes.");
     } finally {
       setLoading(false);

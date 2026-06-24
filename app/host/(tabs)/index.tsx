@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,20 +37,22 @@ export default function InstructorHomeTab() {
   const router = useRouter();
   const [classes, setClasses] = useState<ScheduledClass[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
 
   const loadClasses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const data = await listMyClasses();
       setClasses(data);
     } catch (err) {
-      Alert.alert("Oops", err instanceof Error ? err.message : "Failed to load classes.");
+      setError(err instanceof Error ? err.message : "Failed to load classes.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadClasses(); }, [loadClasses]);
   useFocusEffect(useCallback(() => { loadClasses(); }, [loadClasses]));
 
   const now = new Date();
@@ -113,6 +115,15 @@ export default function InstructorHomeTab() {
           {loading ? (
             <View style={styles.centered}>
               <ActivityIndicator color="#87A878" />
+            </View>
+          ) : error ? (
+            <View style={styles.centered}>
+              <MaterialCommunityIcons name="wifi-off" size={36} color="#C0C0C0" />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={loadClasses} activeOpacity={0.7}>
+                <MaterialCommunityIcons name="refresh" size={14} color="#87A878" />
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <>
@@ -239,6 +250,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 80,
+    gap: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: "#888888",
+    textAlign: "center",
+    paddingHorizontal: 32,
+  },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F0F5EE",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#4A7A40",
   },
   statsCard: {
     flexDirection: "row",
