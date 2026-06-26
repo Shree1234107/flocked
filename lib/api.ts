@@ -11,6 +11,9 @@ import {
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  // TODO: re-enable auth before launch
+  if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) return {};
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
