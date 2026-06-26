@@ -97,21 +97,15 @@ export default function LoginScreen() {
     if (!devEmail) return;
     setSending(true);
     try {
-      await setRole("host");
-      if (session) {
-        router.replace("/");
-        return;
-      }
-      const { error } = await supabase.auth.signInWithOtp({
-        email: devEmail,
-        options: { emailRedirectTo: getAuthRedirectUri() },
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "instructor@flockd.test",
+        password: "devbypass123",
       });
       if (error) throw error;
-      setEmail(devEmail);
-      setSent(true);
+      await setRole("host");
+      router.replace("/host");
     } catch (err) {
       Alert.alert("Dev bypass failed", friendlyAuthError(err));
-    } finally {
       setSending(false);
     }
   };
@@ -253,7 +247,7 @@ export default function LoginScreen() {
                 activeOpacity={0.7}
               >
                 <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
-                <Text style={styles.devBtnHostText}>Dev: sign in as instructor</Text>
+                <Text style={styles.devBtnHostText}>Dev: Enter as Instructor →</Text>
               </TouchableOpacity>
             )}
           </View>

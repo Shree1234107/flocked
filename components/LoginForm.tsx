@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text, TextInput } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
@@ -26,9 +26,11 @@ export function LoginForm({ role, title, subtitle }: Props) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  // Prevents the session useEffect from double-navigating during dev bypass
+  const devBypassActive = useRef(false);
 
   useEffect(() => {
-    if (!loading && session) {
+    if (!loading && session && !devBypassActive.current) {
       setRole(role)
         .then(() => router.replace("/"))
         .catch(() => router.replace("/"));
@@ -76,7 +78,9 @@ export function LoginForm({ role, title, subtitle }: Props) {
   };
 
   const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
-  const handleDevBypass = async () => {
+
+  // Guest bypass still uses magic link (just pre-fills + sends)
+  const handleDevBypassGuest = async () => {
     if (!devEmail) return;
     setSending(true);
     const { error: signInError } = await supabase.auth.signInWithOtp({
@@ -90,6 +94,27 @@ export function LoginForm({ role, title, subtitle }: Props) {
     }
     setEmail(devEmail);
     setSent(true);
+  };
+
+  // Instructor bypass uses password auth — no email click required
+  const handleDevBypassInstructor = async () => {
+    devBypassActive.current = true;
+    setSending(true);
+    setError(null);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: "instructor@flockd.test",
+        password: "devbypass123",
+      });
+      if (signInError) throw signInError;
+      await setRole("host");
+      router.replace("/host");
+    } catch (err) {
+      devBypassActive.current = false;
+      const msg = err instanceof Error ? err.message : "Dev sign-in failed.";
+      Alert.alert("Dev bypass failed", msg);
+      setSending(false);
+    }
   };
 
   return (
@@ -175,17 +200,26 @@ export function LoginForm({ role, title, subtitle }: Props) {
             )}
           </TouchableOpacity>
 
-          {devEmail && (
+          {devEmail && role === "host" && (
             <TouchableOpacity
               style={styles.devBtn}
-              onPress={handleDevBypass}
+              onPress={handleDevBypassInstructor}
               disabled={sending}
               activeOpacity={0.7}
             >
               <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
-              <Text style={styles.devBtnText}>
-                {role === "host" ? "Dev: sign in as instructor" : "Dev: sign in as guest"}
-              </Text>
+              <Text style={styles.devBtnText}>Dev: Enter as Instructor →</Text>
+            </TouchableOpacity>
+          )}
+          {devEmail && role === "guest" && (
+            <TouchableOpacity
+              style={styles.devBtn}
+              onPress={handleDevBypassGuest}
+              disabled={sending}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
+              <Text style={styles.devBtnText}>Dev: sign in as guest</Text>
             </TouchableOpacity>
           )}
         </View>
