@@ -75,6 +75,23 @@ export function LoginForm({ role, title, subtitle }: Props) {
     }
   };
 
+  const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
+  const handleDevBypass = async () => {
+    if (!devEmail) return;
+    setSending(true);
+    const { error: signInError } = await supabase.auth.signInWithOtp({
+      email: devEmail,
+      options: { emailRedirectTo: getAuthRedirectUri() },
+    });
+    setSending(false);
+    if (signInError) {
+      setError(signInError.message || "Dev bypass failed.");
+      return;
+    }
+    setEmail(devEmail);
+    setSent(true);
+  };
+
   return (
     <View style={[styles.root, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}>
       {/* Back */}
@@ -157,6 +174,20 @@ export function LoginForm({ role, title, subtitle }: Props) {
               <Text style={styles.primaryBtnText}>Send magic link</Text>
             )}
           </TouchableOpacity>
+
+          {devEmail && (
+            <TouchableOpacity
+              style={styles.devBtn}
+              onPress={handleDevBypass}
+              disabled={sending}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
+              <Text style={styles.devBtnText}>
+                {role === "host" ? "Dev: sign in as instructor" : "Dev: sign in as guest"}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>
@@ -297,4 +328,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#87A878",
   },
+  devBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 10,
+  },
+  devBtnText: { fontSize: 12, color: "#87A878" },
 });

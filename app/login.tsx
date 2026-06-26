@@ -44,7 +44,7 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading } = useRole();
+  const { role, loading: roleLoading, setRole } = useRole();
 
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -79,6 +79,29 @@ export default function LoginScreen() {
     if (!devEmail) return;
     setSending(true);
     try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: devEmail,
+        options: { emailRedirectTo: getAuthRedirectUri() },
+      });
+      if (error) throw error;
+      setEmail(devEmail);
+      setSent(true);
+    } catch (err) {
+      Alert.alert("Dev bypass failed", friendlyAuthError(err));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleDevBypassHost = async () => {
+    if (!devEmail) return;
+    setSending(true);
+    try {
+      await setRole("host");
+      if (session) {
+        router.replace("/");
+        return;
+      }
       const { error } = await supabase.auth.signInWithOtp({
         email: devEmail,
         options: { emailRedirectTo: getAuthRedirectUri() },
@@ -210,7 +233,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Dev bypass button — only rendered when env var is set */}
+            {/* Dev bypass buttons — only rendered when env var is set */}
             {devEmail && (
               <TouchableOpacity
                 style={styles.devBtn}
@@ -220,6 +243,17 @@ export default function LoginScreen() {
               >
                 <MaterialCommunityIcons name="code-tags" size={13} color="#AAA" />
                 <Text style={styles.devBtnText}>Dev bypass ({devEmail})</Text>
+              </TouchableOpacity>
+            )}
+            {devEmail && (
+              <TouchableOpacity
+                style={styles.devBtnHost}
+                onPress={handleDevBypassHost}
+                disabled={sending}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
+                <Text style={styles.devBtnHostText}>Dev: sign in as instructor</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -343,4 +377,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   devBtnText: { fontSize: 12, color: "#AAA" },
+  devBtnHost: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 10,
+  },
+  devBtnHostText: { fontSize: 12, color: "#87A878" },
 });
