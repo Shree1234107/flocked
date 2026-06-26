@@ -1,10 +1,40 @@
-import { Tabs } from "expo-router";
+import { Slot, Tabs } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
+
+import { useBreakpoint } from "../../../lib/useBreakpoint";
+import { DesktopSidebar } from "../../../components/DesktopSidebar";
 
 export default function GuestTabsLayout() {
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useBreakpoint();
+
+  if (isDesktop) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#FAFAFA" }}>
+        <View
+          style={{
+            maxWidth: 1200,
+            width: "100%",
+            alignSelf: "center",
+            flex: 1,
+            flexDirection: "row",
+            borderLeftWidth: 1,
+            borderRightWidth: 1,
+            borderColor: "#EEEEEE",
+            backgroundColor: "#FFFFFF",
+          }}
+        >
+          <DesktopSidebar />
+          <View style={{ flex: 1, overflow: "hidden" as any }}>
+            <Slot />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -15,20 +45,15 @@ export default function GuestTabsLayout() {
           backgroundColor: "#FFFFFF",
           borderTopColor: "#EEEEEE",
           borderTopWidth: 1,
-          // Fix: give the tab bar enough height so taps register on all tabs,
-          // including Profile (the rightmost). Previous height was too tight on
-          // some Android devices and clipping the touch target.
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom + 4,
           paddingTop: 8,
-          // Fix for Android: elevation creates a touch-blocking shadow layer
           elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "500",
         },
-        // Ensures the pressable area fills the full tab item on both platforms
         tabBarItemStyle: {
           paddingVertical: Platform.OS === "android" ? 4 : 0,
         },

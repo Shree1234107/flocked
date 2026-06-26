@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -17,6 +18,7 @@ import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { useFilters } from "../../../lib/filtersContext";
 import { listClasses, listFollowingClasses } from "../../../lib/api";
+import { useBreakpoint } from "../../../lib/useBreakpoint";
 import type { ScheduledClass } from "../../../lib/types";
 
 const FILTER_TAGS = ["All", "Yoga", "Dance", "Tutoring"] as const;
@@ -39,6 +41,11 @@ function formatTime(iso: string): string {
   const m = d.getMinutes();
   const ampm = h >= 12 ? "PM" : "AM";
   return `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${ampm}`;
+}
+
+function formatFullDateTime(iso: string): string {
+  const d = new Date(iso);
+  return `${DAYS_ABB[d.getDay()]}, ${MONTHS_ABB[d.getMonth()]} ${d.getDate()} · ${formatTime(iso)}`;
 }
 
 function fmtDayHeader(d: Date): string {
@@ -81,10 +88,50 @@ function filterByTime(classes: ScheduledClass[], timeFilter: TimeFilter): Schedu
   });
 }
 
+// ── Featured instructor card (desktop only) ───────────────────────────────────
+
+function FeaturedInstructorCard({
+  id,
+  name,
+  rating,
+  initials,
+  onPress,
+}: {
+  id: string;
+  name: string;
+  rating: number | null;
+  initials: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={(state: any) => [
+        styles.featuredCard,
+        state.hovered && styles.featuredCardHovered,
+      ]}
+      onPress={onPress}
+    >
+      <View style={styles.featuredAvatar}>
+        <Text style={styles.featuredInitials}>{initials}</Text>
+      </View>
+      <Text style={styles.featuredName} numberOfLines={1}>{name}</Text>
+      {rating != null && (
+        <Text style={styles.featuredRating}>★ {rating.toFixed(1)}</Text>
+      )}
+      <View style={styles.featuredFollowBtn}>
+        <Text style={styles.featuredFollowText}>Follow</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+
 export default function GuestDiscoverTab() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { filters, hasActiveFilters } = useFilters();
+  const { isDesktop } = useBreakpoint();
 
   const [selectedTag, setSelectedTag] = useState<FilterTag>("All");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("All");
@@ -128,6 +175,18 @@ export default function GuestDiscoverTab() {
 
   const onRefresh = () => { setRefreshing(true); loadData(true); };
 
+  const featuredInstructors = useMemo(() => {
+    const seen = new Set<string>();
+    return forYouClasses.reduce<Array<{ id: string; name: string; rating: number | null; initials: string }>>((acc, cls) => {
+      if (!seen.has(cls.host_id)) {
+        seen.add(cls.host_id);
+        const name = (cls.host as any)?.display_name ?? "Instructor";
+        acc.push({ id: cls.host_id, name, rating: (cls.host as any)?.avg_rating ?? null, initials: name.slice(0, 2).toUpperCase() });
+      }
+      return acc;
+    }, []).slice(0, 8);
+  }, [forYouClasses]);
+
   const applyFilters = (classes: ScheduledClass[]): ScheduledClass[] => {
     let result = [...classes];
 
@@ -162,7 +221,6 @@ export default function GuestDiscoverTab() {
       });
     }
 
-    // Smart sort
     result.sort((a, b) => smartScore(b) - smartScore(a));
     return result;
   };
@@ -171,7 +229,6 @@ export default function GuestDiscoverTab() {
     feedTab === "For You" ? forYouClasses : followingClasses
   );
 
-  // Group by day
   const grouped: { date: Date; classes: ScheduledClass[] }[] = [];
   for (const cls of activeClasses) {
     const d = new Date(cls.scheduled_at);
@@ -182,13 +239,76 @@ export default function GuestDiscoverTab() {
 
   const TIME_FILTERS: TimeFilter[] = ["Today", "Tomorrow", "This Week", "All"];
 
+  const renderCard = (cls: ScheduledClass) => {
+    const colors = CATEGORY_COLORS[cls.category];
+    const spotsLeft = cls.max_students - cls.current_students;
+    const full = spotsLeft <= 0;
+    const urgent = spotsLeft <= 3 && !full;
+    const hostName = (cls.host as any)?.display_name ?? "Instructor";
+    const avgRating = (cls.host as any)?.avg_rating;
+    const bio: string | null = (cls as any)?.host?.bio ?? cls.description ?? null;
+
+    return (
+      <Pressable
+        key={cls.id}
+        style={(state: any) => [
+          styles.classCard,
+          isDesktop && styles.classCardDesktop,
+          state.hovered && styles.classCardHovered,
+        ]}
+        onPress={() => router.push(`/guest/class/${cls.id}`)}
+      >
+        <View style={[styles.classCardBar, { backgroundColor: colors?.dot ?? "#EEEEEE" }]} />
+        <View style={[styles.classCardBody, isDesktop && styles.classCardBodyDesktop]}>
+          <View style={styles.classCardTop}>
+            <Text style={[styles.classCardTime, isDesktop && styles.classCardTimeDesktop]}>
+              {isDesktop ? formatFullDateTime(cls.scheduled_at) : formatTime(cls.scheduled_at)}
+            </Text>
+            <View style={[styles.categoryBadge, { backgroundColor: colors?.bg ?? "#F9F9F9" }]}>
+              <Text style={[styles.categoryBadgeText, { color: colors?.label ?? "#888888" }]}>
+                {cls.category}
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.classCardTitle, isDesktop && styles.classCardTitleDesktop]} numberOfLines={1}>
+            {cls.title}
+          </Text>
+          <Pressable onPress={() => router.push(`/guest/instructor/${cls.host_id}`)}>
+            <Text style={styles.classCardHost}>with {hostName}</Text>
+          </Pressable>
+          {isDesktop && bio && (
+            <Text style={styles.classCardBio} numberOfLines={1}>{bio}</Text>
+          )}
+          {avgRating && (
+            <Text style={styles.ratingText}>★ {avgRating.toFixed(1)}</Text>
+          )}
+          <View style={styles.classCardMeta}>
+            {urgent && (
+              <Text style={styles.urgencyText}>
+                🔥 {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left
+              </Text>
+            )}
+            <View style={[styles.spotsBadge, full && styles.spotsBadgeFull]}>
+              <Text style={[styles.spotsText, full && styles.spotsTextFull]}>
+                {full ? "Full" : `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Pressable>
+    );
+  };
+
   return (
     <AuthGate>
       <RoleGuard requiredRole="guest">
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={[styles.container, { paddingTop: isDesktop ? 0 : insets.top }]}>
+
           {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Discover</Text>
+          <View style={[styles.header, isDesktop && styles.headerDesktop]}>
+            <Text style={[styles.headerTitle, isDesktop && styles.headerTitleDesktop]}>
+              Discover
+            </Text>
             <TouchableOpacity
               style={styles.bellBtn}
               onPress={() => router.push("/notifications")}
@@ -200,7 +320,7 @@ export default function GuestDiscoverTab() {
           </View>
 
           {/* Search bar */}
-          <View style={styles.searchRow}>
+          <View style={[styles.searchRow, isDesktop && styles.searchRowDesktop]}>
             <View style={styles.searchInputWrap}>
               <MaterialCommunityIcons name="magnify" size={18} color="#C0C0C0" />
               <TextInput
@@ -231,72 +351,100 @@ export default function GuestDiscoverTab() {
             </TouchableOpacity>
           </View>
 
-          {/* Time filter tabs */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.timeFilterRow}
-          >
-            {TIME_FILTERS.map((t) => (
-              <TouchableOpacity
-                key={t}
-                style={styles.timeFilterBtn}
-                onPress={() => setTimeFilter(t)}
-                activeOpacity={0.7}
+          {/* Filters: on desktop merge time + chips on one row; on mobile two separate scrolls */}
+          {isDesktop ? (
+            <View style={styles.desktopFiltersRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.timeFilterRowInline}
               >
-                <Text
-                  style={[
-                    styles.timeFilterText,
-                    timeFilter === t && styles.timeFilterTextActive,
-                  ]}
-                >
-                  {t}
-                </Text>
-                {timeFilter === t && <View style={styles.timeFilterUnderline} />}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Category chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-          >
-            {FILTER_TAGS.map((tag) => (
-              <TouchableOpacity
-                key={tag}
-                style={[styles.filterChip, selectedTag === tag && styles.filterChipActive]}
-                onPress={() => setSelectedTag(tag)}
-                activeOpacity={0.75}
+                {TIME_FILTERS.map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={styles.timeFilterBtn}
+                    onPress={() => setTimeFilter(t)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timeFilterText, timeFilter === t && styles.timeFilterTextActive]}>
+                      {t}
+                    </Text>
+                    {timeFilter === t && <View style={styles.timeFilterUnderline} />}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <View style={styles.desktopFilterDivider} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterRowInline}
               >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    selectedTag === tag && styles.filterChipTextActive,
-                  ]}
-                >
-                  {tag}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                {FILTER_TAGS.map((tag) => (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[styles.filterChip, selectedTag === tag && styles.filterChipActive]}
+                    onPress={() => setSelectedTag(tag)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.filterChipText, selectedTag === tag && styles.filterChipTextActive]}>
+                      {tag}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          ) : (
+            <>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.timeFilterRow}
+              >
+                {TIME_FILTERS.map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={styles.timeFilterBtn}
+                    onPress={() => setTimeFilter(t)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.timeFilterText, timeFilter === t && styles.timeFilterTextActive]}>
+                      {t}
+                    </Text>
+                    {timeFilter === t && <View style={styles.timeFilterUnderline} />}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterRow}
+              >
+                {FILTER_TAGS.map((tag) => (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[styles.filterChip, selectedTag === tag && styles.filterChipActive]}
+                    onPress={() => setSelectedTag(tag)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.filterChipText, selectedTag === tag && styles.filterChipTextActive]}>
+                      {tag}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          )}
 
           {/* Feed tabs */}
-          <View style={styles.feedTabRow}>
+          <View style={[styles.feedTabRow, isDesktop && styles.feedTabRowDesktop]}>
             {(["For You", "Following"] as FeedTab[]).map((tab) => (
               <TouchableOpacity
                 key={tab}
-                style={[styles.feedTab, feedTab === tab && styles.feedTabActive]}
+                style={[styles.feedTab, isDesktop && styles.feedTabDesktop, feedTab === tab && styles.feedTabActive]}
                 onPress={() => setFeedTab(tab)}
                 activeOpacity={0.7}
               >
-                <Text
-                  style={[
-                    styles.feedTabText,
-                    feedTab === tab && styles.feedTabTextActive,
-                  ]}
-                >
+                <Text style={[styles.feedTabText, isDesktop && styles.feedTabTextDesktop, feedTab === tab && styles.feedTabTextActive]}>
                   {tab}
                 </Text>
               </TouchableOpacity>
@@ -320,14 +468,8 @@ export default function GuestDiscoverTab() {
             <View style={styles.centered}>
               <MaterialCommunityIcons name="account-heart-outline" size={40} color="#D0D0D0" />
               <Text style={styles.emptyText}>No classes from people you follow</Text>
-              <Text style={styles.emptySubtext}>
-                Follow instructors to see their classes here
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyHint}
-                onPress={() => setFeedTab("For You")}
-                activeOpacity={0.7}
-              >
+              <Text style={styles.emptySubtext}>Follow instructors to see their classes here</Text>
+              <TouchableOpacity style={styles.emptyHint} onPress={() => setFeedTab("For You")} activeOpacity={0.7}>
                 <Text style={styles.emptyHintText}>Browse classes →</Text>
               </TouchableOpacity>
             </View>
@@ -341,91 +483,50 @@ export default function GuestDiscoverTab() {
             <ScrollView
               contentContainerStyle={[
                 styles.listContent,
-                { paddingBottom: insets.bottom + 32 },
+                isDesktop && styles.listContentDesktop,
+                { paddingBottom: isDesktop ? 40 : insets.bottom + 32 },
               ]}
               showsVerticalScrollIndicator={false}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#87A878" />
               }
             >
+              {/* Featured instructors (desktop only) */}
+              {isDesktop && featuredInstructors.length > 0 && (
+                <View style={styles.featuredSection}>
+                  <Text style={styles.featuredTitle}>Featured Instructors</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.featuredScroll}
+                  >
+                    {featuredInstructors.map((inst) => (
+                      <FeaturedInstructorCard
+                        key={inst.id}
+                        {...inst}
+                        onPress={() => router.push(`/guest/instructor/${inst.id}`)}
+                      />
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
               {grouped.map(({ date, classes: dayCls }) => (
                 <View key={date.toISOString()} style={styles.daySection}>
                   <Text style={styles.dayHeader}>{fmtDayHeader(date)}</Text>
-                  {dayCls.map((cls) => {
-                    const colors = CATEGORY_COLORS[cls.category];
-                    const spotsLeft = cls.max_students - cls.current_students;
-                    const full = spotsLeft <= 0;
-                    const urgent = spotsLeft <= 3 && !full;
-                    const hostName =
-                      (cls.host as any)?.display_name ?? "Instructor";
-                    const avgRating = (cls.host as any)?.avg_rating;
-
-                    return (
-                      <TouchableOpacity
-                        key={cls.id}
-                        style={styles.classCard}
-                        onPress={() => router.push(`/guest/class/${cls.id}`)}
-                        activeOpacity={0.85}
-                      >
-                        <View
-                          style={[
-                            styles.classCardBar,
-                            { backgroundColor: colors?.dot ?? "#EEEEEE" },
-                          ]}
-                        />
-                        <View style={styles.classCardBody}>
-                          <View style={styles.classCardTop}>
-                            <Text style={styles.classCardTime}>
-                              {formatTime(cls.scheduled_at)}
-                            </Text>
-                            <View
-                              style={[
-                                styles.categoryBadge,
-                                { backgroundColor: colors?.bg ?? "#F9F9F9" },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.categoryBadgeText,
-                                  { color: colors?.label ?? "#888888" },
-                                ]}
-                              >
-                                {cls.category}
-                              </Text>
-                            </View>
-                          </View>
-                          <Text style={styles.classCardTitle} numberOfLines={1}>
-                            {cls.title}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() =>
-                              router.push(`/guest/instructor/${cls.host_id}`)
-                            }
-                            activeOpacity={0.7}
-                          >
-                            <Text style={styles.classCardHost}>with {hostName}</Text>
-                          </TouchableOpacity>
-                          {avgRating && (
-                            <Text style={styles.ratingText}>★ {avgRating.toFixed(1)}</Text>
-                          )}
-                          <View style={styles.classCardMeta}>
-                            {urgent && (
-                              <Text style={styles.urgencyText}>
-                                🔥 {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left
-                              </Text>
-                            )}
-                            <View style={[styles.spotsBadge, full && styles.spotsBadgeFull]}>
-                              <Text style={[styles.spotsText, full && styles.spotsTextFull]}>
-                                {full
-                                  ? "Full"
-                                  : `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`}
-                              </Text>
-                            </View>
-                          </View>
+                  {isDesktop ? (
+                    <View style={styles.cardGrid}>
+                      {dayCls.map((cls) => (
+                        <View key={cls.id} style={styles.cardGridItem}>
+                          {renderCard(cls)}
                         </View>
-                      </TouchableOpacity>
-                    );
-                  })}
+                      ))}
+                      {/* Invisible spacer so odd last item doesn't stretch */}
+                      {dayCls.length % 2 !== 0 && <View style={styles.cardGridItem} />}
+                    </View>
+                  ) : (
+                    dayCls.map((cls) => renderCard(cls))
+                  )}
                 </View>
               ))}
             </ScrollView>
@@ -438,6 +539,8 @@ export default function GuestDiscoverTab() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
+
+  // ── Header ──────────────────────────────────────────────────────────────────
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -445,26 +548,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
+  headerDesktop: { paddingVertical: 20, paddingHorizontal: 28 },
   headerTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.3 },
+  headerTitleDesktop: { fontSize: 36, letterSpacing: -0.5 },
   bellBtn: { position: "relative", padding: 4 },
   bellDot: {
     position: "absolute", top: 4, right: 4, width: 7, height: 7,
     borderRadius: 4, backgroundColor: "#87A878", borderWidth: 1.5, borderColor: "#FFFFFF",
   },
+
+  // ── Search ──────────────────────────────────────────────────────────────────
   searchRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
+  searchRowDesktop: { paddingHorizontal: 28 },
   searchInputWrap: {
     flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: "#F9F9F9", borderRadius: 10, borderWidth: 1,
-    borderColor: "#EEEEEE", paddingHorizontal: 12, height: 40,
+    borderColor: "#EEEEEE", paddingHorizontal: 12, height: 44,
   },
-  searchInput: { flex: 1, fontSize: 14, color: "#2C2C2C", height: 40 },
+  searchInput: { flex: 1, fontSize: 14, color: "#2C2C2C", height: 44 },
   filterBtn: {
-    width: 40, height: 40, borderRadius: 10, backgroundColor: "#F9F9F9",
+    width: 44, height: 44, borderRadius: 10, backgroundColor: "#F9F9F9",
     borderWidth: 1, borderColor: "#EEEEEE", alignItems: "center", justifyContent: "center",
   },
   filterBtnActive: { backgroundColor: "#87A878", borderColor: "#87A878" },
 
+  // ── Filters ─────────────────────────────────────────────────────────────────
+  desktopFiltersRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 28,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  desktopFilterDivider: { width: 1, height: 20, backgroundColor: "#EEEEEE" },
   timeFilterRow: { paddingHorizontal: 16, paddingBottom: 8, gap: 4 },
+  timeFilterRowInline: { gap: 4 },
   timeFilterBtn: { paddingHorizontal: 12, paddingVertical: 6, alignItems: "center" },
   timeFilterText: { fontSize: 14, fontWeight: "500", color: "#888888" },
   timeFilterTextActive: { fontWeight: "700", color: "#2C2C2C" },
@@ -472,8 +590,8 @@ const styles = StyleSheet.create({
     position: "absolute", bottom: 0, left: 12, right: 12,
     height: 2, backgroundColor: "#87A878", borderRadius: 1,
   },
-
   filterRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
+  filterRowInline: { gap: 8 },
   filterChip: {
     paddingHorizontal: 16, paddingVertical: 7, borderRadius: 8,
     backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
@@ -482,45 +600,70 @@ const styles = StyleSheet.create({
   filterChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
   filterChipTextActive: { color: "#FFFFFF", fontWeight: "600" },
 
+  // ── Feed tabs ────────────────────────────────────────────────────────────────
   feedTabRow: {
     flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#EEEEEE",
     marginHorizontal: 16, marginBottom: 8,
   },
+  feedTabRowDesktop: { marginHorizontal: 28 },
   feedTab: { flex: 1, paddingVertical: 10, alignItems: "center" },
+  feedTabDesktop: { paddingVertical: 14 },
   feedTabActive: { borderBottomWidth: 2, borderBottomColor: "#87A878" },
   feedTabText: { fontSize: 14, fontWeight: "500", color: "#888888" },
+  feedTabTextDesktop: { fontSize: 16 },
   feedTabTextActive: { fontWeight: "700", color: "#2C2C2C" },
 
+  // ── States ──────────────────────────────────────────────────────────────────
   centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingBottom: 60 },
   errorText: { fontSize: 14, color: "#888", textAlign: "center" },
   retryBtn: { backgroundColor: "#F0F5EE", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   retryText: { fontSize: 13, fontWeight: "600", color: "#87A878" },
   emptyText: { fontSize: 16, fontWeight: "600", color: "#2C2C2C" },
   emptySubtext: { fontSize: 13, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
-  emptyHint: {
-    backgroundColor: "#F0F5EE", paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 8, marginTop: 4,
-  },
+  emptyHint: { backgroundColor: "#F0F5EE", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 4 },
   emptyHintText: { fontSize: 13, fontWeight: "500", color: "#4A7A40" },
 
+  // ── List / grid ──────────────────────────────────────────────────────────────
   listContent: { paddingHorizontal: 16, paddingTop: 8, gap: 24 },
+  listContentDesktop: { paddingHorizontal: 28 },
   daySection: { gap: 8 },
   dayHeader: {
     fontSize: 12, fontWeight: "600", color: "#888888",
     textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2,
   },
+
+  // Desktop 2-column grid
+  cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 20 },
+  cardGridItem: { flex: 1, minWidth: 260, maxWidth: "50%" as any },
+
+  // ── Class card ──────────────────────────────────────────────────────────────
   classCard: {
     flexDirection: "row", backgroundColor: "#FFFFFF", borderRadius: 12,
     borderWidth: 1, borderColor: "#EEEEEE", overflow: "hidden",
   },
+  classCardDesktop: {
+    borderRadius: 14,
+  },
+  classCardHovered: {
+    borderColor: "#C8DCC0",
+    shadowColor: "#87A878",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   classCardBar: { width: 4, alignSelf: "stretch" },
   classCardBody: { flex: 1, padding: 12, gap: 3 },
+  classCardBodyDesktop: { padding: 16, gap: 5 },
   classCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   classCardTime: { fontSize: 12, fontWeight: "600", color: "#888888" },
+  classCardTimeDesktop: { fontSize: 13 },
   categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   categoryBadgeText: { fontSize: 10, fontWeight: "600" },
   classCardTitle: { fontSize: 15, fontWeight: "600", color: "#2C2C2C" },
+  classCardTitleDesktop: { fontSize: 17 },
   classCardHost: { fontSize: 12, color: "#87A878", fontWeight: "500" },
+  classCardBio: { fontSize: 13, color: "#888888", lineHeight: 18 },
   ratingText: { fontSize: 11, color: "#F4A200", fontWeight: "600" },
   classCardMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 },
   urgencyText: { fontSize: 11, color: "#E05555", fontWeight: "600" },
@@ -528,4 +671,46 @@ const styles = StyleSheet.create({
   spotsBadgeFull: { backgroundColor: "#FEF2F2" },
   spotsText: { fontSize: 11, fontWeight: "500", color: "#4A7A40" },
   spotsTextFull: { color: "#EF4444" },
+
+  // ── Featured instructors (desktop) ──────────────────────────────────────────
+  featuredSection: { gap: 12, marginBottom: 8 },
+  featuredTitle: { fontSize: 16, fontWeight: "700", color: "#2C2C2C" },
+  featuredScroll: { gap: 12, paddingBottom: 4 },
+  featuredCard: {
+    width: 140,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#EEEEEE",
+    padding: 16,
+    alignItems: "center",
+    gap: 6,
+  },
+  featuredCardHovered: {
+    borderColor: "#C8DCC0",
+    shadowColor: "#87A878",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  featuredAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#F0F5EE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  featuredInitials: { fontSize: 18, fontWeight: "700", color: "#87A878" },
+  featuredName: { fontSize: 13, fontWeight: "600", color: "#2C2C2C", textAlign: "center" },
+  featuredRating: { fontSize: 12, color: "#F4A200", fontWeight: "500" },
+  featuredFollowBtn: {
+    backgroundColor: "#F0F5EE",
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginTop: 2,
+  },
+  featuredFollowText: { fontSize: 12, fontWeight: "600", color: "#4A7A40" },
 });
