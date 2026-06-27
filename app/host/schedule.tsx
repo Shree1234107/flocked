@@ -6,12 +6,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { ActivityIndicator, Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../components/AuthGate";
 import { RoleGuard } from "../../components/RoleGuard";
@@ -60,34 +60,60 @@ function fmtTime(slot: string): string {
   return `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${ampm}`;
 }
 
+function getDefaultWebDatetime(): string {
+  const d = new Date();
+  d.setHours(9, 0, 0, 0);
+  if (d <= new Date()) d.setDate(d.getDate() + 1);
+  // "YYYY-MM-DDTHH:MM" for datetime-local input value
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T09:00`;
+}
+
 const DATE_CHIPS = getDateChips();
 
 export default function ScheduleClassScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const isWeb = Platform.OS === "web";
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<typeof CATEGORIES[number]>("Yoga");
   const [selectedDate, setSelectedDate] = useState<Date>(DATE_CHIPS[0]);
   const [selectedTime, setSelectedTime] = useState<string>("9:00");
+  const [webDatetime, setWebDatetime] = useState<string>(getDefaultWebDatetime());
   const [duration, setDuration] = useState<number>(60);
   const [maxStudents, setMaxStudents] = useState<number>(10);
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    console.log("[schedule] handleSubmit fired — title:", JSON.stringify(title), "category:", category, "date:", selectedDate.toDateString(), "time:", selectedTime, "duration:", duration, "maxStudents:", maxStudents);
+    console.log("[schedule] handleSubmit fired — title:", JSON.stringify(title), "category:", category, "duration:", duration, "maxStudents:", maxStudents, "isWeb:", isWeb, "webDatetime:", webDatetime);
+
     if (!title.trim()) {
       console.log("[schedule] blocked: title empty");
+      if (isWeb) { setInlineError("Please enter a class title."); return; }
       Alert.alert("Oops", "Please enter a class title.");
       return;
     }
-    const [h, m] = selectedTime.split(":").map(Number);
-    const d = new Date(selectedDate);
-    d.setHours(h, m, 0, 0);
-    const scheduledAt = d.toISOString();
-    console.log("[schedule] submitting — scheduledAt:", scheduledAt);
 
+    let scheduledAt: string;
+    if (isWeb) {
+      if (!webDatetime) {
+        setInlineError("Please select a date and time.");
+        return;
+      }
+      scheduledAt = new Date(webDatetime).toISOString();
+      console.log("[schedule] web scheduledAt:", scheduledAt);
+    } else {
+      const [h, m] = selectedTime.split(":").map(Number);
+      const d = new Date(selectedDate);
+      d.setHours(h, m, 0, 0);
+      scheduledAt = d.toISOString();
+      console.log("[schedule] mobile scheduledAt:", scheduledAt);
+    }
+
+    setInlineError(null);
     setSubmitting(true);
     try {
       await createClass({
@@ -98,387 +124,343 @@ export default function ScheduleClassScreen() {
         maxStudents,
         description: description.trim() || undefined,
       });
-      Alert.alert(
-        "Class Scheduled",
-        "Your class has been added to the calendar and students can now join.",
-        [{ text: "Done", onPress: () => router.back() }]
-      );
+      console.log("[schedule] createClass success");
+      if (isWeb) {
+        router.back();
+      } else {
+        Alert.alert(
+          "Class Scheduled",
+          "Your class has been added to the calendar and students can now join.",
+          [{ text: "Done", onPress: () => router.back() }]
+        );
+      }
     } catch (err) {
-      Alert.alert("Oops", err instanceof Error ? err.message : "Failed to schedule class.");
+      console.log("[schedule] createClass error:", err);
+      const msg = err instanceof Error ? err.message : "Failed to schedule class.";
+      if (isWeb) {
+        setInlineError(msg);
+      } else {
+        Alert.alert("Oops", msg);
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
+  const formContent = (
+    <ScrollView
+      style={styles.flex}
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Title */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Class Title</Text>
+        <TextInput
+          value={title}
+          onChangeText={(t) => { setTitle(t); setInlineError(null); }}
+          mode="outlined"
+          placeholder="e.g. Beginner Morning Yoga"
+          style={styles.textInput}
+          outlineColor="#EEEEEE"
+          activeOutlineColor="#00B4A6"
+          textColor="#2C2C2C"
+          theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
+          maxLength={100}
+        />
+      </View>
+
+      {/* Category */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.chipRow}>
+          {CATEGORIES.map((cat) => {
+            const colors = CATEGORY_COLORS[cat];
+            const selected = category === cat;
+            return (
+              <Pressable
+                key={cat}
+                style={(state: any) => [
+                  styles.categoryChip,
+                  selected && { backgroundColor: colors.bg, borderColor: colors.border },
+                  !selected && state.hovered && styles.chipHovered,
+                  isWeb && ({ cursor: "pointer" } as any),
+                ]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text style={[styles.categoryChipText, selected && { color: colors.text, fontWeight: "600" }]}>
+                  {cat}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Date + Time — datetime-local on web, chip rows on mobile */}
+      {isWeb ? (
+        <View style={styles.section}>
+          <Text style={styles.label}>Date & Time</Text>
+          {/* @ts-ignore — native HTML input, valid on web */}
+          <input
+            type="datetime-local"
+            value={webDatetime}
+            min={(() => {
+              const now = new Date();
+              const pad = (n: number) => n.toString().padStart(2, "0");
+              return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            })()}
+            onChange={(e: any) => {
+              console.log("[schedule] datetime-local changed:", e.target.value);
+              setWebDatetime(e.target.value);
+            }}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 8,
+              border: "1px solid #EEEEEE",
+              fontSize: 15,
+              color: "#2C2C2C",
+              backgroundColor: "#F9F9F9",
+              width: "100%",
+              boxSizing: "border-box",
+              outline: "none",
+              fontFamily: "inherit",
+            } as any}
+          />
+        </View>
+      ) : (
+        <>
+          {/* Date chips */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Date</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollRow}>
+              {DATE_CHIPS.map((date, i) => {
+                const { day, num, month } = chipLabel(date);
+                const selected = selectedDate.toDateString() === date.toDateString();
+                return (
+                  <Pressable
+                    key={i}
+                    style={[styles.dateChip, selected && styles.dateChipSelected]}
+                    onPress={() => setSelectedDate(date)}
+                  >
+                    <Text style={[styles.dateChipTop, selected && styles.dateChipTopSelected]}>{day}</Text>
+                    <Text style={[styles.dateChipNum, selected && styles.dateChipNumSelected]}>{num}</Text>
+                    <Text style={[styles.dateChipTop, selected && styles.dateChipTopSelected]}>{month}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {/* Time chips */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Time</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollRow}>
+              {TIME_SLOTS.map((slot) => {
+                const selected = selectedTime === slot;
+                return (
+                  <Pressable
+                    key={slot}
+                    style={[styles.timeChip, selected && styles.timeChipSelected]}
+                    onPress={() => setSelectedTime(slot)}
+                  >
+                    <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
+                      {fmtTime(slot)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </>
+      )}
+
+      {/* Duration */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Duration</Text>
+        <View style={styles.chipRow}>
+          {DURATIONS.map((d) => (
+            <Pressable
+              key={d}
+              style={(state: any) => [
+                styles.durationChip,
+                duration === d && styles.durationChipSelected,
+                duration !== d && state.hovered && styles.chipHovered,
+                isWeb && ({ cursor: "pointer" } as any),
+              ]}
+              onPress={() => setDuration(d)}
+            >
+              <Text style={[styles.durationChipText, duration === d && styles.durationChipTextSelected]}>
+                {d}m
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Max students */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Max Students</Text>
+        <View style={styles.counterRow}>
+          <Pressable
+            style={(state: any) => [
+              styles.counterBtn,
+              state.hovered && styles.counterBtnHovered,
+              isWeb && ({ cursor: "pointer" } as any),
+            ]}
+            onPress={() => setMaxStudents((p) => Math.max(1, p - 1))}
+          >
+            <Text style={styles.counterBtnText}>−</Text>
+          </Pressable>
+          <Text style={styles.counterValue}>{maxStudents}</Text>
+          <Pressable
+            style={(state: any) => [
+              styles.counterBtn,
+              state.hovered && styles.counterBtnHovered,
+              isWeb && ({ cursor: "pointer" } as any),
+            ]}
+            onPress={() => setMaxStudents((p) => Math.min(50, p + 1))}
+          >
+            <Text style={styles.counterBtnText}>+</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Description */}
+      <View style={styles.section}>
+        <Text style={styles.label}>
+          Description <Text style={styles.optional}>(optional)</Text>
+        </Text>
+        <TextInput
+          value={description}
+          onChangeText={setDescription}
+          mode="outlined"
+          placeholder="What will students learn? What should they bring?"
+          multiline
+          numberOfLines={3}
+          style={styles.textInput}
+          outlineColor="#EEEEEE"
+          activeOutlineColor="#00B4A6"
+          textColor="#2C2C2C"
+          theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
+          maxLength={500}
+        />
+      </View>
+
+      {/* Inline error (web only) */}
+      {inlineError && (
+        <View style={styles.errorBox}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#E05555" />
+          <Text style={styles.errorText}>{inlineError}</Text>
+        </View>
+      )}
+
+      {/* Submit */}
+      <Pressable
+        style={(state: any) => [
+          styles.submitBtn,
+          submitting && styles.submitBtnDisabled,
+          state.hovered && !submitting && styles.submitBtnHovered,
+          isWeb && ({ cursor: submitting ? "default" : "pointer" } as any),
+        ]}
+        onPress={() => {
+          console.log("[schedule] submit Pressable tapped");
+          handleSubmit();
+        }}
+        disabled={submitting}
+      >
+        {submitting ? (
+          <ActivityIndicator color="#FFFFFF" size="small" />
+        ) : (
+          <Text style={styles.submitBtnText}>Schedule Class</Text>
+        )}
+      </Pressable>
+    </ScrollView>
+  );
+
   return (
     <AuthGate>
       <RoleGuard requiredRole="host">
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <ScrollView
-            style={styles.flex}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Title */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Class Title</Text>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                mode="outlined"
-                placeholder="e.g. Beginner Morning Yoga"
-                style={styles.textInput}
-                outlineColor="#EEEEEE"
-                activeOutlineColor="#00B4A6"
-                textColor="#2C2C2C"
-                theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
-                maxLength={100}
-              />
-            </View>
-
-            {/* Category */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Category</Text>
-              <View style={styles.chipRow}>
-                {CATEGORIES.map((cat) => {
-                  const colors = CATEGORY_COLORS[cat];
-                  const selected = category === cat;
-                  return (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        styles.categoryChip,
-                        selected && { backgroundColor: colors.bg, borderColor: colors.border },
-                      ]}
-                      onPress={() => setCategory(cat)}
-                      activeOpacity={0.75}
-                    >
-                      <Text
-                        style={[
-                          styles.categoryChipText,
-                          selected && { color: colors.text, fontWeight: "600" },
-                        ]}
-                      >
-                        {cat}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Date */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Date</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollRow}
-              >
-                {DATE_CHIPS.map((date, i) => {
-                  const { day, num, month } = chipLabel(date);
-                  const selected = selectedDate.toDateString() === date.toDateString();
-                  return (
-                    <TouchableOpacity
-                      key={i}
-                      style={[styles.dateChip, selected && styles.dateChipSelected]}
-                      onPress={() => setSelectedDate(date)}
-                      activeOpacity={0.75}
-                    >
-                      <Text style={[styles.dateChipTop, selected && styles.dateChipTopSelected]}>{day}</Text>
-                      <Text style={[styles.dateChipNum, selected && styles.dateChipNumSelected]}>{num}</Text>
-                      <Text style={[styles.dateChipTop, selected && styles.dateChipTopSelected]}>{month}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            {/* Time */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Time</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollRow}
-              >
-                {TIME_SLOTS.map((slot) => {
-                  const selected = selectedTime === slot;
-                  return (
-                    <TouchableOpacity
-                      key={slot}
-                      style={[styles.timeChip, selected && styles.timeChipSelected]}
-                      onPress={() => setSelectedTime(slot)}
-                      activeOpacity={0.75}
-                    >
-                      <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
-                        {fmtTime(slot)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            {/* Duration */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Duration</Text>
-              <View style={styles.chipRow}>
-                {DURATIONS.map((d) => (
-                  <TouchableOpacity
-                    key={d}
-                    style={[styles.durationChip, duration === d && styles.durationChipSelected]}
-                    onPress={() => setDuration(d)}
-                    activeOpacity={0.75}
-                  >
-                    <Text
-                      style={[
-                        styles.durationChipText,
-                        duration === d && styles.durationChipTextSelected,
-                      ]}
-                    >
-                      {d}m
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Max students */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Max Students</Text>
-              <View style={styles.counterRow}>
-                <TouchableOpacity
-                  style={styles.counterBtn}
-                  onPress={() => setMaxStudents((p) => Math.max(1, p - 1))}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.counterBtnText}>−</Text>
-                </TouchableOpacity>
-                <Text style={styles.counterValue}>{maxStudents}</Text>
-                <TouchableOpacity
-                  style={styles.counterBtn}
-                  onPress={() => setMaxStudents((p) => Math.min(50, p + 1))}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.counterBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Description */}
-            <View style={styles.section}>
-              <Text style={styles.label}>
-                Description{" "}
-                <Text style={styles.optional}>(optional)</Text>
-              </Text>
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                mode="outlined"
-                placeholder="What will students learn? What should they bring?"
-                multiline
-                numberOfLines={3}
-                style={styles.textInput}
-                outlineColor="#EEEEEE"
-                activeOutlineColor="#00B4A6"
-                textColor="#2C2C2C"
-                theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
-                maxLength={500}
-              />
-            </View>
-
-            {/* Submit */}
-            <Pressable
-              style={(state: any) => [
-                styles.submitBtn,
-                submitting && styles.submitBtnDisabled,
-                state.hovered && !submitting && styles.submitBtnHovered,
-                Platform.OS === "web" && ({ cursor: submitting ? "default" : "pointer" } as any),
-              ]}
-              onPress={() => { console.log("[schedule] Pressable onPress fired"); handleSubmit(); }}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.submitBtnText}>Schedule Class</Text>
-              )}
-            </Pressable>
-          </ScrollView>
-        </KeyboardAvoidingView>
+        {isWeb ? (
+          <View style={styles.flex}>{formContent}</View>
+        ) : (
+          <KeyboardAvoidingView style={styles.flex} behavior="padding">
+            {formContent}
+          </KeyboardAvoidingView>
+        )}
       </RoleGuard>
     </AuthGate>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    gap: 24,
-  },
-  section: {
-    gap: 10,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  optional: {
-    fontWeight: "400",
-    color: "#888888",
-  },
-  textInput: {
-    backgroundColor: "#F9F9F9",
-  },
-  chipRow: {
-    flexDirection: "row",
-    gap: 8,
-    flexWrap: "wrap",
-  },
+  flex: { flex: 1, backgroundColor: "#FFFFFF" },
+  content: { paddingHorizontal: 20, paddingTop: 20, gap: 24 },
+  section: { gap: 10 },
+  label: { fontSize: 13, fontWeight: "600", color: "#2C2C2C" },
+  optional: { fontWeight: "400", color: "#888888" },
+  textInput: { backgroundColor: "#F9F9F9" },
+
+  chipRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  chipHovered: { backgroundColor: "#F0F0F0" },
+
   categoryChip: {
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 8,
-    backgroundColor: "#F9F9F9",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
+    paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8,
+    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
   },
-  categoryChipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#888888",
-  },
-  scrollRow: {
-    gap: 8,
-    paddingVertical: 2,
-  },
+  categoryChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
+
+  scrollRow: { gap: 8, paddingVertical: 2 },
+
   dateChip: {
-    width: 58,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#F9F9F9",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    alignItems: "center",
-    gap: 2,
+    width: 58, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    alignItems: "center", gap: 2,
   },
-  dateChipSelected: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
-  },
-  dateChipTop: {
-    fontSize: 10,
-    fontWeight: "500",
-    color: "#888888",
-  },
-  dateChipTopSelected: {
-    color: "#FFFFFF",
-  },
-  dateChipNum: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#2C2C2C",
-    lineHeight: 24,
-  },
-  dateChipNumSelected: {
-    color: "#FFFFFF",
-  },
+  dateChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
+  dateChipTop: { fontSize: 10, fontWeight: "500", color: "#888888" },
+  dateChipTopSelected: { color: "#FFFFFF" },
+  dateChipNum: { fontSize: 18, fontWeight: "700", color: "#2C2C2C", lineHeight: 24 },
+  dateChipNumSelected: { color: "#FFFFFF" },
+
   timeChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 8,
-    backgroundColor: "#F9F9F9",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
+    paddingHorizontal: 12, paddingVertical: 9, borderRadius: 8,
+    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
   },
-  timeChipSelected: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
-  },
-  timeChipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#888888",
-  },
-  timeChipTextSelected: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
+  timeChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
+  timeChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
+  timeChipTextSelected: { color: "#FFFFFF", fontWeight: "600" },
+
   durationChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 9,
-    borderRadius: 8,
-    backgroundColor: "#F9F9F9",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
+    paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8,
+    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
   },
-  durationChipSelected: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
-  },
-  durationChipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#888888",
-  },
-  durationChipTextSelected: {
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  counterRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 20,
-  },
+  durationChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
+  durationChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
+  durationChipTextSelected: { fontWeight: "600", color: "#FFFFFF" },
+
+  counterRow: { flexDirection: "row", alignItems: "center", gap: 20 },
   counterBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F9F9F9",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    alignItems: "center", justifyContent: "center",
   },
-  counterBtnText: {
-    fontSize: 20,
-    fontWeight: "500",
-    color: "#2C2C2C",
-    lineHeight: 24,
+  counterBtnHovered: { backgroundColor: "#EEEEEE" },
+  counterBtnText: { fontSize: 20, fontWeight: "500", color: "#2C2C2C", lineHeight: 24 },
+  counterValue: { fontSize: 24, fontWeight: "700", color: "#2C2C2C", minWidth: 36, textAlign: "center" },
+
+  errorBox: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    backgroundColor: "#FFF0F0", borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 10,
   },
-  counterValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2C2C2C",
-    minWidth: 36,
-    textAlign: "center",
-  },
+  errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
+
   submitBtn: {
-    backgroundColor: "#00B4A6",
-    borderRadius: 12,
-    paddingVertical: 15,
-    alignItems: "center",
-    marginTop: 4,
+    backgroundColor: "#00B4A6", borderRadius: 12,
+    paddingVertical: 15, alignItems: "center", marginTop: 4,
   },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  submitBtnHovered: {
-    backgroundColor: "#009E91",
-  },
-  submitBtnText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
+  submitBtnDisabled: { opacity: 0.6 },
+  submitBtnHovered: { backgroundColor: "#009E91" },
+  submitBtnText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
 });
