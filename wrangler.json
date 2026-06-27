@@ -2,7 +2,7 @@
   "name": "muddy-night-98a4",
   "compatibility_date": "2026-06-27",
   "assets": {
-    "directory": "./dist"
-  },
-  "$schema": "node_modules/wrangler/config-schema.json"
+    "directory": "./dist",
+    "binding": "ASSETS"
+  }
 }
