@@ -77,55 +77,40 @@ export default function LoginScreen() {
 
     setSending(true);
 
-    // Subscribe BEFORE sign-in so we can't miss the onAuthStateChange event
-    let resolveAuth!: () => void;
-    const authReady = new Promise<void>((resolve) => { resolveAuth = resolve; });
-    const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((_event, sess) => {
-      if (sess) { authSub.unsubscribe(); resolveAuth(); }
-    });
-
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
     if (error) {
       console.log("[bypass] 2. signInWithPassword FAILED:", error.message);
-      authSub.unsubscribe();
       setSending(false);
       return;
     }
     console.log("[bypass] 2. signInWithPassword OK, user:", data.session?.user?.email);
     console.log("[bypass] session after login:", data.session ? "found" : "null");
 
-    // Step 1: wait for onAuthStateChange to propagate the session into React context
-    console.log("[bypass] 3. waiting for onAuthStateChange...");
-    await authReady;
-    console.log("[bypass] 3. auth state ready");
-
-    // Step 2: POST /api/auth/role using the fresh token
-    const token = data.session?.access_token;
-    if (token) {
-      const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
-      try {
-        const res = await fetch(`${apiBase}/api/auth/role`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ role: targetRole }),
-        });
-        const body = await res.json().catch(() => null);
-        console.log("[bypass] 4. POST /api/auth/role →", res.status, body);
-      } catch (err) {
-        console.log("[bypass] 4. POST /api/auth/role error:", err);
-      }
+    // Set role in user_profiles via backend using the fresh token directly
+    const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
+    try {
+      const response = await fetch(`${apiBase}/api/auth/role`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session!.access_token}`,
+        },
+        body: JSON.stringify({ role: targetRole }),
+      });
+      console.log("[bypass] set role response:", response.status);
+      const body = await response.json().catch(() => null);
+      console.log("[bypass] set role body:", body);
+    } catch (err) {
+      console.log("[bypass] set role error:", err);
     }
 
-    // Step 3: write role to SecureStore so RoleProvider picks it up
+    // Write role to SecureStore so RoleProvider picks it up locally
     await SecureStore.setItemAsync("flocked.role", targetRole);
-    console.log("[bypass] 5. SecureStore role set:", targetRole);
+    console.log("[bypass] SecureStore role set:", targetRole);
 
-    // Step 4: navigate
+    // Navigate
     const dest = targetRole === "guest" ? "/guest/(tabs)/index" : "/host/(tabs)/index";
-    console.log("[bypass] 6. navigating to:", dest);
+    console.log("[bypass] navigating to:", dest);
     router.replace(dest);
   };
 
