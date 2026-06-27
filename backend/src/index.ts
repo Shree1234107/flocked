@@ -1189,7 +1189,7 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
     .insert({
       host_id: userId,
       title,
-      category: category.toLowerCase(),
+      category: category.toLowerCase(), // normalized before insert
       scheduled_at: scheduledAt,
       duration_minutes: durationMinutes,
       max_students: maxStudents,
