@@ -29,7 +29,7 @@ export default function NotificationPermissionScreen() {
     <View style={[styles.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 32 }]}>
       {/* Icon */}
       <View style={styles.iconWrap}>
-        <MaterialCommunityIcons name="bell-ring-outline" size={48} color="#87A878" />
+        <MaterialCommunityIcons name="bell-ring-outline" size={48} color="#00B4A6" />
       </View>
 
       {/* Copy */}
@@ -45,7 +45,7 @@ export default function NotificationPermissionScreen() {
         {PERKS.map((p, i) => (
           <View key={i} style={styles.perkRow}>
             <View style={styles.perkIconWrap}>
-              <MaterialCommunityIcons name={p.icon as never} size={18} color="#87A878" />
+              <MaterialCommunityIcons name={p.icon as never} size={18} color="#00B4A6" />
             </View>
             <Text style={styles.perkText}>{p.text}</Text>
           </View>
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 2,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   enableBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     flexDirection: "row",

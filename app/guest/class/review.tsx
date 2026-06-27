@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   submitBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

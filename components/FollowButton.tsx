@@ -53,7 +53,7 @@ export function FollowButton({
         activeOpacity={0.7}
       >
         {loading ? (
-          <ActivityIndicator size={10} color={following ? "#87A878" : "#fff"} />
+          <ActivityIndicator size={10} color={following ? "#00B4A6" : "#fff"} />
         ) : (
           <Text style={[styles.smText, following && styles.smTextFollowing]}>
             {following ? "Following" : "Follow"}
@@ -70,7 +70,7 @@ export function FollowButton({
       activeOpacity={0.85}
     >
       {loading ? (
-        <ActivityIndicator size={16} color={following ? "#87A878" : "#fff"} />
+        <ActivityIndicator size={16} color={following ? "#00B4A6" : "#fff"} />
       ) : (
         <Text style={[styles.mdText, following && styles.mdTextFollowing]}>
           {following ? "Following" : "Follow"}
@@ -82,7 +82,7 @@ export function FollowButton({
 
 const styles = StyleSheet.create({
   mdBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   mdBtnFollowing: {
     backgroundColor: "#fff",
     borderWidth: 1.5,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
   },
   mdText: {
     fontSize: 15,
@@ -99,10 +99,10 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   mdTextFollowing: {
-    color: "#87A878",
+    color: "#00B4A6",
   },
   smBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   smBtnFollowing: {
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
   },
   smText: {
     fontSize: 12,
@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   smTextFollowing: {
-    color: "#87A878",
+    color: "#00B4A6",
   },
 });

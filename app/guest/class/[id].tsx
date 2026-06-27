@@ -35,8 +35,8 @@ const MOCK_REVIEWS = [
 ];
 
 const CATEGORY_COLORS = {
-  Yoga: { headerBg: "#F0F5EE", dot: "#87A878", text: "#4A7A40" },
-  Dance: { headerBg: "#FDF0F2", dot: "#F4B8C1", text: "#A04060" },
+  Yoga: { headerBg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
+  Dance: { headerBg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
   Tutoring: { headerBg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -107,7 +107,7 @@ export default function ClassDetailScreen() {
                   <MaterialCommunityIcons
                     name={favored ? "heart" : "heart-outline"}
                     size={20}
-                    color={favored ? "#F4B8C1" : "#2C2C2C"}
+                    color={favored ? "#E0F7F5" : "#2C2C2C"}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -150,7 +150,7 @@ export default function ClassDetailScreen() {
                 <MaterialCommunityIcons
                   name={favored ? "heart" : "heart-outline"}
                   size={22}
-                  color={favored ? "#F4B8C1" : "#C0C0C0"}
+                  color={favored ? "#E0F7F5" : "#C0C0C0"}
                 />
               </TouchableOpacity>
             </View>
@@ -249,7 +249,7 @@ export default function ClassDetailScreen() {
             {isFull ? (
               waitlistJoined ? (
                 <View style={styles.waitlistConfirmed}>
-                  <MaterialCommunityIcons name="check-circle" size={18} color="#87A878" />
+                  <MaterialCommunityIcons name="check-circle" size={18} color="#00B4A6" />
                   <Text style={styles.waitlistConfirmedText}>You're #3 on the waitlist</Text>
                 </View>
               ) : (
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDF0F2",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#F4B8C1",
+    borderColor: "#E0F7F5",
     padding: 14,
   },
   waitlistBannerText: {
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   reviewInitials: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   reviewMeta: {
     flex: 1,
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#EEEEEE",
   },
   joinBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 16,
     flexDirection: "row",
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1,
-    borderColor: "#F4B8C1",
+    borderColor: "#E0F7F5",
   },
   waitlistBtnText: {
     fontSize: 16,
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     color: "#A04060",
   },
   waitlistConfirmed: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 12,
     paddingVertical: 16,
     flexDirection: "row",
@@ -621,6 +621,6 @@ const styles = StyleSheet.create({
   waitlistConfirmedText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#4A7A40",
+    color: "#007A70",
   },
 });

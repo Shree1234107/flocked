@@ -45,7 +45,7 @@ export default function ReferralScreen() {
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="account-group-outline" size={44} color="#87A878" />
+          <MaterialCommunityIcons name="account-group-outline" size={44} color="#00B4A6" />
         </View>
         <Text style={styles.heroTitle}>Give a class,{"\n"}get a class</Text>
         <Text style={styles.heroSub}>
@@ -63,7 +63,7 @@ export default function ReferralScreen() {
         >
           <Text style={styles.codeText}>{MOCK_CODE}</Text>
           <View style={styles.copyBadge}>
-            <MaterialCommunityIcons name="content-copy" size={14} color="#87A878" />
+            <MaterialCommunityIcons name="content-copy" size={14} color="#00B4A6" />
             <Text style={styles.copyText}>Copy</Text>
           </View>
         </TouchableOpacity>
@@ -82,7 +82,7 @@ export default function ReferralScreen() {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: "#87A878" }]}>0</Text>
+          <Text style={[styles.statNum, { color: "#00B4A6" }]}>0</Text>
           <Text style={styles.statLabel}>Months free</Text>
         </View>
       </View>
@@ -97,7 +97,7 @@ export default function ReferralScreen() {
                 <Text style={styles.perkStepNum}>{i + 1}</Text>
               </View>
               <View style={styles.perkIcon}>
-                <MaterialCommunityIcons name={p.icon as never} size={18} color="#87A878" />
+                <MaterialCommunityIcons name={p.icon as never} size={18} color="#00B4A6" />
               </View>
               <Text style={styles.perkText}>{p.text}</Text>
             </View>
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 2,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   copyText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   statsRow: {
     flexDirection: "row",
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   shareBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     flexDirection: "row",

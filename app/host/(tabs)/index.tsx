@@ -11,8 +11,8 @@ import { listMyClasses, cancelClass } from "../../../lib/api";
 import { ScheduledClass } from "../../../lib/types";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Yoga: "#87A878",
-  Dance: "#F4B8C1",
+  Yoga: "#00B4A6",
+  Dance: "#E0F7F5",
   Tutoring: "#94B4D2",
 };
 
@@ -114,14 +114,14 @@ export default function InstructorHomeTab() {
 
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color="#87A878" />
+              <ActivityIndicator color="#00B4A6" />
             </View>
           ) : error ? (
             <View style={styles.centered}>
               <MaterialCommunityIcons name="wifi-off" size={36} color="#C0C0C0" />
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity style={styles.retryBtn} onPress={loadClasses} activeOpacity={0.7}>
-                <MaterialCommunityIcons name="refresh" size={14} color="#87A878" />
+                <MaterialCommunityIcons name="refresh" size={14} color="#00B4A6" />
                 <Text style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
             </View>
@@ -138,7 +138,7 @@ export default function InstructorHomeTab() {
 
               {/* Growth tip */}
               <View style={styles.tipNote}>
-                <MaterialCommunityIcons name="lightning-bolt" size={14} color="#87A878" />
+                <MaterialCommunityIcons name="lightning-bolt" size={14} color="#00B4A6" />
                 <Text style={styles.tipText}>
                   Aim for <Text style={styles.tipBold}>2–3 classes/week</Text> to grow your audience.
                 </Text>
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#4A7A40",
+    color: "#007A70",
   },
   statsCard: {
     flexDirection: "row",
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 24,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   scheduleEmptyBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 11,

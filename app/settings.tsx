@@ -74,7 +74,7 @@ export default function SettingsScreen() {
             <Switch
               value={classReminders}
               onValueChange={setClassReminders}
-              trackColor={{ true: "#87A878", false: "#EEEEEE" }}
+              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -87,7 +87,7 @@ export default function SettingsScreen() {
             <Switch
               value={newInstructorAlerts}
               onValueChange={setNewInstructorAlerts}
-              trackColor={{ true: "#87A878", false: "#EEEEEE" }}
+              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -100,7 +100,7 @@ export default function SettingsScreen() {
             <Switch
               value={promotions}
               onValueChange={setPromotions}
-              trackColor={{ true: "#87A878", false: "#EEEEEE" }}
+              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -117,7 +117,7 @@ export default function SettingsScreen() {
             <Switch
               value={darkMode}
               onValueChange={setDarkMode}
-              trackColor={{ true: "#87A878", false: "#EEEEEE" }}
+              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -126,7 +126,7 @@ export default function SettingsScreen() {
           <>
             <View style={styles.rowDivider} />
             <View style={styles.darkModeNote}>
-              <MaterialCommunityIcons name="information-outline" size={14} color="#87A878" />
+              <MaterialCommunityIcons name="information-outline" size={14} color="#00B4A6" />
               <Text style={styles.darkModeNoteText}>
                 Dark mode preference saved. Full theme support coming soon.
               </Text>
@@ -252,12 +252,12 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
   },
   darkModeNoteText: {
     flex: 1,
     fontSize: 12,
-    color: "#4A7A40",
+    color: "#007A70",
     lineHeight: 18,
   },
   signOutCard: {

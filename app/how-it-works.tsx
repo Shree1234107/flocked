@@ -11,8 +11,8 @@ const STEPS = [
     title: "Apply",
     description:
       "Submit a short application to join as an instructor. We review every submission personally to keep the quality of classes high.",
-    color: "#87A878",
-    bg: "#F0F5EE",
+    color: "#00B4A6",
+    bg: "#E0F7F5",
   },
   {
     number: "2",
@@ -29,8 +29,8 @@ const STEPS = [
     title: "Go Live",
     description:
       "At class time, start your session and teach. Students join in real time and interact with you live.",
-    color: "#87A878",
-    bg: "#F0F5EE",
+    color: "#00B4A6",
+    bg: "#E0F7F5",
   },
   {
     number: "4",
@@ -56,7 +56,7 @@ export default function HowItWorksScreen() {
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="school-outline" size={30} color="#87A878" />
+          <MaterialCommunityIcons name="school-outline" size={30} color="#00B4A6" />
         </View>
         <Text style={styles.heroTitle}>How It Works</Text>
         <Text style={styles.heroSubtitle}>
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 13,
     paddingHorizontal: 24,

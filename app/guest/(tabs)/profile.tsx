@@ -40,8 +40,8 @@ function formatClassTime(iso: string): string {
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  Yoga: { bg: "#F0F5EE", text: "#4A7A40", dot: "#87A878" },
-  Dance: { bg: "#FDF0F2", text: "#A04060", dot: "#F4B8C1" },
+  Yoga: { bg: "#E0F7F5", text: "#007A70", dot: "#00B4A6" },
+  Dance: { bg: "#FDF0F2", text: "#A04060", dot: "#E0F7F5" },
   Tutoring: { bg: "#EEF3F8", text: "#3A5F80", dot: "#94B4D2" },
 };
 
@@ -124,7 +124,7 @@ export default function GuestProfileTab() {
       <AuthGate>
         <RoleGuard requiredRole="guest">
           <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
-            <ActivityIndicator color="#87A878" />
+            <ActivityIndicator color="#00B4A6" />
           </View>
         </RoleGuard>
       </AuthGate>
@@ -187,7 +187,7 @@ export default function GuestProfileTab() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Saved Instructors</Text>
-                <MaterialCommunityIcons name="heart" size={14} color="#F4B8C1" />
+                <MaterialCommunityIcons name="heart" size={14} color="#E0F7F5" />
               </View>
               <View style={styles.classList}>
                 {savedInstructors.map((inst) => (
@@ -204,7 +204,7 @@ export default function GuestProfileTab() {
                       activeOpacity={0.7}
                       style={styles.heartBtn}
                     >
-                      <MaterialCommunityIcons name="heart" size={20} color="#F4B8C1" />
+                      <MaterialCommunityIcons name="heart" size={20} color="#E0F7F5" />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -243,7 +243,7 @@ export default function GuestProfileTab() {
                         </Text>
                       </View>
                       <View style={styles.checkWrap}>
-                        <MaterialCommunityIcons name="check-circle" size={18} color="#87A878" />
+                        <MaterialCommunityIcons name="check-circle" size={18} color="#00B4A6" />
                       </View>
                     </View>
                   );
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   displayName: {
     fontSize: 20,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   memberBadgeText: {
     fontSize: 12,
-    color: "#4A7A40",
+    color: "#007A70",
     fontWeight: "500",
   },
   statsCard: {
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   savedInitials: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   savedInfo: {
     flex: 1,

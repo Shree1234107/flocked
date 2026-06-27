@@ -73,13 +73,13 @@ export default function FollowersScreen() {
 
           {loading && (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#87A878" />
+              <ActivityIndicator color="#00B4A6" />
             </View>
           )}
 
           {error && !loading && (
             <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#F4B8C1" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   avatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: "#87A878",
+    width: 44, height: 44, borderRadius: 22, backgroundColor: "#00B4A6",
     alignItems: "center", justifyContent: "center",
   },
   avatarText: { fontSize: 16, fontWeight: "700", color: "#fff" },

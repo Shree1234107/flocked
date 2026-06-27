@@ -115,7 +115,7 @@ export default function SupportChatScreen() {
         </TouchableOpacity>
         <View style={styles.navCenter}>
           <View style={styles.avatarSmall}>
-            <MaterialCommunityIcons name="headset" size={16} color="#87A878" />
+            <MaterialCommunityIcons name="headset" size={16} color="#00B4A6" />
           </View>
           <View>
             <Text style={styles.navTitle}>Flocked Support</Text>
@@ -149,7 +149,7 @@ export default function SupportChatScreen() {
             <View style={[styles.msgRow, isUser && styles.msgRowUser]}>
               {!isUser && (
                 <View style={[styles.supportAvatar, { opacity: showAvatar ? 1 : 0 }]}>
-                  <MaterialCommunityIcons name="headset" size={14} color="#87A878" />
+                  <MaterialCommunityIcons name="headset" size={14} color="#00B4A6" />
                 </View>
               )}
               <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleSupport]}>
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 1.5,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
   },
   onlineText: {
     fontSize: 11,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 1,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   bubbleUser: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderBottomRightRadius: 4,
   },
   bubbleText: {
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quickChip: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   quickChipText: {
     fontSize: 12,
-    color: "#4A7A40",
+    color: "#007A70",
     fontWeight: "500",
   },
   inputBar: {
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,

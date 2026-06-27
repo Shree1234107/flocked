@@ -124,7 +124,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
       {sent ? (
         <View style={styles.sentCard}>
           <View style={styles.sentIconWrap}>
-            <MaterialCommunityIcons name="email-check-outline" size={28} color="#87A878" />
+            <MaterialCommunityIcons name="email-check-outline" size={28} color="#00B4A6" />
           </View>
           <Text style={styles.sentTitle}>Check your inbox</Text>
           <Text style={styles.sentBody}>
@@ -172,7 +172,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
             mode="outlined"
             style={styles.emailInput}
             outlineColor={errorMsg ? "#E05555" : "#EEEEEE"}
-            activeOutlineColor={errorMsg ? "#E05555" : "#87A878"}
+            activeOutlineColor={errorMsg ? "#E05555" : "#00B4A6"}
             textColor="#2C2C2C"
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
           />
@@ -209,7 +209,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
                 disabled={sending}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
+                <MaterialCommunityIcons name="code-tags" size={13} color="#00B4A6" />
                 <Text style={styles.devBtnText}>
                   {role === "host" ? "Enter as Instructor (Dev)" : "Enter as Student (Dev)"}
                 </Text>
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
 
   primaryBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   sentEmail: { fontWeight: "600", color: "#2C2C2C" },
   sentHint: { fontSize: 12, color: "#AAA", textAlign: "center", lineHeight: 18 },
   resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
-  resendText: { fontSize: 14, fontWeight: "500", color: "#87A878" },
+  resendText: { fontSize: 14, fontWeight: "500", color: "#00B4A6" },
 
   devSection: { gap: 4 },
   devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 2 },
@@ -322,5 +322,5 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
   },
-  devBtnText: { fontSize: 12, color: "#87A878", fontWeight: "500" },
+  devBtnText: { fontSize: 12, color: "#00B4A6", fontWeight: "500" },
 });

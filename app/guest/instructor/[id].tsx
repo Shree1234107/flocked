@@ -17,8 +17,8 @@ import {
 import type { ScheduledClass, ClassReview } from "../../../lib/types";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#F0F5EE", dot: "#87A878", text: "#4A7A40" },
-  Dance: { bg: "#FDF0F2", dot: "#F4B8C1", text: "#A04060" },
+  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -125,13 +125,13 @@ export default function InstructorProfileScreen() {
 
         {loading && (
           <View style={styles.centerBox}>
-            <ActivityIndicator color="#87A878" />
+            <ActivityIndicator color="#00B4A6" />
           </View>
         )}
 
         {error && !loading && (
           <View style={styles.centerBox}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#F4B8C1" />
+            <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
 
   hero: { alignItems: "center", gap: 10, marginBottom: 28 },
   avatar: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: "#87A878",
+    width: 80, height: 80, borderRadius: 40, backgroundColor: "#00B4A6",
     alignItems: "center", justifyContent: "center",
   },
   avatarImg: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#DDD" },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 12, fontWeight: "600" },
 
   bio: { fontSize: 14, color: "#666", lineHeight: 20, textAlign: "center" },
-  readMore: { fontSize: 13, color: "#87A878", fontWeight: "600", textAlign: "center", marginTop: 4 },
+  readMore: { fontSize: 13, color: "#00B4A6", fontWeight: "600", textAlign: "center", marginTop: 4 },
 
   statsRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" },
   stat: { fontSize: 13, color: "#555", fontWeight: "500" },
@@ -341,5 +341,5 @@ const styles = StyleSheet.create({
   reviewDate: { fontSize: 12, color: "#AAA" },
   reviewText: { fontSize: 13, color: "#555", lineHeight: 19 },
   seeAllBtn: { alignItems: "center", paddingVertical: 12 },
-  seeAllText: { fontSize: 13, color: "#87A878", fontWeight: "600" },
+  seeAllText: { fontSize: 13, color: "#00B4A6", fontWeight: "600" },
 });

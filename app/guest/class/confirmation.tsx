@@ -14,8 +14,8 @@ const CONFIRMED_CLASS = {
   time: "9:00 AM",
   duration: 60,
   instructor: "Sarah Chen",
-  dot: "#87A878",
-  bg: "#F0F5EE",
+  dot: "#00B4A6",
+  bg: "#E0F7F5",
 };
 
 export default function ConfirmationScreen() {
@@ -29,7 +29,7 @@ export default function ConfirmationScreen() {
           {/* Success icon */}
           <View style={styles.heroSection}>
             <View style={styles.checkRing}>
-              <MaterialCommunityIcons name="check" size={40} color="#87A878" />
+              <MaterialCommunityIcons name="check" size={40} color="#00B4A6" />
             </View>
             <Text style={styles.youreIn}>You're in!</Text>
             <Text style={styles.subtitle}>
@@ -41,7 +41,7 @@ export default function ConfirmationScreen() {
           <View style={styles.classCard}>
             <View style={[styles.classCardHeader, { backgroundColor: CONFIRMED_CLASS.bg }]}>
               <View style={[styles.catDot, { backgroundColor: CONFIRMED_CLASS.dot }]} />
-              <Text style={[styles.classCardCategory, { color: "#4A7A40" }]}>
+              <Text style={[styles.classCardCategory, { color: "#007A70" }]}>
                 {CONFIRMED_CLASS.category}
               </Text>
             </View>
@@ -73,7 +73,7 @@ export default function ConfirmationScreen() {
               onPress={() => Alert.alert("Add to Calendar", "Calendar integration coming soon!")}
               activeOpacity={0.8}
             >
-              <MaterialCommunityIcons name="calendar-plus" size={17} color="#4A7A40" />
+              <MaterialCommunityIcons name="calendar-plus" size={17} color="#007A70" />
               <Text style={styles.calendarBtnText}>Add to Calendar</Text>
             </TouchableOpacity>
 
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 2,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -207,16 +207,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 12,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
   },
   calendarBtnText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#4A7A40",
+    color: "#007A70",
   },
   rateBtn: {
     flexDirection: "row",
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   discoverBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

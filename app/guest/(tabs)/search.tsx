@@ -33,8 +33,8 @@ const MOCK_INSTRUCTORS = [
 ];
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#F0F5EE", dot: "#87A878", text: "#4A7A40" },
-  Dance: { bg: "#FDF0F2", dot: "#F4B8C1", text: "#A04060" },
+  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -270,7 +270,7 @@ function InstructorCard({
         <MaterialCommunityIcons
           name={isFav ? "heart" : "heart-outline"}
           size={20}
-          color={isFav ? "#F4B8C1" : "#C0C0C0"}
+          color={isFav ? "#E0F7F5" : "#C0C0C0"}
         />
       </TouchableOpacity>
     </View>
@@ -327,8 +327,8 @@ const styles = StyleSheet.create({
     borderColor: "#EEEEEE",
   },
   chipActive: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   chipText: {
     fontSize: 13,
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   instInitials: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   instInfo: {
     flex: 1,

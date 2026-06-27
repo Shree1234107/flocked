@@ -67,7 +67,7 @@ export default function LanguageScreen() {
                   <Text style={styles.rowSub}>{lang.region}</Text>
                 </View>
                 {selectedLang === lang.code && (
-                  <MaterialCommunityIcons name="check-circle" size={20} color="#87A878" />
+                  <MaterialCommunityIcons name="check-circle" size={20} color="#00B4A6" />
                 )}
               </TouchableOpacity>
             ))}
@@ -90,7 +90,7 @@ export default function LanguageScreen() {
               >
                 <Text style={styles.rowLabel}>{tz}</Text>
                 {selectedTz === tz && (
-                  <MaterialCommunityIcons name="check-circle" size={20} color="#87A878" />
+                  <MaterialCommunityIcons name="check-circle" size={20} color="#00B4A6" />
                 )}
               </TouchableOpacity>
             ))}
@@ -99,7 +99,7 @@ export default function LanguageScreen() {
 
         {/* Region note */}
         <View style={styles.noteRow}>
-          <MaterialCommunityIcons name="information-outline" size={14} color="#87A878" />
+          <MaterialCommunityIcons name="information-outline" size={14} color="#00B4A6" />
           <Text style={styles.noteText}>
             Class times are displayed in your selected time zone. Changes take effect immediately.
           </Text>
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 12,
     padding: 12,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#D4E8CC",
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   noteText: {
     flex: 1,
     fontSize: 12,
-    color: "#4A7A40",
+    color: "#007A70",
     lineHeight: 18,
   },
 });

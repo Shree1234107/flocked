@@ -10,8 +10,8 @@ import { RoleGuard } from "../../components/RoleGuard";
 import { getStudentAnalytics, StudentAnalytics } from "../../lib/api";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#F0F5EE", dot: "#87A878", text: "#4A7A40" },
-  Dance: { bg: "#FDF0F2", dot: "#F4B8C1", text: "#A04060" },
+  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -27,7 +27,7 @@ function StatCard({
   icon,
   label,
   value,
-  color = "#87A878",
+  color = "#00B4A6",
 }: {
   icon: string;
   label: string;
@@ -100,14 +100,14 @@ export default function StudentAnalyticsScreen() {
 
           {loading && (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#87A878" />
+              <ActivityIndicator color="#00B4A6" />
               <Text style={styles.loadingText}>Loading your activity…</Text>
             </View>
           )}
 
           {error && !loading && (
             <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#F4B8C1" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -121,13 +121,13 @@ export default function StudentAnalyticsScreen() {
                   icon="calendar-check-outline"
                   label="Classes Attended"
                   value={analytics.total_attended}
-                  color="#87A878"
+                  color="#00B4A6"
                 />
                 <StatCard
                   icon="bookmark-outline"
                   label="Enrolled"
                   value={analytics.total_enrolled}
-                  color="#F4B8C1"
+                  color="#E0F7F5"
                 />
                 <StatCard
                   icon="account-heart-outline"
@@ -139,7 +139,7 @@ export default function StudentAnalyticsScreen() {
                   icon="star-outline"
                   label="Reviews Given"
                   value={analytics.total_reviews_given}
-                  color="#87A878"
+                  color="#00B4A6"
                 />
               </View>
 

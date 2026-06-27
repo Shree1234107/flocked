@@ -17,22 +17,22 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SLIDES = [
   {
     icon: "leaf-circle-outline" as const,
-    iconColor: "#87A878",
-    iconBg: "#F0F5EE",
+    iconColor: "#00B4A6",
+    iconBg: "#E0F7F5",
     title: "Welcome to Flocked",
     subtitle: "Live community classes from real instructors who care about what they teach.",
   },
   {
     icon: "calendar-check-outline" as const,
-    iconColor: "#87A878",
-    iconBg: "#F0F5EE",
+    iconColor: "#00B4A6",
+    iconBg: "#E0F7F5",
     title: "Book in one tap",
     subtitle: "Browse yoga, dance, tutoring and more. Join any class instantly.",
   },
   {
     icon: "account-group-outline" as const,
-    iconColor: "#87A878",
-    iconBg: "#F0F5EE",
+    iconColor: "#00B4A6",
+    iconBg: "#E0F7F5",
     title: "Learn together",
     subtitle: "Small classes. Real instructors. Real time. A community that grows with you.",
   },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     width: 20,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
   },
   dotInactive: {
     width: 6,
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   nextBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 16,
     flexDirection: "row",

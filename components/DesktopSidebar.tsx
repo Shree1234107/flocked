@@ -23,7 +23,7 @@ export function DesktopSidebar() {
     <View style={styles.sidebar}>
       {/* Logo */}
       <View style={styles.logoSection}>
-        <MaterialCommunityIcons name="leaf-circle-outline" size={26} color="#87A878" />
+        <MaterialCommunityIcons name="leaf-circle-outline" size={26} color="#00B4A6" />
         <Text style={styles.logoText}>Flockd</Text>
       </View>
 
@@ -118,10 +118,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   navItemActive: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
   },
   navItemHovered: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
   },
   navLabel: {
     fontSize: 14,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   userInitials: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   userEmail: {
     flex: 1,

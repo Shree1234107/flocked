@@ -44,7 +44,7 @@ export default function FAQScreen() {
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="help-circle-outline" size={30} color="#87A878" />
+          <MaterialCommunityIcons name="help-circle-outline" size={30} color="#00B4A6" />
         </View>
         <Text style={styles.heroTitle}>FAQ & Help</Text>
         <Text style={styles.heroSubtitle}>
@@ -70,7 +70,7 @@ export default function FAQScreen() {
                 <MaterialCommunityIcons
                   name={isOpen ? "chevron-up" : "chevron-down"}
                   size={18}
-                  color={isOpen ? "#87A878" : "#C0C0C0"}
+                  color={isOpen ? "#00B4A6" : "#C0C0C0"}
                 />
               </View>
               {isOpen && (
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   accordionItemOpen: {
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
     backgroundColor: "#FAFCFA",
   },
   accordionHeader: {
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   accordionQOpen: {
-    color: "#87A878",
+    color: "#00B4A6",
   },
   accordionA: {
     fontSize: 14,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 13,
     paddingHorizontal: 28,

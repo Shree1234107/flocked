@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   clearText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   scroll: {
     flex: 1,
@@ -233,8 +233,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayChipActive: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   dayChipText: {
     fontSize: 13,
@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   timeRowActive: {
-    borderColor: "#87A878",
-    backgroundColor: "#F0F5EE",
+    borderColor: "#00B4A6",
+    backgroundColor: "#E0F7F5",
   },
   checkBox: {
     width: 20,
@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   checkBoxActive: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   timeInfo: {
     flex: 1,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   timeLabelActive: {
     fontWeight: "600",
-    color: "#4A7A40",
+    color: "#007A70",
   },
   timeSub: {
     fontSize: 12,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   priceTrack: {
     height: 5,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   priceFill: {
     height: "100%",
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 3,
   },
   priceSteps: {
@@ -331,8 +331,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   priceStepActive: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   priceStepText: {
     fontSize: 12,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#EEEEEE",
   },
   applyBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

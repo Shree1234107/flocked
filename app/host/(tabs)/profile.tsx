@@ -35,8 +35,8 @@ const MOCK_REVIEWS = [
 ];
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#F0F5EE", dot: "#87A878", text: "#4A7A40" },
-  Dance: { bg: "#FDF0F2", dot: "#F4B8C1", text: "#A04060" },
+  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -81,7 +81,7 @@ export default function InstructorProfileTab() {
       <RoleGuard requiredRole="host">
         {profileLoading ? (
           <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
-            <ActivityIndicator color="#87A878" />
+            <ActivityIndicator color="#00B4A6" />
           </View>
         ) : null}
         <ScrollView
@@ -279,9 +279,9 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 2,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -291,13 +291,13 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 42,
     borderWidth: 2,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
     marginBottom: 4,
   },
   avatarInitials: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   displayName: {
     fontSize: 20,
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   reviewInitials: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   reviewMeta: {
     flex: 1,

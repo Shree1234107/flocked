@@ -56,7 +56,7 @@ export default function NewsletterScreen() {
           // Success state
           <View style={styles.successBox}>
             <View style={styles.successIcon}>
-              <MaterialCommunityIcons name="check-circle-outline" size={48} color="#87A878" />
+              <MaterialCommunityIcons name="check-circle-outline" size={48} color="#00B4A6" />
             </View>
             <Text style={styles.successTitle}>You're on the list! 🌿</Text>
             <Text style={styles.successBody}>
@@ -75,7 +75,7 @@ export default function NewsletterScreen() {
           // Form
           <>
             <View style={styles.brandRow}>
-              <MaterialCommunityIcons name="leaf-circle-outline" size={28} color="#87A878" />
+              <MaterialCommunityIcons name="leaf-circle-outline" size={28} color="#00B4A6" />
               <Text style={styles.wordmark}>Flocked</Text>
             </View>
 
@@ -93,7 +93,7 @@ export default function NewsletterScreen() {
                 mode="outlined"
                 style={styles.input}
                 outlineColor="#E0E0E0"
-                activeOutlineColor="#87A878"
+                activeOutlineColor="#00B4A6"
                 autoCapitalize="words"
                 left={<TextInput.Icon icon="account-outline" color="#AAA" />}
               />
@@ -104,7 +104,7 @@ export default function NewsletterScreen() {
                 mode="outlined"
                 style={styles.input}
                 outlineColor="#E0E0E0"
-                activeOutlineColor="#87A878"
+                activeOutlineColor="#00B4A6"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: "#fff" },
 
   submitBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   doneBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 32,

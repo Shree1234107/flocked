@@ -45,7 +45,7 @@ export default function EarningsScreen() {
             <View style={styles.cardDivider} />
 
             <View style={styles.formulaRow}>
-              <MaterialCommunityIcons name="information-outline" size={13} color="#87A878" />
+              <MaterialCommunityIcons name="information-outline" size={13} color="#00B4A6" />
               <Text style={styles.formulaText}>
                 avg. students × ${RATE_PER_STUDENT}/seat × {Math.round(PLATFORM_CUT * 100)}% = earnings per class
               </Text>
@@ -73,7 +73,7 @@ export default function EarningsScreen() {
           {/* Payout info */}
           <View style={styles.payoutCard}>
             <View style={styles.payoutRow}>
-              <MaterialCommunityIcons name="calendar-check-outline" size={20} color="#87A878" />
+              <MaterialCommunityIcons name="calendar-check-outline" size={20} color="#00B4A6" />
               <View style={styles.payoutInfo}>
                 <Text style={styles.payoutTitle}>Next Payout</Text>
                 <Text style={styles.payoutDate}>{PAYOUT_DATE}</Text>
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   payoutCard: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#D4E8CC",
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   payoutTitle: {
     fontSize: 11,
-    color: "#4A7A40",
+    color: "#007A70",
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.4,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   payoutBannerText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#4A7A40",
+    color: "#007A70",
   },
   sectionTitle: {
     fontSize: 14,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   classDateBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   classDateText: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#4A7A40",
+    color: "#007A70",
     textTransform: "uppercase",
     letterSpacing: 0.3,
   },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   classEarn: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   disclaimer: {
     flexDirection: "row",

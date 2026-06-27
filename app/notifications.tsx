@@ -21,8 +21,8 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
     time: "2 hours ago",
     read: false,
     icon: "clock-alert-outline",
-    iconColor: "#87A878",
-    iconBg: "#F0F5EE",
+    iconColor: "#00B4A6",
+    iconBg: "#E0F7F5",
   },
   {
     id: "2",
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   unreadBadge: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 999,
     minWidth: 20,
     height: 20,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   clearAllText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   notifList: {
     gap: 0,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     flexShrink: 0,
   },
   emptyState: {

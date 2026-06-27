@@ -50,7 +50,7 @@ export default function HostActivityTab() {
 
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color="#87A878" />
+              <ActivityIndicator color="#00B4A6" />
             </View>
           ) : error ? (
             <View style={styles.centered}>

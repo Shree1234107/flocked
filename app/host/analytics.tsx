@@ -10,8 +10,8 @@ import { RoleGuard } from "../../components/RoleGuard";
 import { getInstructorAnalytics, InstructorAnalytics } from "../../lib/api";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Yoga: "#87A878",
-  Dance: "#F4B8C1",
+  Yoga: "#00B4A6",
+  Dance: "#E0F7F5",
   Tutoring: "#94B4D2",
 };
 
@@ -23,7 +23,7 @@ function StarRating({ rating }: { rating: number }) {
           key={i}
           name={i <= Math.round(rating) ? "star" : "star-outline"}
           size={14}
-          color="#F4B8C1"
+          color="#E0F7F5"
         />
       ))}
     </View>
@@ -34,7 +34,7 @@ function StatCard({
   icon,
   label,
   value,
-  color = "#87A878",
+  color = "#00B4A6",
 }: {
   icon: string;
   label: string;
@@ -129,14 +129,14 @@ export default function InstructorAnalyticsScreen() {
 
           {loading && (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#87A878" />
+              <ActivityIndicator color="#00B4A6" />
               <Text style={styles.loadingText}>Loading your stats…</Text>
             </View>
           )}
 
           {error && !loading && (
             <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#F4B8C1" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -150,13 +150,13 @@ export default function InstructorAnalyticsScreen() {
                   icon="school-outline"
                   label="Total Classes"
                   value={analytics.total_classes}
-                  color="#87A878"
+                  color="#00B4A6"
                 />
                 <StatCard
                   icon="account-group-outline"
                   label="Total Students"
                   value={analytics.total_students}
-                  color="#F4B8C1"
+                  color="#E0F7F5"
                 />
                 <StatCard
                   icon="check-circle-outline"
@@ -168,7 +168,7 @@ export default function InstructorAnalyticsScreen() {
                   icon="calendar-clock"
                   label="Upcoming"
                   value={analytics.upcoming_classes}
-                  color="#87A878"
+                  color="#00B4A6"
                 />
               </View>
 
@@ -190,7 +190,7 @@ export default function InstructorAnalyticsScreen() {
                 </View>
                 <View style={[styles.highlightCard, { flex: 1 }]}>
                   <Text style={styles.highlightLabel}>Est. Revenue</Text>
-                  <Text style={[styles.highlightValue, { color: "#87A878" }]}>
+                  <Text style={[styles.highlightValue, { color: "#00B4A6" }]}>
                     ${analytics.estimated_revenue}
                   </Text>
                   <Text style={styles.highlightSub}>Stripe coming soon</Text>
@@ -270,7 +270,7 @@ export default function InstructorAnalyticsScreen() {
                         <View
                           style={[
                             styles.rankBadge,
-                            { backgroundColor: i === 0 ? "#87A878" : "#F0F0F0" },
+                            { backgroundColor: i === 0 ? "#00B4A6" : "#F0F0F0" },
                           ]}
                         >
                           <Text
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     overflow: "hidden",
   },
-  barFill: { backgroundColor: "#87A878", borderRadius: 4, minHeight: 4 },
+  barFill: { backgroundColor: "#00B4A6", borderRadius: 4, minHeight: 4 },
   barLabel: { fontSize: 10, color: "#AAA" },
 
   // Generic card
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
   rankText: { fontSize: 11, fontWeight: "700" },
   topClassName: { fontSize: 14, fontWeight: "600", color: "#1A1A1A" },
   topClassCat: { fontSize: 12, color: "#888" },
-  topClassCount: { fontSize: 13, color: "#87A878", fontWeight: "600" },
+  topClassCount: { fontSize: 13, color: "#00B4A6", fontWeight: "600" },
 
   // Reviews
   reviewCard: {

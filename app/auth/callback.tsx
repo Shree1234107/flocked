@@ -110,7 +110,7 @@ export default function AuthCallbackScreen() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color="#87A878" />
+      <ActivityIndicator size="large" color="#00B4A6" />
       <Text style={styles.label}>Signing you in…</Text>
     </View>
   );
@@ -138,6 +138,6 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#87A878",
+    color: "#00B4A6",
   },
 });

@@ -114,7 +114,7 @@ export default function StudentEditProfile() {
           >
             {loading ? (
               <View style={styles.centered}>
-                <ActivityIndicator color="#87A878" />
+                <ActivityIndicator color="#00B4A6" />
               </View>
             ) : (
               <>
@@ -156,7 +156,7 @@ export default function StudentEditProfile() {
                       maxLength={50}
                       style={styles.input}
                       outlineColor="#EEEEEE"
-                      activeOutlineColor="#87A878"
+                      activeOutlineColor="#00B4A6"
                       textColor="#2C2C2C"
                       theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
                     />
@@ -216,13 +216,13 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
   },
-  avatarInitials: { fontSize: 30, fontWeight: "700", color: "#87A878" },
+  avatarInitials: { fontSize: 30, fontWeight: "700", color: "#00B4A6" },
   cameraOverlay: {
     position: "absolute",
     bottom: 0,
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   inputReadOnly: { backgroundColor: "#F9F9F9" },
   fieldHint: { fontSize: 11, color: "#BBBBBB" },
   saveBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

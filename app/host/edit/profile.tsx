@@ -22,8 +22,8 @@ import { INTEREST_TAGS } from "../../../lib/config";
 import { supabase } from "../../../lib/supabase";
 
 const TAG_COLORS: Record<string, { bg: string; selectedBg: string; text: string; border: string }> = {
-  Yoga:     { bg: "#F0F5EE", selectedBg: "#87A878", text: "#4A7A40", border: "#C8DFC0" },
-  Dance:    { bg: "#FDF0F2", selectedBg: "#F4B8C1", text: "#A04060", border: "#F4B8C1" },
+  Yoga:     { bg: "#E0F7F5", selectedBg: "#00B4A6", text: "#007A70", border: "#C8DFC0" },
+  Dance:    { bg: "#FDF0F2", selectedBg: "#E0F7F5", text: "#A04060", border: "#E0F7F5" },
   Tutoring: { bg: "#EEF3F8", selectedBg: "#94B4D2", text: "#3A5F80", border: "#94B4D2" },
 };
 
@@ -136,7 +136,7 @@ export default function TeacherEditProfile() {
           >
             {loading ? (
               <View style={styles.centered}>
-                <ActivityIndicator color="#87A878" />
+                <ActivityIndicator color="#00B4A6" />
               </View>
             ) : (
               <>
@@ -178,7 +178,7 @@ export default function TeacherEditProfile() {
                       maxLength={50}
                       style={styles.input}
                       outlineColor="#EEEEEE"
-                      activeOutlineColor="#87A878"
+                      activeOutlineColor="#00B4A6"
                       textColor="#2C2C2C"
                       theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
                     />
@@ -196,7 +196,7 @@ export default function TeacherEditProfile() {
                       maxLength={500}
                       style={styles.inputMultiline}
                       outlineColor="#EEEEEE"
-                      activeOutlineColor="#87A878"
+                      activeOutlineColor="#00B4A6"
                       textColor="#2C2C2C"
                       theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
                     />
@@ -275,13 +275,13 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
   },
-  avatarInitials: { fontSize: 30, fontWeight: "700", color: "#87A878" },
+  avatarInitials: { fontSize: 30, fontWeight: "700", color: "#00B4A6" },
   cameraOverlay: {
     position: "absolute",
     bottom: 0,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   tagChipText: { fontSize: 13, fontWeight: "600" },
   saveBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

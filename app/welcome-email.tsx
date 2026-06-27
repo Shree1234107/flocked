@@ -30,9 +30,9 @@ export default function WelcomeEmailScreen() {
           {/* Email header bar */}
           <View style={styles.emailHeader}>
             <View style={styles.emailDots}>
-              <View style={[styles.dot, { backgroundColor: "#F4B8C1" }]} />
+              <View style={[styles.dot, { backgroundColor: "#E0F7F5" }]} />
               <View style={[styles.dot, { backgroundColor: "#F0D080" }]} />
-              <View style={[styles.dot, { backgroundColor: "#87A878" }]} />
+              <View style={[styles.dot, { backgroundColor: "#00B4A6" }]} />
             </View>
             <Text style={styles.emailSubjectLine}>Welcome to Flocked 🌿 — Your first class awaits</Text>
           </View>
@@ -54,7 +54,7 @@ export default function WelcomeEmailScreen() {
             {/* Logo */}
             <View style={styles.logoRow}>
               <View style={styles.logoMark}>
-                <MaterialCommunityIcons name="leaf" size={20} color="#87A878" />
+                <MaterialCommunityIcons name="leaf" size={20} color="#00B4A6" />
               </View>
               <Text style={styles.logoText}>flocked</Text>
             </View>
@@ -92,7 +92,7 @@ export default function WelcomeEmailScreen() {
               ].map((f, i) => (
                 <View key={i} style={styles.featureBlock}>
                   <View style={styles.featureIconWrap}>
-                    <MaterialCommunityIcons name={f.icon as never} size={20} color="#87A878" />
+                    <MaterialCommunityIcons name={f.icon as never} size={20} color="#00B4A6" />
                   </View>
                   <Text style={styles.featureTitle}>{f.title}</Text>
                   <Text style={styles.featureBody}>{f.body}</Text>
@@ -133,7 +133,7 @@ export default function WelcomeEmailScreen() {
 
         {/* Design note */}
         <View style={styles.designNote}>
-          <MaterialCommunityIcons name="information-outline" size={14} color="#87A878" />
+          <MaterialCommunityIcons name="information-outline" size={14} color="#00B4A6" />
           <Text style={styles.designNoteText}>
             This is a design reference preview. The actual email is sent via your email service provider.
           </Text>
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   emailSubhead: {
     fontSize: 15,
-    color: "#87A878",
+    color: "#00B4A6",
     fontWeight: "600",
     marginTop: 2,
     marginBottom: 14,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   ctaBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 10,
     paddingHorizontal: 32,
     paddingVertical: 13,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     top: 28,
   },
   referralBox: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#D4E8CC",
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   referralCodeText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
     letterSpacing: 1.5,
   },
   emailFooter: {
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 11,
-    color: "#87A878",
+    color: "#00B4A6",
     textAlign: "center",
   },
   designNote: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 8,
     padding: 12,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#D4E8CC",
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   designNoteText: {
     flex: 1,
     fontSize: 12,
-    color: "#4A7A40",
+    color: "#007A70",
     lineHeight: 18,
   },
 });

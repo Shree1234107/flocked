@@ -147,14 +147,14 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
   avatarInitials: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#87A878",
+    color: "#00B4A6",
   },
   hostName: {
     fontSize: 12,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tagPill: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -171,6 +171,6 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontWeight: "500",
-    color: "#4A7A40",
+    color: "#007A70",
   },
 });

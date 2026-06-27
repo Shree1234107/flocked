@@ -3,6 +3,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -20,8 +21,8 @@ const CATEGORIES = ["Yoga", "Dance", "Tutoring"] as const;
 const DURATIONS = [30, 45, 60, 90] as const;
 
 const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  Yoga: { bg: "#F0F5EE", border: "#87A878", text: "#4A7A40" },
-  Dance: { bg: "#FDF0F2", border: "#F4B8C1", text: "#A04060" },
+  Yoga: { bg: "#E0F7F5", border: "#00B4A6", text: "#007A70" },
+  Dance: { bg: "#FDF0F2", border: "#E0F7F5", text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", border: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -75,7 +76,9 @@ export default function ScheduleClassScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    console.log("[schedule] handleSubmit fired — title:", JSON.stringify(title), "category:", category, "date:", selectedDate.toDateString(), "time:", selectedTime, "duration:", duration, "maxStudents:", maxStudents);
     if (!title.trim()) {
+      console.log("[schedule] blocked: title empty");
       Alert.alert("Oops", "Please enter a class title.");
       return;
     }
@@ -83,6 +86,7 @@ export default function ScheduleClassScreen() {
     const d = new Date(selectedDate);
     d.setHours(h, m, 0, 0);
     const scheduledAt = d.toISOString();
+    console.log("[schedule] submitting — scheduledAt:", scheduledAt);
 
     setSubmitting(true);
     try {
@@ -128,7 +132,7 @@ export default function ScheduleClassScreen() {
                 placeholder="e.g. Beginner Morning Yoga"
                 style={styles.textInput}
                 outlineColor="#EEEEEE"
-                activeOutlineColor="#87A878"
+                activeOutlineColor="#00B4A6"
                 textColor="#2C2C2C"
                 theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
                 maxLength={100}
@@ -280,7 +284,7 @@ export default function ScheduleClassScreen() {
                 numberOfLines={3}
                 style={styles.textInput}
                 outlineColor="#EEEEEE"
-                activeOutlineColor="#87A878"
+                activeOutlineColor="#00B4A6"
                 textColor="#2C2C2C"
                 theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
                 maxLength={500}
@@ -288,18 +292,22 @@ export default function ScheduleClassScreen() {
             </View>
 
             {/* Submit */}
-            <TouchableOpacity
-              style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
-              onPress={handleSubmit}
+            <Pressable
+              style={(state: any) => [
+                styles.submitBtn,
+                submitting && styles.submitBtnDisabled,
+                state.hovered && !submitting && styles.submitBtnHovered,
+                Platform.OS === "web" && ({ cursor: submitting ? "default" : "pointer" } as any),
+              ]}
+              onPress={() => { console.log("[schedule] Pressable onPress fired"); handleSubmit(); }}
               disabled={submitting}
-              activeOpacity={0.85}
             >
               {submitting ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <Text style={styles.submitBtnText}>Schedule Class</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
       </RoleGuard>
@@ -365,8 +373,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   dateChipSelected: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   dateChipTop: {
     fontSize: 10,
@@ -394,8 +402,8 @@ const styles = StyleSheet.create({
     borderColor: "#EEEEEE",
   },
   timeChipSelected: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   timeChipText: {
     fontSize: 13,
@@ -415,8 +423,8 @@ const styles = StyleSheet.create({
     borderColor: "#EEEEEE",
   },
   durationChipSelected: {
-    backgroundColor: "#87A878",
-    borderColor: "#87A878",
+    backgroundColor: "#00B4A6",
+    borderColor: "#00B4A6",
   },
   durationChipText: {
     fontSize: 13,
@@ -456,7 +464,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   submitBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
@@ -464,6 +472,9 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: {
     opacity: 0.6,
+  },
+  submitBtnHovered: {
+    backgroundColor: "#009E91",
   },
   submitBtnText: {
     fontSize: 15,
