@@ -37,6 +37,7 @@ export default function HostTabsLayout() {
 
   return (
     <Tabs
+      tabBar={Platform.OS === "web" ? () => null : undefined}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#00B4A6",
