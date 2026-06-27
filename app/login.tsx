@@ -92,6 +92,7 @@ export default function LoginScreen() {
       return;
     }
     console.log("[bypass] 2. signInWithPassword OK, user:", data.session?.user?.email);
+    console.log("[bypass] session after login:", data.session ? "found" : "null");
 
     // Step 1: wait for onAuthStateChange to propagate the session into React context
     console.log("[bypass] 3. waiting for onAuthStateChange...");

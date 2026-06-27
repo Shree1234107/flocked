@@ -11,12 +11,10 @@ import {
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  // TODO: re-enable auth before launch
-  if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) return {};
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  console.log("[api] session:", session ? "found" : "null", "token:", session?.access_token?.slice(0, 20));
   if (!session?.access_token) return {};
   return { Authorization: `Bearer ${session.access_token}` };
 }
