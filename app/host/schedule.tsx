@@ -118,7 +118,7 @@ export default function ScheduleClassScreen() {
     try {
       await createClass({
         title: title.trim(),
-        category,
+        category: category.toLowerCase(),
         scheduledAt,
         durationMinutes: duration,
         maxStudents,
