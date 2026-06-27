@@ -1066,11 +1066,11 @@ app.post("/api/rooms/:id/leave", requireAuth, async (req, res) => {
 
 // ─── Scheduled class routes ───────────────────────────────────────────────────
 
-const CLASS_CATEGORIES = ["Yoga", "Dance", "Tutoring"] as const;
+const CLASS_CATEGORIES = ["yoga", "dance", "tutoring"] as const;
 
 const createClassSchema = z.object({
   title: z.string().min(1, "Title is required.").max(100),
-  category: z.enum(CLASS_CATEGORIES),
+  category: z.enum(["yoga", "dance", "tutoring"]),
   scheduledAt: z.string().datetime({ message: "Invalid date/time." }),
   durationMinutes: z.number().int().refine((v) => [30, 45, 60, 90].includes(v), {
     message: "Duration must be 30, 45, 60, or 90 minutes.",
@@ -1189,7 +1189,7 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
     .insert({
       host_id: userId,
       title,
-      category,
+      category: category.toLowerCase(),
       scheduled_at: scheduledAt,
       duration_minutes: durationMinutes,
       max_students: maxStudents,
