@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -24,15 +24,31 @@ export default function HostLayout() {
   const { session, loading: authLoading } = useAuth();
   const { role, loading: roleLoading, clearRole } = useRole();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [appState, setAppState] = useState<AppState>("loading");
 
   useEffect(() => {
-    if (authLoading || roleLoading) return;
+    console.log("[host layout] useEffect fired — authLoading:", authLoading, "roleLoading:", roleLoading, "session:", !!session, "role:", role);
+    if (authLoading || roleLoading) {
+      console.log("[host layout] still loading, returning early");
+      return;
+    }
 
-    if (!session || role !== "host") return;
+    if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) {
+      console.log("[host layout] DEV BYPASS active → setAppState(approved)");
+      setAppState("approved");
+      return;
+    }
 
+    if (!session || role !== "host") {
+      console.log("[host layout] no session or wrong role, returning early");
+      return;
+    }
+
+    console.log("[host layout] calling getInstructorApplication()");
     getInstructorApplication()
       .then((result) => {
+        console.log("[host layout] getInstructorApplication result:", result);
         if (result.is_approved) {
           setAppState("approved");
         } else if (result.submitted) {
@@ -41,17 +57,42 @@ export default function HostLayout() {
           setAppState("apply");
         }
       })
-      .catch(() => setAppState("apply"));
+      .catch((err) => {
+        console.log("[host layout] getInstructorApplication ERROR:", err);
+        setAppState("apply");
+      });
   }, [session, role, authLoading, roleLoading]);
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
       await clearRole();
+      router.replace("/login");
     } catch {
       Alert.alert("Oops", "Sign out failed. Please try again.");
     }
   };
+
+  // Dev bypass — skip all state/auth checks, render the host Stack immediately
+  if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) {
+    return (
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: "#FFFFFF" },
+          headerTintColor: "#2C2C2C",
+          headerTitleAlign: "center",
+          headerTitleStyle: { fontWeight: "700" as const },
+          headerShadowVisible: false,
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="edit/profile" options={{ headerShown: false }} />
+        <Stack.Screen name="edit/fee" options={{ headerShown: false }} />
+        <Stack.Screen name="schedule" options={{ title: "Schedule a Class" }} />
+        <Stack.Screen name="earnings" options={{ title: "Earnings" }} />
+      </Stack>
+    );
+  }
 
   if (appState === "loading") {
     return (
