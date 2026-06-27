@@ -51,7 +51,8 @@ app.use(
         /^https?:\/\/(?:10|192\.168)\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
         /\.railway\.app$/.test(origin) ||
         /\.up\.railway\.app$/.test(origin) ||
-        /flocked\.app$/.test(origin);
+        /flocked-online\.com$/.test(origin) ||
+        /netlify\.app$/.test(origin);
       allowed ? callback(null, true) : callback(new Error("Not allowed by CORS"));
     },
   })
