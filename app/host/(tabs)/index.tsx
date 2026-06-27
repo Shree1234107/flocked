@@ -1,5 +1,13 @@
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -8,37 +16,53 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { listMyClasses, cancelClass } from "../../../lib/api";
-import { ScheduledClass } from "../../../lib/types";
+import type { ScheduledClass } from "../../../lib/types";
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Yoga: "#00B4A6",
-  Dance: "#E0F7F5",
-  Tutoring: "#94B4D2",
+// Handle both legacy title-case and new lowercase category values from backend
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
+  yoga:     { bg: "#E0F7F5", text: "#007A70", bar: "#00B4A6" },
+  dance:    { bg: "#FDF0F2", text: "#A04060", bar: "#E0A0B0" },
+  tutoring: { bg: "#EEF3F8", text: "#3A5F80", bar: "#94B4D2" },
+  Yoga:     { bg: "#E0F7F5", text: "#007A70", bar: "#00B4A6" },
+  Dance:    { bg: "#FDF0F2", text: "#A04060", bar: "#E0A0B0" },
+  Tutoring: { bg: "#EEF3F8", text: "#3A5F80", bar: "#94B4D2" },
 };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-function formatTime(iso: string): string {
+function formatSmartDate(iso: string): string {
   const d = new Date(iso);
-  const h = d.getHours();
-  const m = d.getMinutes();
+  const now = new Date();
+  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(todayStart.getDate() + 1);
+  const dayAfter = new Date(tomorrowStart); dayAfter.setDate(tomorrowStart.getDate() + 1);
+  const h = d.getHours(); const m = d.getMinutes();
   const ampm = h >= 12 ? "PM" : "AM";
-  return `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${ampm}`;
+  const time = `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${ampm}`;
+  if (d >= todayStart && d < tomorrowStart) return `Today at ${time}`;
+  if (d >= tomorrowStart && d < dayAfter) return `Tomorrow at ${time}`;
+  return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()} at ${time}`;
 }
 
-function formatDateLabel(iso: string): string {
+function formatPastDate(iso: string): string {
   const d = new Date(iso);
-  return `${DAYS[d.getDay()]} ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+  return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
+
+type Tab = "upcoming" | "past";
 
 export default function InstructorHomeTab() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const isWeb = Platform.OS === "web";
+
   const [classes, setClasses] = useState<ScheduledClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("upcoming");
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
 
   const loadClasses = useCallback(async () => {
     setLoading(true);
@@ -56,52 +80,55 @@ export default function InstructorHomeTab() {
   useFocusEffect(useCallback(() => { loadClasses(); }, [loadClasses]));
 
   const now = new Date();
-  const weekEnd = new Date(now);
-  weekEnd.setDate(weekEnd.getDate() + 7);
-
-  const completed = classes.filter((c) => c.status === "completed");
-  const totalStudents = completed.reduce((sum, c) => sum + c.current_students, 0);
-  const totalClasses = classes.length;
-  const avgAttendance = completed.length > 0 ? (totalStudents / completed.length).toFixed(1) : "—";
-
   const upcoming = classes.filter(
-    (c) => c.status === "scheduled" && new Date(c.scheduled_at) >= now && new Date(c.scheduled_at) < weekEnd
-  );
+    (c) => new Date(c.scheduled_at) >= now && c.status !== "cancelled" && c.status !== "completed"
+  ).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+
+  const past = classes.filter(
+    (c) => new Date(c.scheduled_at) < now || c.status === "completed" || c.status === "cancelled"
+  ).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+
+  const doCancel = async (id: string) => {
+    setCancelling(id);
+    setConfirmCancelId(null);
+    try {
+      await cancelClass(id);
+      setClasses((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      if (isWeb) {
+        setError(err instanceof Error ? err.message : "Failed to cancel class.");
+      } else {
+        Alert.alert("Oops", err instanceof Error ? err.message : "Failed to cancel class.");
+      }
+    } finally {
+      setCancelling(null);
+    }
+  };
 
   const handleCancel = (cls: ScheduledClass) => {
-    Alert.alert(
-      "Cancel Class",
-      `Cancel "${cls.title}" on ${formatDateLabel(cls.scheduled_at)}?`,
-      [
-        { text: "Keep", style: "cancel" },
-        {
-          text: "Cancel Class",
-          style: "destructive",
-          onPress: async () => {
-            setCancelling(cls.id);
-            try {
-              await cancelClass(cls.id);
-              setClasses((prev) => prev.filter((c) => c.id !== cls.id));
-            } catch (err) {
-              Alert.alert("Oops", err instanceof Error ? err.message : "Failed to cancel class.");
-            } finally {
-              setCancelling(null);
-            }
-          },
-        },
-      ]
-    );
+    if (isWeb) {
+      setConfirmCancelId(cls.id);
+    } else {
+      Alert.alert(
+        "Cancel Class",
+        `Cancel "${cls.title}"?`,
+        [
+          { text: "Keep", style: "cancel" },
+          { text: "Cancel Class", style: "destructive", onPress: () => doCancel(cls.id) },
+        ]
+      );
+    }
   };
+
+  const displayed = tab === "upcoming" ? upcoming : past;
 
   return (
     <AuthGate>
       <RoleGuard requiredRole="host">
-        <ScrollView
-          style={[styles.container, { paddingTop: insets.top }]}
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-        >
+        <View style={[styles.root, { paddingTop: insets.top }]}>
+          {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Dashboard</Text>
+            <Text style={styles.headerTitle}>My Classes</Text>
             <TouchableOpacity
               style={styles.scheduleBtn}
               onPress={() => router.push("/host/schedule")}
@@ -112,6 +139,27 @@ export default function InstructorHomeTab() {
             </TouchableOpacity>
           </View>
 
+          {/* Tab row */}
+          <View style={styles.tabRow}>
+            {(["upcoming", "past"] as Tab[]).map((t) => (
+              <Pressable
+                key={t}
+                style={[styles.tabBtn, tab === t && styles.tabBtnActive]}
+                onPress={() => setTab(t)}
+              >
+                <Text style={[styles.tabBtnText, tab === t && styles.tabBtnTextActive]}>
+                  {t === "upcoming" ? "Upcoming" : "Past"}
+                  {t === "upcoming" && upcoming.length > 0 && (
+                    <Text style={tab === t ? styles.tabCountActive : styles.tabCount}>
+                      {"  "}{upcoming.length}
+                    </Text>
+                  )}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Content */}
           {loading ? (
             <View style={styles.centered}>
               <ActivityIndicator color="#00B4A6" />
@@ -125,100 +173,158 @@ export default function InstructorHomeTab() {
                 <Text style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
             </View>
+          ) : displayed.length === 0 ? (
+            <View style={styles.centered}>
+              <MaterialCommunityIcons
+                name={tab === "upcoming" ? "calendar-blank-outline" : "history"}
+                size={40}
+                color="#D0D0D0"
+              />
+              <Text style={styles.emptyTitle}>
+                {tab === "upcoming" ? "No upcoming classes" : "No past classes yet"}
+              </Text>
+              {tab === "upcoming" && (
+                <>
+                  <Text style={styles.emptySubtext}>Schedule one to get started</Text>
+                  <TouchableOpacity
+                    style={styles.emptyScheduleBtn}
+                    onPress={() => router.push("/host/schedule")}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.emptyScheduleBtnText}>Schedule a Class</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
           ) : (
-            <>
-              {/* Stats */}
-              <View style={styles.statsCard}>
-                <StatBox label="Students" value={totalStudents.toString()} />
-                <View style={styles.statDivider} />
-                <StatBox label="Classes" value={totalClasses.toString()} />
-                <View style={styles.statDivider} />
-                <StatBox label="Avg / Class" value={avgAttendance} />
-              </View>
+            <ScrollView
+              contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
+              showsVerticalScrollIndicator={false}
+            >
+              {displayed.map((cls) => {
+                const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F9F9F9", text: "#888888", bar: "#EEEEEE" };
+                const isConfirming = confirmCancelId === cls.id;
+                const isCancelling = cancelling === cls.id;
 
-              {/* Growth tip */}
-              <View style={styles.tipNote}>
-                <MaterialCommunityIcons name="lightning-bolt" size={14} color="#00B4A6" />
-                <Text style={styles.tipText}>
-                  Aim for <Text style={styles.tipBold}>2–3 classes/week</Text> to grow your audience.
-                </Text>
-              </View>
+                return (
+                  <View key={cls.id} style={styles.card}>
+                    {/* Color bar */}
+                    <View style={[styles.cardBar, { backgroundColor: colors.bar }]} />
 
-              {/* This Week */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>This Week</Text>
-
-                {upcoming.length === 0 ? (
-                  <View style={styles.emptyWeek}>
-                    <MaterialCommunityIcons name="calendar-blank-outline" size={32} color="#C0C0C0" />
-                    <Text style={styles.emptyWeekText}>No classes scheduled this week</Text>
-                    <TouchableOpacity
-                      style={styles.scheduleEmptyBtn}
-                      onPress={() => router.push("/host/schedule")}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.scheduleEmptyBtnText}>Schedule a Class</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={styles.classesList}>
-                    {upcoming.map((cls) => (
-                      <View key={cls.id} style={styles.classRow}>
-                        <View
-                          style={[
-                            styles.classColorBar,
-                            { backgroundColor: CATEGORY_COLORS[cls.category] ?? "#EEEEEE" },
-                          ]}
-                        />
-                        <View style={styles.classInfo}>
-                          <Text style={styles.classDateLabel}>{formatDateLabel(cls.scheduled_at)}</Text>
-                          <Text style={styles.classTitle} numberOfLines={1}>{cls.title}</Text>
-                          <Text style={styles.classMeta}>
-                            {formatTime(cls.scheduled_at)} · {cls.duration_minutes}min · {cls.current_students}/{cls.max_students} spots
+                    <View style={styles.cardBody}>
+                      {/* Top row: title + category badge */}
+                      <View style={styles.cardTopRow}>
+                        <Text style={styles.cardTitle} numberOfLines={2}>{cls.title}</Text>
+                        <View style={[styles.categoryBadge, { backgroundColor: colors.bg }]}>
+                          <Text style={[styles.categoryBadgeText, { color: colors.text }]}>
+                            {cls.category.charAt(0).toUpperCase() + cls.category.slice(1)}
                           </Text>
                         </View>
-                        <TouchableOpacity
-                          style={styles.cancelBtn}
-                          onPress={() => handleCancel(cls)}
-                          disabled={cancelling === cls.id}
-                          activeOpacity={0.7}
-                        >
-                          {cancelling === cls.id ? (
-                            <ActivityIndicator size="small" color="#EF4444" />
-                          ) : (
-                            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#EF4444" />
-                          )}
-                        </TouchableOpacity>
                       </View>
-                    ))}
+
+                      {/* Date/time */}
+                      <View style={styles.metaRow}>
+                        <MaterialCommunityIcons name="clock-outline" size={13} color="#888888" />
+                        <Text style={styles.metaText}>
+                          {tab === "upcoming" ? formatSmartDate(cls.scheduled_at) : formatPastDate(cls.scheduled_at)}
+                        </Text>
+                      </View>
+
+                      {/* Duration */}
+                      <View style={styles.metaRow}>
+                        <MaterialCommunityIcons name="timer-outline" size={13} color="#888888" />
+                        <Text style={styles.metaText}>{cls.duration_minutes} min</Text>
+                      </View>
+
+                      {/* Students */}
+                      <View style={styles.metaRow}>
+                        <MaterialCommunityIcons name="account-group-outline" size={13} color="#888888" />
+                        <Text style={styles.metaText}>
+                          {tab === "upcoming"
+                            ? `${cls.current_students}/${cls.max_students} students enrolled`
+                            : `${cls.current_students} student${cls.current_students !== 1 ? "s" : ""} attended`}
+                        </Text>
+                      </View>
+
+                      {/* Upcoming actions */}
+                      {tab === "upcoming" && (
+                        <View style={styles.actions}>
+                          {isConfirming ? (
+                            // Inline cancel confirmation (web-safe)
+                            <View style={styles.confirmRow}>
+                              <Text style={styles.confirmText}>Cancel this class?</Text>
+                              <View style={styles.confirmBtns}>
+                                <TouchableOpacity
+                                  style={styles.confirmKeepBtn}
+                                  onPress={() => setConfirmCancelId(null)}
+                                  activeOpacity={0.7}
+                                >
+                                  <Text style={styles.confirmKeepText}>Keep</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.confirmCancelBtn}
+                                  onPress={() => doCancel(cls.id)}
+                                  disabled={isCancelling}
+                                  activeOpacity={0.7}
+                                >
+                                  {isCancelling ? (
+                                    <ActivityIndicator size="small" color="#EF4444" />
+                                  ) : (
+                                    <Text style={styles.confirmCancelText}>Yes, Cancel</Text>
+                                  )}
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <>
+                              <TouchableOpacity
+                                style={styles.startBtn}
+                                onPress={() => router.push(`/host/room/${cls.id}` as never)}
+                                activeOpacity={0.85}
+                              >
+                                <MaterialCommunityIcons name="play-circle-outline" size={18} color="#FFFFFF" />
+                                <Text style={styles.startBtnText}>Start Class</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={styles.cancelClassBtn}
+                                onPress={() => handleCancel(cls)}
+                                disabled={isCancelling}
+                                activeOpacity={0.7}
+                              >
+                                {isCancelling ? (
+                                  <ActivityIndicator size="small" color="#EF4444" />
+                                ) : (
+                                  <Text style={styles.cancelClassBtnText}>Cancel Class</Text>
+                                )}
+                              </TouchableOpacity>
+                            </>
+                          )}
+                        </View>
+                      )}
+                    </View>
                   </View>
-                )}
-              </View>
-            </>
+                );
+              })}
+            </ScrollView>
           )}
-        </ScrollView>
+
+          {/* FAB — Schedule New Class */}
+          <TouchableOpacity
+            style={[styles.fab, { bottom: insets.bottom + 24 }]}
+            onPress={() => router.push("/host/schedule")}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </RoleGuard>
     </AuthGate>
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  content: {
-    gap: 0,
-  },
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -226,182 +332,106 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#2C2C2C",
-    letterSpacing: -0.3,
-  },
+  headerTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.3 },
   scheduleBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    backgroundColor: "#00B4A6", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+  },
+  scheduleBtnText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
+
+  tabRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "#00B4A6",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEEEEE",
+    marginHorizontal: 20,
+    marginBottom: 4,
   },
-  scheduleBtnText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  centered: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 80,
-    gap: 12,
-  },
-  errorText: {
-    fontSize: 14,
-    color: "#888888",
-    textAlign: "center",
-    paddingHorizontal: 32,
-  },
+  tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center" },
+  tabBtnActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
+  tabBtnText: { fontSize: 15, fontWeight: "500", color: "#888888" },
+  tabBtnTextActive: { color: "#2C2C2C", fontWeight: "700" },
+  tabCount: { fontSize: 13, color: "#C0C0C0" },
+  tabCountActive: { fontSize: 13, color: "#00B4A6" },
+
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingBottom: 60 },
+  errorText: { fontSize: 14, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
   retryBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+  },
+  retryText: { fontSize: 13, fontWeight: "500", color: "#007A70" },
+
+  emptyTitle: { fontSize: 16, fontWeight: "600", color: "#2C2C2C" },
+  emptySubtext: { fontSize: 13, color: "#888888" },
+  emptyScheduleBtn: {
+    backgroundColor: "#00B4A6", borderRadius: 10,
+    paddingHorizontal: 20, paddingVertical: 11, marginTop: 4,
+  },
+  emptyScheduleBtnText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
+
+  list: { paddingHorizontal: 16, paddingTop: 12, gap: 14 },
+
+  card: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#E0F7F5",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  retryText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#007A70",
-  },
-  statsCard: {
-    flexDirection: "row",
-    marginHorizontal: 20,
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
-    paddingVertical: 18,
-    marginBottom: 12,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: "center",
-    gap: 3,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#2C2C2C",
-    letterSpacing: -0.4,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: "#888888",
-    textAlign: "center",
-    fontWeight: "500",
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: "#EEEEEE",
-    marginVertical: 6,
-  },
-  tipNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginBottom: 24,
-    backgroundColor: "#E0F7F5",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "#D4E8CC",
-  },
-  tipText: {
-    fontSize: 13,
-    color: "#888888",
-    flex: 1,
-    lineHeight: 18,
-  },
-  tipBold: {
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  section: {
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  emptyWeek: {
-    alignItems: "center",
-    paddingVertical: 40,
-    gap: 10,
-  },
-  emptyWeekText: {
-    fontSize: 14,
-    color: "#888888",
-    textAlign: "center",
-  },
-  scheduleEmptyBtn: {
-    backgroundColor: "#00B4A6",
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 11,
-    marginTop: 4,
-  },
-  scheduleEmptyBtnText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  classesList: {
-    gap: 8,
-  },
-  classRow: {
-    flexDirection: "row",
-    alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "#EEEEEE",
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  classColorBar: {
-    width: 4,
-    alignSelf: "stretch",
-  },
-  classInfo: {
-    flex: 1,
+  cardBar: { width: 5, alignSelf: "stretch" },
+  cardBody: { flex: 1, padding: 16, gap: 6 },
+
+  cardTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 2 },
+  cardTitle: { flex: 1, fontSize: 17, fontWeight: "700", color: "#2C2C2C", lineHeight: 22 },
+  categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, flexShrink: 0 },
+  categoryBadgeText: { fontSize: 11, fontWeight: "600" },
+
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  metaText: { fontSize: 13, color: "#666666" },
+
+  actions: { marginTop: 10, gap: 8 },
+  startBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, backgroundColor: "#00B4A6", borderRadius: 10,
     paddingVertical: 12,
-    paddingLeft: 12,
-    gap: 2,
   },
-  classDateLabel: {
-    fontSize: 11,
-    color: "#888888",
-    fontWeight: "500",
+  startBtnText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
+  cancelClassBtn: { alignItems: "center", paddingVertical: 6 },
+  cancelClassBtnText: { fontSize: 13, color: "#EF4444", fontWeight: "500" },
+
+  confirmRow: { gap: 8 },
+  confirmText: { fontSize: 13, color: "#2C2C2C", fontWeight: "500", textAlign: "center" },
+  confirmBtns: { flexDirection: "row", gap: 10 },
+  confirmKeepBtn: {
+    flex: 1, alignItems: "center", paddingVertical: 9,
+    borderRadius: 8, borderWidth: 1, borderColor: "#EEEEEE",
   },
-  classTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2C2C2C",
+  confirmKeepText: { fontSize: 13, color: "#888888", fontWeight: "500" },
+  confirmCancelBtn: {
+    flex: 1, alignItems: "center", paddingVertical: 9,
+    borderRadius: 8, backgroundColor: "#FEF2F2",
   },
-  classMeta: {
-    fontSize: 12,
-    color: "#888888",
-  },
-  cancelBtn: {
-    padding: 14,
+  confirmCancelText: { fontSize: 13, color: "#EF4444", fontWeight: "600" },
+
+  fab: {
+    position: "absolute",
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#00B4A6",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
   },
 });
