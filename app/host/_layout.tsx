@@ -97,7 +97,7 @@ export default function HostLayout() {
   if (appState === "loading") {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color="#87A878" />
+        <ActivityIndicator color="#00B4A6" />
       </View>
     );
   }
@@ -188,7 +188,7 @@ function ApplicationQuestionnaire({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formIconWrap}>
-          <MaterialCommunityIcons name="clipboard-text-outline" size={32} color="#87A878" />
+          <MaterialCommunityIcons name="clipboard-text-outline" size={32} color="#00B4A6" />
         </View>
         <Text style={styles.formTitle}>Instructor Application</Text>
         <Text style={styles.formSubtitle}>
@@ -206,7 +206,7 @@ function ApplicationQuestionnaire({
             placeholder="e.g. Beginner yoga, beginner piano, GCSE math tutoring…"
             style={styles.textInput}
             outlineColor="#EEEEEE"
-            activeOutlineColor="#87A878"
+            activeOutlineColor="#00B4A6"
             textColor="#2C2C2C"
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
             maxLength={500}
@@ -224,7 +224,7 @@ function ApplicationQuestionnaire({
             placeholder="Share your passion and motivation…"
             style={styles.textInput}
             outlineColor="#EEEEEE"
-            activeOutlineColor="#87A878"
+            activeOutlineColor="#00B4A6"
             textColor="#2C2C2C"
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
             maxLength={500}
@@ -242,7 +242,7 @@ function ApplicationQuestionnaire({
             placeholder="Certifications, years of experience, training…"
             style={styles.textInput}
             outlineColor="#EEEEEE"
-            activeOutlineColor="#87A878"
+            activeOutlineColor="#00B4A6"
             textColor="#2C2C2C"
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
             maxLength={500}
@@ -284,7 +284,7 @@ function PendingApproval({
   return (
     <View style={[styles.pendingContainer, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.pendingIconWrap}>
-        <MaterialCommunityIcons name="check-circle-outline" size={40} color="#87A878" />
+        <MaterialCommunityIcons name="check-circle-outline" size={40} color="#00B4A6" />
       </View>
       <Text style={styles.pendingTitle}>Application Received!</Text>
       <Text style={styles.pendingBody}>
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9F9F9",
   },
   submitBtn: {
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
@@ -414,9 +414,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderWidth: 2,
-    borderColor: "#87A878",
+    borderColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   pendingEmailBox: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   },
   pendingEmailLabel: {
     fontSize: 11,
-    color: "#4A7A40",
+    color: "#007A70",
     fontWeight: "500",
   },
   pendingEmailValue: {
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#87A878",
+    backgroundColor: "#00B4A6",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,

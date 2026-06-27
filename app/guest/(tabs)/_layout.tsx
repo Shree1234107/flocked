@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform, View } from "react-native";
 
 import { useBreakpoint } from "../../../lib/useBreakpoint";
-import { DesktopSidebar } from "../../../components/DesktopSidebar";
+import { WebSidebar } from "../../../components/WebSidebar";
 
 export default function GuestTabsLayout() {
   const insets = useSafeAreaInsets();
@@ -26,7 +26,7 @@ export default function GuestTabsLayout() {
             backgroundColor: "#FFFFFF",
           }}
         >
-          <DesktopSidebar />
+          <WebSidebar role="guest" />
           <View style={{ flex: 1, overflow: "hidden" as any }}>
             <Slot />
           </View>
@@ -39,24 +39,21 @@ export default function GuestTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#87A878",
+        tabBarActiveTintColor: "#00B4A6",
         tabBarInactiveTintColor: "#C0C0C0",
-        tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#EEEEEE",
-          borderTopWidth: 1,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom + 4,
-          paddingTop: 8,
-          elevation: 0,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "500",
-        },
-        tabBarItemStyle: {
-          paddingVertical: Platform.OS === "android" ? 4 : 0,
-        },
+        tabBarStyle: Platform.OS === "web"
+          ? { display: "none" }
+          : {
+              backgroundColor: "#FFFFFF",
+              borderTopColor: "#EEEEEE",
+              borderTopWidth: 1,
+              height: 60 + insets.bottom,
+              paddingBottom: insets.bottom + 4,
+              paddingTop: 8,
+              elevation: 0,
+            },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
+        tabBarItemStyle: { paddingVertical: Platform.OS === "android" ? 4 : 0 },
       }}
     >
       <Tabs.Screen

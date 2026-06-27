@@ -27,8 +27,8 @@ type TimeFilter = "Today" | "Tomorrow" | "This Week" | "All";
 type FeedTab = "For You" | "Following";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; label: string }> = {
-  Yoga: { bg: "#F0F5EE", dot: "#87A878", label: "#4A7A40" },
-  Dance: { bg: "#FDF0F2", dot: "#F4B8C1", label: "#A04060" },
+  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", label: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", label: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", label: "#3A5F80" },
 };
 
@@ -454,11 +454,11 @@ export default function GuestDiscoverTab() {
           {/* Content */}
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color="#87A878" />
+              <ActivityIndicator color="#00B4A6" />
             </View>
           ) : error ? (
             <View style={styles.centered}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#F4B8C1" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity style={styles.retryBtn} onPress={() => loadData()} activeOpacity={0.7}>
                 <Text style={styles.retryText}>Try again</Text>
@@ -488,7 +488,7 @@ export default function GuestDiscoverTab() {
               ]}
               showsVerticalScrollIndicator={false}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#87A878" />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B4A6" />
               }
             >
               {/* Featured instructors (desktop only) */}
@@ -548,18 +548,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
-  headerDesktop: { paddingVertical: 20, paddingHorizontal: 28 },
+  headerDesktop: { paddingVertical: 24, paddingHorizontal: 32 },
   headerTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.3 },
   headerTitleDesktop: { fontSize: 36, letterSpacing: -0.5 },
   bellBtn: { position: "relative", padding: 4 },
   bellDot: {
     position: "absolute", top: 4, right: 4, width: 7, height: 7,
-    borderRadius: 4, backgroundColor: "#87A878", borderWidth: 1.5, borderColor: "#FFFFFF",
+    borderRadius: 4, backgroundColor: "#00B4A6", borderWidth: 1.5, borderColor: "#FFFFFF",
   },
 
   // ── Search ──────────────────────────────────────────────────────────────────
   searchRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
-  searchRowDesktop: { paddingHorizontal: 28 },
+  searchRowDesktop: { paddingHorizontal: 32 },
   searchInputWrap: {
     flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: "#F9F9F9", borderRadius: 10, borderWidth: 1,
@@ -570,14 +570,14 @@ const styles = StyleSheet.create({
     width: 44, height: 44, borderRadius: 10, backgroundColor: "#F9F9F9",
     borderWidth: 1, borderColor: "#EEEEEE", alignItems: "center", justifyContent: "center",
   },
-  filterBtnActive: { backgroundColor: "#87A878", borderColor: "#87A878" },
+  filterBtnActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
 
   // ── Filters ─────────────────────────────────────────────────────────────────
   desktopFiltersRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 28,
-    paddingBottom: 10,
+    paddingHorizontal: 32,
+    paddingBottom: 12,
     gap: 8,
   },
   desktopFilterDivider: { width: 1, height: 20, backgroundColor: "#EEEEEE" },
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
   timeFilterTextActive: { fontWeight: "700", color: "#2C2C2C" },
   timeFilterUnderline: {
     position: "absolute", bottom: 0, left: 12, right: 12,
-    height: 2, backgroundColor: "#87A878", borderRadius: 1,
+    height: 2, backgroundColor: "#00B4A6", borderRadius: 1,
   },
   filterRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
   filterRowInline: { gap: 8 },
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 7, borderRadius: 8,
     backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
   },
-  filterChipActive: { backgroundColor: "#87A878", borderColor: "#87A878" },
+  filterChipActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
   filterChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
   filterChipTextActive: { color: "#FFFFFF", fontWeight: "600" },
 
@@ -605,10 +605,10 @@ const styles = StyleSheet.create({
     flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#EEEEEE",
     marginHorizontal: 16, marginBottom: 8,
   },
-  feedTabRowDesktop: { marginHorizontal: 28 },
+  feedTabRowDesktop: { marginHorizontal: 32 },
   feedTab: { flex: 1, paddingVertical: 10, alignItems: "center" },
   feedTabDesktop: { paddingVertical: 14 },
-  feedTabActive: { borderBottomWidth: 2, borderBottomColor: "#87A878" },
+  feedTabActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
   feedTabText: { fontSize: 14, fontWeight: "500", color: "#888888" },
   feedTabTextDesktop: { fontSize: 16 },
   feedTabTextActive: { fontWeight: "700", color: "#2C2C2C" },
@@ -616,24 +616,24 @@ const styles = StyleSheet.create({
   // ── States ──────────────────────────────────────────────────────────────────
   centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingBottom: 60 },
   errorText: { fontSize: 14, color: "#888", textAlign: "center" },
-  retryBtn: { backgroundColor: "#F0F5EE", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  retryText: { fontSize: 13, fontWeight: "600", color: "#87A878" },
+  retryBtn: { backgroundColor: "#E0F7F5", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  retryText: { fontSize: 13, fontWeight: "600", color: "#00B4A6" },
   emptyText: { fontSize: 16, fontWeight: "600", color: "#2C2C2C" },
   emptySubtext: { fontSize: 13, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
-  emptyHint: { backgroundColor: "#F0F5EE", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 4 },
-  emptyHintText: { fontSize: 13, fontWeight: "500", color: "#4A7A40" },
+  emptyHint: { backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 4 },
+  emptyHintText: { fontSize: 13, fontWeight: "500", color: "#007A70" },
 
   // ── List / grid ──────────────────────────────────────────────────────────────
-  listContent: { paddingHorizontal: 16, paddingTop: 8, gap: 24 },
-  listContentDesktop: { paddingHorizontal: 28 },
-  daySection: { gap: 8 },
+  listContent: { paddingHorizontal: 20, paddingTop: 8, gap: 24 },
+  listContentDesktop: { paddingHorizontal: 32 },
+  daySection: { gap: 12 },
   dayHeader: {
     fontSize: 12, fontWeight: "600", color: "#888888",
     textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2,
   },
 
   // Desktop 2-column grid
-  cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 20 },
+  cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
   cardGridItem: { flex: 1, minWidth: 260, maxWidth: "50%" as any },
 
   // ── Class card ──────────────────────────────────────────────────────────────
@@ -645,16 +645,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   classCardHovered: {
-    borderColor: "#C8DCC0",
-    shadowColor: "#87A878",
+    borderColor: "#9FE0DC",
+    shadowColor: "#00B4A6",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 3,
   },
   classCardBar: { width: 4, alignSelf: "stretch" },
-  classCardBody: { flex: 1, padding: 12, gap: 3 },
-  classCardBodyDesktop: { padding: 16, gap: 5 },
+  classCardBody: { flex: 1, padding: 14, gap: 4 },
+  classCardBodyDesktop: { padding: 20, gap: 6 },
   classCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   classCardTime: { fontSize: 12, fontWeight: "600", color: "#888888" },
   classCardTimeDesktop: { fontSize: 13 },
@@ -662,14 +662,14 @@ const styles = StyleSheet.create({
   categoryBadgeText: { fontSize: 10, fontWeight: "600" },
   classCardTitle: { fontSize: 15, fontWeight: "600", color: "#2C2C2C" },
   classCardTitleDesktop: { fontSize: 17 },
-  classCardHost: { fontSize: 12, color: "#87A878", fontWeight: "500" },
+  classCardHost: { fontSize: 12, color: "#00B4A6", fontWeight: "500" },
   classCardBio: { fontSize: 13, color: "#888888", lineHeight: 18 },
   ratingText: { fontSize: 11, color: "#F4A200", fontWeight: "600" },
   classCardMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 },
   urgencyText: { fontSize: 11, color: "#E05555", fontWeight: "600" },
-  spotsBadge: { backgroundColor: "#F0F5EE", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
+  spotsBadge: { backgroundColor: "#E0F7F5", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
   spotsBadgeFull: { backgroundColor: "#FEF2F2" },
-  spotsText: { fontSize: 11, fontWeight: "500", color: "#4A7A40" },
+  spotsText: { fontSize: 11, fontWeight: "500", color: "#007A70" },
   spotsTextFull: { color: "#EF4444" },
 
   // ── Featured instructors (desktop) ──────────────────────────────────────────
@@ -687,8 +687,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   featuredCardHovered: {
-    borderColor: "#C8DCC0",
-    shadowColor: "#87A878",
+    borderColor: "#9FE0DC",
+    shadowColor: "#00B4A6",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -698,19 +698,19 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
-  featuredInitials: { fontSize: 18, fontWeight: "700", color: "#87A878" },
+  featuredInitials: { fontSize: 18, fontWeight: "700", color: "#00B4A6" },
   featuredName: { fontSize: 13, fontWeight: "600", color: "#2C2C2C", textAlign: "center" },
   featuredRating: { fontSize: 12, color: "#F4A200", fontWeight: "500" },
   featuredFollowBtn: {
-    backgroundColor: "#F0F5EE",
+    backgroundColor: "#E0F7F5",
     paddingHorizontal: 14,
     paddingVertical: 5,
     borderRadius: 20,
     marginTop: 2,
   },
-  featuredFollowText: { fontSize: 12, fontWeight: "600", color: "#4A7A40" },
+  featuredFollowText: { fontSize: 12, fontWeight: "600", color: "#007A70" },
 });
