@@ -1,94 +1,356 @@
-// TODO: re-enable auth before launch
-// Magic link / OTP flow is temporarily disabled for dev testing.
-// To restore: git diff HEAD~1 -- app/login.tsx
-
 import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { Text } from "react-native-paper";
-import { useRouter } from "expo-router";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Text, TextInput } from "react-native-paper";
+import { Redirect, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
+import { supabase } from "../lib/supabase";
+import { getAuthRedirectUri } from "../lib/auth-helpers";
+
+function friendlyAuthError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  const lower = msg.toLowerCase();
+  if (lower.includes("email rate limit") || lower.includes("rate limit"))
+    return "Too many sign-in attempts. Please wait a minute and try again.";
+  if (lower.includes("email already") || lower.includes("already registered"))
+    return "This email is already registered. Check your inbox for a sign-in link, or try a different email.";
+  if (lower.includes("invalid email"))
+    return "Please enter a valid email address.";
+  if (lower.includes("network") || lower.includes("fetch"))
+    return "Network error — please check your connection and try again.";
+  return msg || "Failed to send sign-in link. Please try again.";
+}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { setRole } = useRole();
-  const [loading, setLoading] = useState(false);
+  const { session, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading, setRole } = useRole();
 
-  const enterAs = async (role: "guest" | "host") => {
-    setLoading(true);
-    await setRole(role);
-    router.replace(role === "guest" ? "/guest" : "/host");
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleSendMagicLink = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+    setErrorMsg(null);
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: { emailRedirectTo: getAuthRedirectUri() },
+      });
+      if (error) throw error;
+      setSent(true);
+    } catch (err) {
+      setErrorMsg(friendlyAuthError(err));
+    } finally {
+      setSending(false);
+    }
   };
 
+  // Dev bypass — only shown when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set
+  const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
+
+  const handleDevBypass = async (targetRole: "guest" | "host") => {
+    const credentials = {
+      guest: { email: "student@flockd.test", password: "devbypass123" },
+      host: { email: "instructor@flockd.test", password: "devbypass123" },
+    }[targetRole];
+
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword(credentials);
+      if (error) throw error;
+      await setRole(targetRole);
+      router.replace(targetRole === "guest" ? "/guest" : "/host");
+    } catch (err) {
+      Alert.alert("Dev bypass failed", friendlyAuthError(err));
+      setSending(false);
+    }
+  };
+
+  if (!authLoading && !roleLoading && session && role) {
+    return <Redirect href="/" />;
+  }
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 32 }]}>
-      {/* Logo */}
-      <View style={styles.brand}>
-        <MaterialCommunityIcons name="leaf-circle-outline" size={40} color="#87A878" />
-        <Text style={styles.wordmark}>Flockd</Text>
-        <Text style={styles.tagline}>Live classes from real instructors</Text>
+    <KeyboardAvoidingView
+      style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={styles.container}>
+        {/* Wordmark */}
+        <View style={styles.brandSection}>
+          <View style={styles.logoMark}>
+            <MaterialCommunityIcons name="leaf-circle-outline" size={32} color="#87A878" />
+          </View>
+          <Text style={styles.wordmark}>Flockd</Text>
+          <Text style={styles.tagline}>Live classes from real instructors</Text>
+        </View>
+
+        {sent ? (
+          <View style={styles.sentCard}>
+            <View style={styles.sentIconWrap}>
+              <MaterialCommunityIcons name="email-check-outline" size={28} color="#87A878" />
+            </View>
+            <Text style={styles.sentTitle}>Check your inbox</Text>
+            <Text style={styles.sentBody}>
+              We sent a sign-in link to{"\n"}
+              <Text style={styles.sentEmail}>{email.trim()}</Text>
+            </Text>
+            <Text style={styles.sentHint}>
+              Didn't get it? Check your spam folder, or tap below to try again.
+            </Text>
+            <TouchableOpacity
+              onPress={() => { setSent(false); setEmail(""); setErrorMsg(null); }}
+              activeOpacity={0.7}
+              style={styles.resendBtn}
+            >
+              <Text style={styles.resendText}>Use a different email</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.formSection}>
+            <TextInput
+              label="Email address"
+              value={email}
+              onChangeText={(t) => { setEmail(t); setErrorMsg(null); }}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              returnKeyType="send"
+              onSubmitEditing={handleSendMagicLink}
+              mode="outlined"
+              style={styles.emailInput}
+              outlineColor={errorMsg ? "#E05555" : "#EEEEEE"}
+              activeOutlineColor={errorMsg ? "#E05555" : "#87A878"}
+              textColor="#2C2C2C"
+              theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
+            />
+
+            {errorMsg && (
+              <View style={styles.errorBox}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={15} color="#E05555" />
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.primaryBtn, sending && styles.btnDisabled]}
+              onPress={handleSendMagicLink}
+              disabled={sending}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.primaryBtnText}>
+                {sending ? "Sending…" : "Continue with email"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or sign in as</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.roleCard}>
+              <TouchableOpacity
+                style={styles.roleRow}
+                onPress={() => router.push("/login/guest")}
+                activeOpacity={0.75}
+              >
+                <View style={styles.roleIconWrap}>
+                  <MaterialCommunityIcons name="account-outline" size={20} color="#87A878" />
+                </View>
+                <View style={styles.roleTextWrap}>
+                  <Text style={styles.roleTitle}>Student</Text>
+                  <Text style={styles.roleSub}>Browse and join live classes</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={18} color="#C0C0C0" />
+              </TouchableOpacity>
+
+              <View style={styles.roleSep} />
+
+              <TouchableOpacity
+                style={styles.roleRow}
+                onPress={() => router.push("/login/instructor")}
+                activeOpacity={0.75}
+              >
+                <View style={styles.roleIconWrap}>
+                  <MaterialCommunityIcons name="school-outline" size={20} color="#87A878" />
+                </View>
+                <View style={styles.roleTextWrap}>
+                  <Text style={styles.roleTitle}>Teacher</Text>
+                  <Text style={styles.roleSub}>Teach and run live sessions</Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={18} color="#C0C0C0" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Dev bypass — only shown when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set */}
+            {devEmail && (
+              <View style={styles.devSection}>
+                <View style={styles.devDividerRow}>
+                  <View style={styles.devDividerLine} />
+                  <Text style={styles.devDividerText}>dev</Text>
+                  <View style={styles.devDividerLine} />
+                </View>
+                <TouchableOpacity
+                  style={[styles.devBtn, sending && styles.btnDisabled]}
+                  onPress={() => handleDevBypass("guest")}
+                  disabled={sending}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
+                  <Text style={styles.devBtnText}>Enter as Student (Dev)</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.devBtn, sending && styles.btnDisabled]}
+                  onPress={() => handleDevBypass("host")}
+                  disabled={sending}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons name="code-tags" size={13} color="#87A878" />
+                  <Text style={styles.devBtnText}>Enter as Instructor (Dev)</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
       </View>
-
-      {/* Role buttons */}
-      <View style={styles.buttons}>
-        <TouchableOpacity
-          style={[styles.btn, styles.btnPrimary, loading && styles.btnDisabled]}
-          onPress={() => enterAs("guest")}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          <MaterialCommunityIcons name="account-outline" size={20} color="#FFFFFF" />
-          <Text style={styles.btnPrimaryText}>Enter as Student</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.btn, styles.btnOutline, loading && styles.btnDisabled]}
-          onPress={() => enterAs("host")}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          <MaterialCommunityIcons name="school-outline" size={20} color="#87A878" />
-          <Text style={styles.btnOutlineText}>Enter as Instructor</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.devNote}>dev mode — auth disabled</Text>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
-    gap: 40,
+    paddingHorizontal: 24,
+    gap: 32,
   },
-  brand: { alignItems: "center", gap: 10 },
-  wordmark: { fontSize: 34, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.5 },
-  tagline: { fontSize: 14, color: "#888888" },
-  buttons: { width: "100%", gap: 14 },
-  btn: {
+  brandSection: { alignItems: "center", gap: 8 },
+  logoMark: { marginBottom: 2 },
+  wordmark: { fontSize: 32, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.5 },
+  tagline: { fontSize: 14, color: "#888888", fontWeight: "400" },
+
+  formSection: { width: "100%", gap: 12 },
+  emailInput: { backgroundColor: "#FFFFFF" },
+
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    backgroundColor: "#FFF0F0",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
+
+  primaryBtn: {
+    backgroundColor: "#87A878",
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  btnDisabled: { opacity: 0.5 },
+  primaryBtnText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
+
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#EEEEEE" },
+  dividerText: { fontSize: 13, color: "#888888" },
+
+  roleCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#EEEEEE",
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  roleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+  },
+  roleIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: "#F0F5EE",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  roleTextWrap: { flex: 1, gap: 2 },
+  roleTitle: { fontSize: 14, fontWeight: "600", color: "#2C2C2C" },
+  roleSub: { fontSize: 12, color: "#888888" },
+  roleSep: { height: 1, backgroundColor: "#EEEEEE", marginLeft: 64 },
+
+  sentCard: {
+    width: "100%",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#EEEEEE",
+    padding: 32,
+    gap: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  sentIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#F0F5EE",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  sentTitle: { fontSize: 20, fontWeight: "700", color: "#2C2C2C" },
+  sentBody: { fontSize: 14, color: "#888888", textAlign: "center", lineHeight: 22 },
+  sentEmail: { fontWeight: "600", color: "#2C2C2C" },
+  sentHint: { fontSize: 12, color: "#AAA", textAlign: "center", lineHeight: 18 },
+  resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
+  resendText: { fontSize: 14, fontWeight: "500", color: "#87A878" },
+
+  devSection: { gap: 4 },
+  devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 2 },
+  devDividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
+  devDividerText: { fontSize: 10, color: "#C0C0C0", letterSpacing: 0.5, textTransform: "uppercase" },
+  devBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    borderRadius: 14,
-    paddingVertical: 17,
+    gap: 6,
+    paddingVertical: 10,
   },
-  btnPrimary: { backgroundColor: "#87A878" },
-  btnPrimaryText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
-  btnOutline: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#87A878",
-  },
-  btnOutlineText: { fontSize: 16, fontWeight: "700", color: "#87A878" },
-  btnDisabled: { opacity: 0.5 },
-  devNote: { fontSize: 11, color: "#C0C0C0", letterSpacing: 0.3 },
+  devBtnText: { fontSize: 12, color: "#87A878", fontWeight: "500" },
 });
