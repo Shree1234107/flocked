@@ -1090,7 +1090,7 @@ app.get("/api/classes", requireAuth, async (req, res) => {
     let query = supabase
       .from("scheduled_classes")
       .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
-      .eq("status", "scheduled")
+      .eq("status", "upcoming")
       .order("scheduled_at", { ascending: true })
       .limit(500);
 
@@ -1196,7 +1196,7 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
       max_students: maxStudents,
       current_students: 0,
       description: description ?? null,
-      status: "scheduled",
+      status: "upcoming",
     })
     .select()
     .single();
@@ -1250,7 +1250,7 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
     .single();
 
   if (fetchError || !cls) return fail(res, "Class not found.", 404);
-  if (cls.status !== "scheduled") return fail(res, "This class is no longer available.");
+  if (cls.status !== "upcoming") return fail(res, "This class is no longer available.");
   if (cls.current_students >= cls.max_students) return fail(res, "This class is full.");
 
   const { data: existing } = await supabase
@@ -1389,7 +1389,7 @@ app.post("/api/classes/:id/waitlist", requireAuth, requireUserRole(["guest"]), a
     .single();
 
   if (!cls) return fail(res, "Class not found.", 404);
-  if (cls.status !== "scheduled") return fail(res, "This class is no longer available.");
+  if (cls.status !== "upcoming") return fail(res, "This class is no longer available.");
   if (cls.current_students < cls.max_students)
     return fail(res, "There are still open spots — join directly.");
 
