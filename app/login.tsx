@@ -16,7 +16,6 @@ import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri } from "../lib/auth-helpers";
-import * as SecureStore from "../lib/secure-store";
 import { fonts } from "../lib/fonts";
 
 function friendlyAuthError(err: unknown): string {
@@ -37,7 +36,7 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading } = useRole();
+  const { role, loading: roleLoading, setRole } = useRole();
 
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -87,27 +86,25 @@ export default function LoginScreen() {
     console.log("[bypass] 2. signInWithPassword OK, user:", data.session?.user?.email);
     console.log("[bypass] session after login:", data.session ? "found" : "null");
 
-    // Set role in user_profiles via backend using the fresh token directly
-    const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
-    try {
-      const response = await fetch(`${apiBase}/api/auth/role`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${data.session!.access_token}`,
-        },
-        body: JSON.stringify({ role: targetRole }),
-      });
-      console.log("[bypass] set role response:", response.status);
-      const body = await response.json().catch(() => null);
-      console.log("[bypass] set role body:", body);
-    } catch (err) {
-      console.log("[bypass] set role error:", err);
-    }
+    // Update RoleProvider React state + SecureStore immediately so any
+    // re-render triggered by the new session sees the correct role.
+    // (Writing SecureStore directly without this would leave a stale "guest"
+    // role in React state, causing the login redirect to send to /guest.)
+    await setRole(targetRole);
+    console.log("[bypass] role set in state:", targetRole);
 
-    // Write role to SecureStore so RoleProvider picks it up locally
-    await SecureStore.setItemAsync("flocked.role", targetRole);
-    console.log("[bypass] SecureStore role set:", targetRole);
+    // Sync role to server in background (non-blocking)
+    const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
+    fetch(`${apiBase}/api/auth/role`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${data.session!.access_token}`,
+      },
+      body: JSON.stringify({ role: targetRole }),
+    })
+      .then((r) => console.log("[bypass] set role response:", r.status))
+      .catch((err) => console.log("[bypass] set role error:", err));
 
     // Navigate
     const dest = targetRole === "guest" ? "/guest/(tabs)/index" : "/host/(tabs)/index";
