@@ -46,8 +46,16 @@ const PORT = process.env.PORT || 3000;
 app.use(
   cors({
     origin: (origin, callback) => {
+      const EXPLICIT = new Set([
+        "https://flocked1.netlify.app",
+        "https://flocked-online.com",
+        "http://localhost:8080",
+        "http://localhost:8081",
+        "http://localhost:8082",
+      ]);
       const allowed =
         !origin ||
+        EXPLICIT.has(origin) ||
         /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
         /^https?:\/\/(?:10|192\.168)\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
         /\.railway\.app$/.test(origin) ||
