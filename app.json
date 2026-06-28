@@ -13,13 +13,25 @@
       "@livekit/react-native-expo-plugin",
       "@config-plugins/react-native-webrtc",
       "expo-router",
-      ["expo-web-browser", {"experimentalLauncherActivity": false}],
-      ["expo-location", {
-        "locationWhenInUsePermission": "Flocked needs your location to find rooms near you."
-      }],
-      ["expo-image-picker", {
-        "photosPermission": "Flocked needs access to your photos to set a profile picture."
-      }]
+      [
+        "expo-web-browser",
+        {
+          "experimentalLauncherActivity": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Flocked needs your location to find rooms near you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Flocked needs access to your photos to set a profile picture."
+        }
+      ],
+      "expo-font"
     ],
     "ios": {
       "bundleIdentifier": "com.akshayjoshi.flocked",

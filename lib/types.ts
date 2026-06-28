@@ -38,7 +38,7 @@ export type InstructorApplicationStatus = {
 };
 
 export type ClassCategory = "Yoga" | "Dance" | "Tutoring";
-export type ClassStatus = "scheduled" | "live" | "completed" | "cancelled";
+export type ClassStatus = "upcoming" | "scheduled" | "live" | "completed" | "cancelled";
 export type ClassDuration = 30 | 45 | 60 | 90;
 
 export type ScheduledClass = {
