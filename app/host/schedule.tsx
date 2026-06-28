@@ -20,12 +20,6 @@ import { createClass } from "../../lib/api";
 const CATEGORIES = ["Yoga", "Dance", "Tutoring"] as const;
 const DURATIONS = [30, 45, 60, 90] as const;
 
-const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  Yoga: { bg: "#E0F7F5", border: "#00B4A6", text: "#007A70" },
-  Dance: { bg: "#FDF0F2", border: "#E0F7F5", text: "#A04060" },
-  Tutoring: { bg: "#EEF3F8", border: "#94B4D2", text: "#3A5F80" },
-};
-
 function getDateChips(): Date[] {
   return Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
@@ -64,7 +58,6 @@ function getDefaultWebDatetime(): string {
   const d = new Date();
   d.setHours(9, 0, 0, 0);
   if (d <= new Date()) d.setDate(d.getDate() + 1);
-  // "YYYY-MM-DDTHH:MM" for datetime-local input value
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T09:00`;
 }
@@ -153,42 +146,44 @@ export default function ScheduleClassScreen() {
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
       keyboardShouldPersistTaps="handled"
     >
+      <Text style={styles.pageTitle}>Schedule a class</Text>
+      <View style={styles.titleDivider} />
+
       {/* Title */}
       <View style={styles.section}>
-        <Text style={styles.label}>Class Title</Text>
+        <Text style={styles.label}>CLASS TITLE</Text>
         <TextInput
           value={title}
           onChangeText={(t) => { setTitle(t); setInlineError(null); }}
           mode="outlined"
           placeholder="e.g. Beginner Morning Yoga"
           style={styles.textInput}
-          outlineColor="#EEEEEE"
-          activeOutlineColor="#00B4A6"
-          textColor="#2C2C2C"
-          theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
+          outlineColor="#E8E8E8"
+          activeOutlineColor="#0F0F0F"
+          textColor="#0F0F0F"
+          theme={{ colors: { onSurfaceVariant: "#B0B0B0", background: "#FFFFFF" } }}
           maxLength={100}
         />
       </View>
 
       {/* Category */}
       <View style={styles.section}>
-        <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>CATEGORY</Text>
         <View style={styles.chipRow}>
           {CATEGORIES.map((cat) => {
-            const colors = CATEGORY_COLORS[cat];
             const selected = category === cat;
             return (
               <Pressable
                 key={cat}
                 style={(state: any) => [
-                  styles.categoryChip,
-                  selected && { backgroundColor: colors.bg, borderColor: colors.border },
+                  styles.chip,
+                  selected && styles.chipSelected,
                   !selected && state.hovered && styles.chipHovered,
                   isWeb && ({ cursor: "pointer" } as any),
                 ]}
                 onPress={() => setCategory(cat)}
               >
-                <Text style={[styles.categoryChipText, selected && { color: colors.text, fontWeight: "600" }]}>
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
                   {cat}
                 </Text>
               </Pressable>
@@ -197,11 +192,11 @@ export default function ScheduleClassScreen() {
         </View>
       </View>
 
-      {/* Date + Time — datetime-local on web, chip rows on mobile */}
+      {/* Date + Time */}
       {isWeb ? (
         <View style={styles.section}>
-          <Text style={styles.label}>Date & Time</Text>
-          {/* @ts-ignore — native HTML input, valid on web */}
+          <Text style={styles.label}>DATE & TIME</Text>
+          {/* @ts-ignore — native HTML input */}
           <input
             type="datetime-local"
             value={webDatetime}
@@ -215,24 +210,24 @@ export default function ScheduleClassScreen() {
               setWebDatetime(e.target.value);
             }}
             style={{
-              padding: "12px 14px",
-              borderRadius: 8,
-              border: "1px solid #EEEEEE",
-              fontSize: 15,
-              color: "#2C2C2C",
-              backgroundColor: "#F9F9F9",
+              padding: "10px 14px",
+              borderRadius: 6,
+              border: "1px solid #E8E8E8",
+              fontSize: 14,
+              color: "#0F0F0F",
+              backgroundColor: "#FFFFFF",
               width: "100%",
               boxSizing: "border-box",
               outline: "none",
               fontFamily: "inherit",
+              cursor: "pointer",
             } as any}
           />
         </View>
       ) : (
         <>
-          {/* Date chips */}
           <View style={styles.section}>
-            <Text style={styles.label}>Date</Text>
+            <Text style={styles.label}>DATE</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollRow}>
               {DATE_CHIPS.map((date, i) => {
                 const { day, num, month } = chipLabel(date);
@@ -252,19 +247,18 @@ export default function ScheduleClassScreen() {
             </ScrollView>
           </View>
 
-          {/* Time chips */}
           <View style={styles.section}>
-            <Text style={styles.label}>Time</Text>
+            <Text style={styles.label}>TIME</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollRow}>
               {TIME_SLOTS.map((slot) => {
                 const selected = selectedTime === slot;
                 return (
                   <Pressable
                     key={slot}
-                    style={[styles.timeChip, selected && styles.timeChipSelected]}
+                    style={[styles.chip, selected && styles.chipSelected]}
                     onPress={() => setSelectedTime(slot)}
                   >
-                    <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
                       {fmtTime(slot)}
                     </Text>
                   </Pressable>
@@ -277,20 +271,20 @@ export default function ScheduleClassScreen() {
 
       {/* Duration */}
       <View style={styles.section}>
-        <Text style={styles.label}>Duration</Text>
+        <Text style={styles.label}>DURATION</Text>
         <View style={styles.chipRow}>
           {DURATIONS.map((d) => (
             <Pressable
               key={d}
               style={(state: any) => [
-                styles.durationChip,
-                duration === d && styles.durationChipSelected,
+                styles.chip,
+                duration === d && styles.chipSelected,
                 duration !== d && state.hovered && styles.chipHovered,
                 isWeb && ({ cursor: "pointer" } as any),
               ]}
               onPress={() => setDuration(d)}
             >
-              <Text style={[styles.durationChipText, duration === d && styles.durationChipTextSelected]}>
+              <Text style={[styles.chipText, duration === d && styles.chipTextSelected]}>
                 {d}m
               </Text>
             </Pressable>
@@ -300,7 +294,7 @@ export default function ScheduleClassScreen() {
 
       {/* Max students */}
       <View style={styles.section}>
-        <Text style={styles.label}>Max Students</Text>
+        <Text style={styles.label}>MAX STUDENTS</Text>
         <View style={styles.counterRow}>
           <Pressable
             style={(state: any) => [
@@ -329,7 +323,7 @@ export default function ScheduleClassScreen() {
       {/* Description */}
       <View style={styles.section}>
         <Text style={styles.label}>
-          Description <Text style={styles.optional}>(optional)</Text>
+          DESCRIPTION <Text style={styles.optional}>(optional)</Text>
         </Text>
         <TextInput
           value={description}
@@ -339,18 +333,18 @@ export default function ScheduleClassScreen() {
           multiline
           numberOfLines={3}
           style={styles.textInput}
-          outlineColor="#EEEEEE"
-          activeOutlineColor="#00B4A6"
-          textColor="#2C2C2C"
-          theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
+          outlineColor="#E8E8E8"
+          activeOutlineColor="#0F0F0F"
+          textColor="#0F0F0F"
+          theme={{ colors: { onSurfaceVariant: "#B0B0B0", background: "#FFFFFF" } }}
           maxLength={500}
         />
       </View>
 
-      {/* Inline error (web only) */}
+      {/* Inline error */}
       {inlineError && (
         <View style={styles.errorBox}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#E05555" />
+          <MaterialCommunityIcons name="alert-circle-outline" size={14} color="#E5484D" />
           <Text style={styles.errorText}>{inlineError}</Text>
         </View>
       )}
@@ -399,76 +393,112 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: "#FFFFFF" },
   webContainer: {
     flex: 1,
-    maxWidth: 600,
+    maxWidth: 560,
     width: "100%",
     alignSelf: "center",
   },
-  content: { paddingHorizontal: 24, paddingTop: 24, gap: 24 },
-  section: { gap: 10 },
-  label: { fontSize: 13, fontWeight: "600", color: "#1A1A1A" },
-  optional: { fontWeight: "400", color: "#888888" },
-  textInput: { backgroundColor: "#F7F7F7" },
+  content: { paddingHorizontal: 24, paddingTop: 32, gap: 24 },
 
-  chipRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  chipHovered: { backgroundColor: "#F0F0F0" },
-
-  categoryChip: {
-    paddingHorizontal: 18, paddingVertical: 9, borderRadius: 9999,
-    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    letterSpacing: -0.5,
+    lineHeight: 32,
   },
-  categoryChipText: { fontSize: 13, fontWeight: "500", color: "#666666" },
+  titleDivider: {
+    height: 1,
+    backgroundColor: "#E8E8E8",
+    marginTop: -8,
+  },
 
-  scrollRow: { gap: 8, paddingVertical: 2 },
+  section: { gap: 8 },
+  label: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#6B6B6B",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  optional: { fontSize: 11, fontWeight: "400", color: "#B0B0B0", textTransform: "none" },
+  textInput: { backgroundColor: "#FFFFFF" },
+
+  chipRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+  },
+  chipSelected: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  chipHovered: { backgroundColor: "#F5F5F5" },
+  chipText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  chipTextSelected: { color: "#FFFFFF", fontWeight: "700" },
+
+  scrollRow: { gap: 6, paddingVertical: 2 },
 
   dateChip: {
-    width: 58, paddingVertical: 10, borderRadius: 12,
-    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
-    alignItems: "center", gap: 2,
+    width: 56,
+    paddingVertical: 10,
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    alignItems: "center",
+    gap: 2,
   },
-  dateChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  dateChipTop: { fontSize: 10, fontWeight: "500", color: "#888888" },
+  dateChipSelected: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  dateChipTop: { fontSize: 10, fontWeight: "500", color: "#6B6B6B" },
   dateChipTopSelected: { color: "#FFFFFF" },
-  dateChipNum: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", lineHeight: 24 },
+  dateChipNum: { fontSize: 18, fontWeight: "700", color: "#0F0F0F", lineHeight: 24 },
   dateChipNumSelected: { color: "#FFFFFF" },
-
-  timeChip: {
-    paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9999,
-    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
-  },
-  timeChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  timeChipText: { fontSize: 13, fontWeight: "500", color: "#666666" },
-  timeChipTextSelected: { color: "#FFFFFF", fontWeight: "600" },
-
-  durationChip: {
-    paddingHorizontal: 20, paddingVertical: 9, borderRadius: 9999,
-    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
-  },
-  durationChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  durationChipText: { fontSize: 13, fontWeight: "500", color: "#666666" },
-  durationChipTextSelected: { fontWeight: "600", color: "#FFFFFF" },
 
   counterRow: { flexDirection: "row", alignItems: "center", gap: 20 },
   counterBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
-    alignItems: "center", justifyContent: "center",
+    width: 36,
+    height: 36,
+    borderRadius: 4,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  counterBtnHovered: { backgroundColor: "#EEEEEE" },
-  counterBtnText: { fontSize: 20, fontWeight: "500", color: "#1A1A1A", lineHeight: 24 },
-  counterValue: { fontSize: 24, fontWeight: "700", color: "#1A1A1A", minWidth: 36, textAlign: "center" },
+  counterBtnHovered: { backgroundColor: "#F5F5F5" },
+  counterBtnText: { fontSize: 18, fontWeight: "500", color: "#0F0F0F", lineHeight: 24 },
+  counterValue: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    minWidth: 32,
+    textAlign: "center",
+  },
 
   errorBox: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8,
-    backgroundColor: "#FFF0F0", borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#FEF2F2",
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   errorText: { flex: 1, fontSize: 13, color: "#E5484D", lineHeight: 18 },
 
   submitBtn: {
-    backgroundColor: "#00B4A6", borderRadius: 10,
-    paddingVertical: 15, alignItems: "center", marginTop: 4,
+    backgroundColor: "#0F0F0F",
+    borderRadius: 6,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginTop: 4,
   },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnHovered: { backgroundColor: "#009E91" },
-  submitBtnText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
+  submitBtnDisabled: { opacity: 0.4 },
+  submitBtnHovered: { backgroundColor: "#2A2A2A" },
+  submitBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 });

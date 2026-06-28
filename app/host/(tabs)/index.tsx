@@ -19,14 +19,16 @@ import { listMyClasses, cancelClass } from "../../../lib/api";
 import type { ScheduledClass } from "../../../lib/types";
 import { fonts } from "../../../lib/fonts";
 
-// Handle both legacy title-case and new lowercase category values from backend
-const CATEGORY_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
-  yoga:     { bg: "#E0F7F5", text: "#007A70", bar: "#00B4A6" },
-  dance:    { bg: "#FEE8EC", text: "#C0406A", bar: "#F4B8C1" },
-  tutoring: { bg: "#FFF9E6", text: "#A0820A", bar: "#FFD66B" },
-  Yoga:     { bg: "#E0F7F5", text: "#007A70", bar: "#00B4A6" },
-  Dance:    { bg: "#FEE8EC", text: "#C0406A", bar: "#F4B8C1" },
-  Tutoring: { bg: "#FFF9E6", text: "#A0820A", bar: "#FFD66B" },
+const CATEGORY_COLORS: Record<string, { dot: string; bg: string; text: string }> = {
+  yoga:     { dot: "#0F7B6B", bg: "#D4EDE8", text: "#0F7B6B" },
+  dance:    { dot: "#B03050", bg: "#F9E0E4", text: "#B03050" },
+  tutoring: { dot: "#806020", bg: "#F5F0D8", text: "#806020" },
+  chess:    { dot: "#2060A0", bg: "#DDE8F5", text: "#2060A0" },
+  piano:    { dot: "#7030A0", bg: "#EDE0F5", text: "#7030A0" },
+  cooking:  { dot: "#A06020", bg: "#F5EBD8", text: "#A06020" },
+  Yoga:     { dot: "#0F7B6B", bg: "#D4EDE8", text: "#0F7B6B" },
+  Dance:    { dot: "#B03050", bg: "#F9E0E4", text: "#B03050" },
+  Tutoring: { dot: "#806020", bg: "#F5F0D8", text: "#806020" },
 };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -48,6 +50,11 @@ function formatSmartDate(iso: string): string {
 
 function formatPastDate(iso: string): string {
   const d = new Date(iso);
+  return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
+function getTodayLabel(): string {
+  const d = new Date();
   return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
 
@@ -89,7 +96,6 @@ export default function InstructorHomeTab() {
     (c) => new Date(c.scheduled_at) < now || c.status === "completed" || c.status === "cancelled"
   ).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
-  // Stats
   const totalStudentsEnrolled = upcoming.reduce((sum, c) => sum + c.current_students, 0);
   const liveNow = classes.filter((c) => c.status === "live").length;
 
@@ -133,32 +139,26 @@ export default function InstructorHomeTab() {
         <View style={[styles.root, { paddingTop: insets.top }]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>My Classes</Text>
-            <TouchableOpacity
-              style={styles.scheduleBtn}
-              onPress={() => router.push("/host/schedule")}
-              activeOpacity={0.85}
-            >
-              <MaterialCommunityIcons name="plus" size={16} color="#FFFFFF" />
-              <Text style={styles.scheduleBtnText}>Schedule</Text>
-            </TouchableOpacity>
+            <View style={styles.headerLeft}>
+              <Text style={styles.headerTitle}>Dashboard</Text>
+              <Text style={styles.headerDate}>{getTodayLabel()}</Text>
+            </View>
           </View>
 
           {/* Stats row */}
           {!loading && !error && (
             <View style={styles.statsRow}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNum}>{upcoming.length}</Text>
-                <Text style={styles.statLabel}>Upcoming</Text>
-              </View>
-              <View style={[styles.statCard, styles.statCardMiddle]}>
-                <Text style={styles.statNum}>{totalStudentsEnrolled}</Text>
-                <Text style={styles.statLabel}>Enrolled</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={[styles.statNum, liveNow > 0 && styles.statNumLive]}>{liveNow}</Text>
-                <Text style={styles.statLabel}>Live Now</Text>
-              </View>
+              {[
+                { value: upcoming.length, label: "Upcoming" },
+                { value: totalStudentsEnrolled, label: "Enrolled" },
+                { value: liveNow, label: "Live now" },
+                { value: past.length, label: "Completed" },
+              ].map((stat) => (
+                <View key={stat.label} style={styles.statCard}>
+                  <Text style={styles.statNum}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -185,24 +185,17 @@ export default function InstructorHomeTab() {
           {/* Content */}
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color="#00B4A6" />
+              <ActivityIndicator color="#0F0F0F" />
             </View>
           ) : error ? (
             <View style={styles.centered}>
-              <MaterialCommunityIcons name="wifi-off" size={36} color="#C0C0C0" />
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity style={styles.retryBtn} onPress={loadClasses} activeOpacity={0.7}>
-                <MaterialCommunityIcons name="refresh" size={14} color="#00B4A6" />
                 <Text style={styles.retryText}>Retry</Text>
               </TouchableOpacity>
             </View>
           ) : displayed.length === 0 ? (
             <View style={styles.centered}>
-              <MaterialCommunityIcons
-                name={tab === "upcoming" ? "calendar-blank-outline" : "history"}
-                size={40}
-                color="#D0D0D0"
-              />
               <Text style={styles.emptyTitle}>
                 {tab === "upcoming" ? "No upcoming classes" : "No past classes yet"}
               </Text>
@@ -214,7 +207,7 @@ export default function InstructorHomeTab() {
                     onPress={() => router.push("/host/schedule")}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.emptyScheduleBtnText}>Schedule a Class</Text>
+                    <Text style={styles.emptyScheduleBtnText}>Schedule a class</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -225,132 +218,111 @@ export default function InstructorHomeTab() {
               showsVerticalScrollIndicator={false}
             >
               {displayed.map((cls) => {
-                const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F7F7F7", text: "#666666", bar: "#EEEEEE" };
+                const colors = CATEGORY_COLORS[cls.category] ?? { dot: "#B0B0B0", bg: "#F5F5F5", text: "#6B6B6B" };
                 const isConfirming = confirmCancelId === cls.id;
                 const isCancelling = cancelling === cls.id;
                 const fillPct = cls.max_students > 0 ? cls.current_students / cls.max_students : 0;
 
                 return (
-                  <View key={cls.id} style={styles.card}>
-                    {/* Color bar */}
-                    <View style={[styles.cardBar, { backgroundColor: colors.bar }]} />
-
-                    <View style={styles.cardBody}>
-                      {/* Top row: title + category badge */}
-                      <View style={styles.cardTopRow}>
-                        <Text style={styles.cardTitle} numberOfLines={2}>{cls.title}</Text>
-                        <View style={[styles.categoryBadge, { backgroundColor: colors.bg }]}>
-                          <Text style={[styles.categoryBadgeText, { color: colors.text }]}>
-                            {cls.category.charAt(0).toUpperCase() + cls.category.slice(1)}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Date/time */}
-                      <View style={styles.metaRow}>
-                        <MaterialCommunityIcons name="clock-outline" size={13} color="#888888" />
-                        <Text style={styles.metaText}>
+                  <View key={cls.id} style={styles.classRow}>
+                    <View style={styles.classRowLeft}>
+                      <View style={[styles.categoryDot, { backgroundColor: colors.dot }]} />
+                      <View style={styles.classRowInfo}>
+                        <Text style={styles.classRowTitle} numberOfLines={1}>{cls.title}</Text>
+                        <Text style={styles.classRowDate}>
                           {tab === "upcoming" ? formatSmartDate(cls.scheduled_at) : formatPastDate(cls.scheduled_at)}
+                          {" · "}{cls.duration_minutes}m
                         </Text>
                       </View>
+                    </View>
 
-                      {/* Duration */}
-                      <View style={styles.metaRow}>
-                        <MaterialCommunityIcons name="timer-outline" size={13} color="#888888" />
-                        <Text style={styles.metaText}>{cls.duration_minutes} min</Text>
-                      </View>
-
-                      {/* Students + progress bar */}
-                      <View style={styles.metaRow}>
-                        <MaterialCommunityIcons name="account-group-outline" size={13} color="#888888" />
-                        <Text style={styles.metaText}>
-                          {tab === "upcoming"
-                            ? `${cls.current_students}/${cls.max_students} students enrolled`
-                            : `${cls.current_students} student${cls.current_students !== 1 ? "s" : ""} attended`}
-                        </Text>
-                      </View>
-
-                      {/* Enrollment progress bar (upcoming only) */}
-                      {tab === "upcoming" && (
-                        <View style={styles.progressBg}>
-                          <View
-                            style={[
-                              styles.progressFill,
-                              { width: `${Math.min(fillPct * 100, 100)}%` as any },
-                              fillPct >= 1 && styles.progressFillFull,
-                            ]}
-                          />
-                        </View>
+                    <View style={styles.classRowRight}>
+                      <Text style={styles.classRowStudents}>
+                        {tab === "upcoming"
+                          ? `${cls.current_students}/${cls.max_students}`
+                          : `${cls.current_students} attended`}
+                      </Text>
+                      {tab === "upcoming" && !isConfirming && (
+                        <TouchableOpacity
+                          style={styles.startBtn}
+                          onPress={() => router.push(`/host/room/${cls.id}` as never)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.startBtnText}>Start</Text>
+                        </TouchableOpacity>
                       )}
+                    </View>
 
-                      {/* Upcoming actions */}
-                      {tab === "upcoming" && (
-                        <View style={styles.actions}>
-                          {isConfirming ? (
-                            <View style={styles.confirmRow}>
-                              <Text style={styles.confirmText}>Cancel this class?</Text>
-                              <View style={styles.confirmBtns}>
-                                <TouchableOpacity
-                                  style={styles.confirmKeepBtn}
-                                  onPress={() => setConfirmCancelId(null)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Text style={styles.confirmKeepText}>Keep</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                  style={styles.confirmCancelBtn}
-                                  onPress={() => doCancel(cls.id)}
-                                  disabled={isCancelling}
-                                  activeOpacity={0.7}
-                                >
-                                  {isCancelling ? (
-                                    <ActivityIndicator size="small" color="#E5484D" />
-                                  ) : (
-                                    <Text style={styles.confirmCancelText}>Yes, Cancel</Text>
-                                  )}
-                                </TouchableOpacity>
-                              </View>
+                    {/* Expanded actions row */}
+                    {tab === "upcoming" && (
+                      <>
+                        {tab === "upcoming" && (
+                          <View style={styles.progressRow}>
+                            <View style={styles.progressBg}>
+                              <View
+                                style={[
+                                  styles.progressFill,
+                                  { width: `${Math.min(fillPct * 100, 100)}%` as any },
+                                  fillPct >= 1 && styles.progressFillFull,
+                                ]}
+                              />
                             </View>
-                          ) : (
-                            <>
+                          </View>
+                        )}
+                        {isConfirming ? (
+                          <View style={styles.confirmRow}>
+                            <Text style={styles.confirmText}>Cancel "{cls.title}"?</Text>
+                            <View style={styles.confirmBtns}>
                               <TouchableOpacity
-                                style={styles.startBtn}
-                                onPress={() => router.push(`/host/room/${cls.id}` as never)}
-                                activeOpacity={0.85}
+                                style={styles.confirmKeepBtn}
+                                onPress={() => setConfirmCancelId(null)}
+                                activeOpacity={0.7}
                               >
-                                <MaterialCommunityIcons name="play-circle-outline" size={18} color="#FFFFFF" />
-                                <Text style={styles.startBtnText}>Start Class</Text>
+                                <Text style={styles.confirmKeepText}>Keep</Text>
                               </TouchableOpacity>
                               <TouchableOpacity
-                                style={styles.cancelClassBtn}
-                                onPress={() => handleCancel(cls)}
+                                style={styles.confirmCancelBtn}
+                                onPress={() => doCancel(cls.id)}
                                 disabled={isCancelling}
                                 activeOpacity={0.7}
                               >
                                 {isCancelling ? (
                                   <ActivityIndicator size="small" color="#E5484D" />
                                 ) : (
-                                  <Text style={styles.cancelClassBtnText}>Cancel Class</Text>
+                                  <Text style={styles.confirmCancelText}>Yes, cancel</Text>
                                 )}
                               </TouchableOpacity>
-                            </>
-                          )}
-                        </View>
-                      )}
-                    </View>
+                            </View>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.cancelClassBtn}
+                            onPress={() => handleCancel(cls)}
+                            disabled={isCancelling}
+                            activeOpacity={0.7}
+                          >
+                            {isCancelling ? (
+                              <ActivityIndicator size="small" color="#E5484D" />
+                            ) : (
+                              <Text style={styles.cancelClassBtnText}>Cancel class</Text>
+                            )}
+                          </TouchableOpacity>
+                        )}
+                      </>
+                    )}
                   </View>
                 );
               })}
             </ScrollView>
           )}
 
-          {/* FAB — Schedule New Class */}
+          {/* FAB */}
           <TouchableOpacity
             style={[styles.fab, { bottom: insets.bottom + 24 }]}
             onPress={() => router.push("/host/schedule")}
             activeOpacity={0.85}
           >
-            <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
+            <MaterialCommunityIcons name="plus" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </RoleGuard>
@@ -361,155 +333,254 @@ export default function InstructorHomeTab() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FFFFFF" },
 
+  // ── Header ──────────────────────────────────────────────────────────────────
   header: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 8,
   },
-  headerTitle: { fontSize: 24, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
-  scheduleBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "#00B4A6", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
+  headerLeft: { gap: 2 },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    letterSpacing: -0.5,
   },
-  scheduleBtnText: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
+  headerDate: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+  },
 
   // ── Stats row ────────────────────────────────────────────────────────────────
   statsRow: {
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#F7F7F7",
-    borderRadius: 14,
-    paddingVertical: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingVertical: 16,
     paddingHorizontal: 12,
-    alignItems: "center",
-    gap: 2,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: "#E8E8E8",
   },
-  statCardMiddle: {
-    backgroundColor: "#E0F7F5",
-    borderColor: "#B0E8E3",
+  statNum: {
+    fontSize: 28,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    letterSpacing: -0.5,
   },
-  statNum: { fontSize: 24, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
-  statNumLive: { color: "#00B4A6" },
-  statLabel: { fontSize: 11, fontFamily: fonts.regular, color: "#888888", textAlign: "center" },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+    marginTop: 4,
+  },
 
+  // ── Tabs ─────────────────────────────────────────────────────────────────────
   tabRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-    marginHorizontal: 20,
+    borderBottomColor: "#E8E8E8",
+    paddingHorizontal: 24,
     marginBottom: 4,
   },
-  tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center" },
-  tabBtnActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
-  tabBtnText: { fontSize: 15, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
-  tabBtnTextActive: { color: "#1A1A1A", fontWeight: "700", fontFamily: fonts.bold },
+  tabBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginRight: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+    marginBottom: -1,
+  },
+  tabBtnActive: { borderBottomColor: "#0F0F0F" },
+  tabBtnText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  tabBtnTextActive: {
+    color: "#0F0F0F",
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+  },
   tabCount: { fontSize: 13, fontFamily: fonts.regular, color: "#C0C0C0" },
-  tabCountActive: { fontSize: 13, fontFamily: fonts.medium, color: "#00B4A6" },
+  tabCountActive: { fontSize: 13, fontFamily: fonts.medium, color: "#6B6B6B" },
 
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingBottom: 60 },
-  errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
+  // ── States ───────────────────────────────────────────────────────────────────
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingBottom: 60 },
+  errorText: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+    textAlign: "center",
+    paddingHorizontal: 32,
+  },
   retryBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9999,
-  },
-  retryText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
-
-  emptyTitle: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
-  emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
-  emptyScheduleBtn: {
-    backgroundColor: "#00B4A6", borderRadius: 10,
-    paddingHorizontal: 20, paddingVertical: 11, marginTop: 4,
-  },
-  emptyScheduleBtnText: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
-
-  list: { paddingHorizontal: 16, paddingTop: 12, gap: 14 },
-
-  card: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    borderColor: "#E8E8E8",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 4,
   },
-  cardBar: { width: 5, alignSelf: "stretch" },
-  cardBody: { flex: 1, padding: 16, gap: 6 },
+  retryText: { fontSize: 13, fontFamily: fonts.medium, color: "#0F0F0F" },
+  emptyTitle: {
+    fontSize: 15,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
+  emptyScheduleBtn: {
+    backgroundColor: "#0F0F0F",
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  emptyScheduleBtnText: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
 
-  cardTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 2 },
-  cardTitle: { flex: 1, fontSize: 17, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", lineHeight: 22 },
-  categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9999, flexShrink: 0 },
-  categoryBadgeText: { fontSize: 11, fontWeight: "600", fontFamily: fonts.medium },
-
-  metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  metaText: { fontSize: 13, fontFamily: fonts.regular, color: "#666666" },
-
-  // Progress bar
+  // ── Class rows ───────────────────────────────────────────────────────────────
+  list: { paddingHorizontal: 24, paddingTop: 8, gap: 0 },
+  classRow: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8E8E8",
+    gap: 8,
+  },
+  classRowLeft: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    flex: 1,
+  },
+  categoryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+    flexShrink: 0,
+  },
+  classRowInfo: { flex: 1, gap: 3 },
+  classRowTitle: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    lineHeight: 20,
+  },
+  classRowDate: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+  },
+  classRowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingLeft: 20,
+  },
+  classRowStudents: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+  },
+  startBtn: {
+    backgroundColor: "#0F0F0F",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  startBtnText: {
+    fontSize: 12,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  progressRow: { paddingLeft: 20 },
   progressBg: {
-    height: 4,
+    height: 3,
     backgroundColor: "#F0F0F0",
-    borderRadius: 9999,
-    marginTop: 2,
+    borderRadius: 2,
     overflow: "hidden",
   },
   progressFill: {
-    height: 4,
-    backgroundColor: "#00B4A6",
-    borderRadius: 9999,
+    height: 3,
+    backgroundColor: "#0F0F0F",
+    borderRadius: 2,
   },
   progressFillFull: { backgroundColor: "#E5484D" },
 
-  actions: { marginTop: 8, gap: 8 },
-  startBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, backgroundColor: "#00B4A6", borderRadius: 10,
-    paddingVertical: 12,
+  cancelClassBtn: { alignSelf: "flex-start", paddingLeft: 20 },
+  cancelClassBtnText: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
   },
-  startBtnText: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
-  cancelClassBtn: { alignItems: "center", paddingVertical: 6 },
-  cancelClassBtnText: { fontSize: 13, color: "#E5484D", fontWeight: "500", fontFamily: fonts.medium },
 
-  confirmRow: { gap: 8 },
-  confirmText: { fontSize: 13, color: "#1A1A1A", fontWeight: "500", fontFamily: fonts.medium, textAlign: "center" },
-  confirmBtns: { flexDirection: "row", gap: 10 },
+  confirmRow: { gap: 8, paddingLeft: 20 },
+  confirmText: {
+    fontSize: 13,
+    color: "#0F0F0F",
+    fontFamily: fonts.medium,
+  },
+  confirmBtns: { flexDirection: "row", gap: 8 },
   confirmKeepBtn: {
-    flex: 1, alignItems: "center", paddingVertical: 9,
-    borderRadius: 10, borderWidth: 1, borderColor: "#F0F0F0",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
   },
-  confirmKeepText: { fontSize: 13, color: "#888888", fontWeight: "500", fontFamily: fonts.medium },
+  confirmKeepText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: "#6B6B6B",
+  },
   confirmCancelBtn: {
-    flex: 1, alignItems: "center", paddingVertical: 9,
-    borderRadius: 10, backgroundColor: "#FEF2F2",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 6,
+    backgroundColor: "#FEF2F2",
   },
-  confirmCancelText: { fontSize: 13, color: "#E5484D", fontWeight: "600", fontFamily: fonts.bold },
+  confirmCancelText: {
+    fontSize: 12,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#E5484D",
+  },
 
+  // ── FAB ──────────────────────────────────────────────────────────────────────
   fab: {
     position: "absolute",
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#00B4A6",
+    right: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 6,
+    backgroundColor: "#0F0F0F",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#00B4A6",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
 });

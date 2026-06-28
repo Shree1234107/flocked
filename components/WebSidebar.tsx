@@ -44,7 +44,6 @@ export function WebSidebar({ role }: { role: Role }) {
     <View style={styles.sidebar}>
       {/* Logo */}
       <View style={styles.logoRow}>
-        <MaterialCommunityIcons name="leaf-circle-outline" size={26} color="#00B4A6" />
         <Text style={styles.logoText}>Flocked</Text>
       </View>
 
@@ -63,13 +62,14 @@ export function WebSidebar({ role }: { role: Role }) {
                 styles.navItem,
                 isActive && styles.navItemActive,
                 !isActive && state.hovered && styles.navItemHovered,
+                { cursor: "pointer" } as any,
               ]}
               onPress={() => router.push(item.href as never)}
             >
               <MaterialCommunityIcons
                 name={item.icon}
-                size={20}
-                color={isActive ? "#00B4A6" : "#888888"}
+                size={16}
+                color={isActive ? "#0F0F0F" : "#6B6B6B"}
               />
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
                 {item.label}
@@ -87,7 +87,7 @@ export function WebSidebar({ role }: { role: Role }) {
           </View>
           <Text style={styles.displayName} numberOfLines={1}>{displayName}</Text>
         </View>
-        <TouchableOpacity onPress={handleSignOut} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleSignOut} activeOpacity={0.7} style={{ cursor: "pointer" } as any}>
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </View>
@@ -97,65 +97,87 @@ export function WebSidebar({ role }: { role: Role }) {
 
 const styles = StyleSheet.create({
   sidebar: {
-    width: 232,
+    width: 200,
     backgroundColor: "#FFFFFF",
     borderRightWidth: 1,
-    borderRightColor: "#F0F0F0",
-    paddingVertical: 28,
-    paddingHorizontal: 16,
+    borderRightColor: "#E8E8E8",
+    paddingVertical: 24,
     flexDirection: "column",
   },
+
   logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 12,
-    marginBottom: 40,
+    paddingHorizontal: 24,
+    marginBottom: 32,
   },
   logoText: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: "700",
     fontFamily: fonts.bold,
-    color: "#1A1A1A",
-    letterSpacing: -0.5,
+    color: "#0F0F0F",
+    letterSpacing: -0.3,
   },
-  nav: { flex: 1, gap: 1 },
+
+  nav: { flex: 1, gap: 1, paddingHorizontal: 8 },
   navItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 12,
-    height: 44,
-    borderRadius: 10,
-    marginVertical: 1,
+    height: 40,
+    borderRadius: 4,
   },
-  navItemActive: { backgroundColor: "#E0F7F5" },
-  navItemHovered: { backgroundColor: "#F7F7F7" },
-  navLabel: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#666666" },
-  navLabelActive: { color: "#00B4A6", fontWeight: "700", fontFamily: fonts.bold },
+  navItemActive: { backgroundColor: "#F5F5F5" },
+  navItemHovered: { backgroundColor: "#F5F5F5" },
+  navLabel: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+  },
+  navLabelActive: {
+    color: "#0F0F0F",
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+  },
+
   bottom: {
     borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+    borderTopColor: "#E8E8E8",
     paddingTop: 16,
-    gap: 10,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   userRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     overflow: "hidden",
-    paddingHorizontal: 4,
   },
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#00B4A6",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#0F0F0F",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  avatarInitials: { fontSize: 12, fontWeight: "700", fontFamily: fonts.bold, color: "#FFFFFF" },
-  displayName: { flex: 1, fontSize: 13, color: "#1A1A1A", fontWeight: "600", fontFamily: fonts.bold },
-  signOutText: { fontSize: 12, color: "#888888", fontWeight: "500", fontFamily: fonts.medium, paddingLeft: 4 },
+  avatarInitials: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: fonts.bold,
+    color: "#FFFFFF",
+  },
+  displayName: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+  },
+  signOutText: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+    paddingLeft: 2,
+  },
 });

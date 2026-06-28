@@ -7,9 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Text, TextInput } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { Redirect, useRouter } from "expo-router";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "../lib/auth";
@@ -84,16 +83,10 @@ export default function LoginScreen() {
       return;
     }
     console.log("[bypass] 2. signInWithPassword OK, user:", data.session?.user?.email);
-    console.log("[bypass] session after login:", data.session ? "found" : "null");
 
-    // Update RoleProvider React state + SecureStore immediately so any
-    // re-render triggered by the new session sees the correct role.
-    // (Writing SecureStore directly without this would leave a stale "guest"
-    // role in React state, causing the login redirect to send to /guest.)
     await setRole(targetRole);
     console.log("[bypass] role set in state:", targetRole);
 
-    // Sync role to server in background (non-blocking)
     const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
     fetch(`${apiBase}/api/auth/role`, {
       method: "POST",
@@ -106,7 +99,6 @@ export default function LoginScreen() {
       .then((r) => console.log("[bypass] set role response:", r.status))
       .catch((err) => console.log("[bypass] set role error:", err));
 
-    // Navigate
     const dest = targetRole === "guest" ? "/guest/(tabs)/index" : "/host/(tabs)/index";
     console.log("[bypass] navigating to:", dest);
     router.replace(dest);
@@ -116,60 +108,59 @@ export default function LoginScreen() {
     return <Redirect href="/" />;
   }
 
-  const brandSection = (
-    <View style={styles.brandSection}>
-      <View style={styles.logoMark}>
-        <MaterialCommunityIcons name="leaf-circle-outline" size={32} color="#00B4A6" />
-      </View>
-      <Text style={styles.wordmark}>Flockd</Text>
-      <Text style={styles.tagline}>Live classes from real instructors</Text>
-    </View>
-  );
+  // ── Inner form ─────────────────────────────────────────────────────────────
 
-  const formSection = sent ? (
-    <View style={styles.sentCard}>
-      <View style={styles.sentIconWrap}>
-        <MaterialCommunityIcons name="email-check-outline" size={28} color="#00B4A6" />
-      </View>
+  const formContent = sent ? (
+    <View style={styles.sentContainer}>
       <Text style={styles.sentTitle}>Check your inbox</Text>
       <Text style={styles.sentBody}>
-        We sent a sign-in link to{"\n"}
+        We sent a sign-in link to{" "}
         <Text style={styles.sentEmail}>{email.trim()}</Text>
       </Text>
       <Text style={styles.sentHint}>
-        Didn't get it? Check your spam folder, or tap below to try again.
+        Didn't get it? Check your spam folder.
       </Text>
       <TouchableOpacity
         onPress={() => { setSent(false); setEmail(""); setErrorMsg(null); }}
         activeOpacity={0.7}
-        style={styles.resendBtn}
+        style={styles.backLink}
       >
-        <Text style={styles.resendText}>Use a different email</Text>
+        <Text style={styles.backLinkText}>← Use a different email</Text>
       </TouchableOpacity>
     </View>
   ) : (
-    <View style={styles.formSection}>
-      <TextInput
-        label="Email address"
+    <>
+      {/* Email input — native for full style control */}
+      {/* @ts-ignore — web input */}
+      <input
+        type="email"
+        placeholder="you@example.com"
         value={email}
-        onChangeText={(t) => { setEmail(t); setErrorMsg(null); }}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        returnKeyType="send"
-        onSubmitEditing={handleSendMagicLink}
-        mode="outlined"
-        style={styles.emailInput}
-        outlineColor={errorMsg ? "#E05555" : "#EEEEEE"}
-        activeOutlineColor={errorMsg ? "#E05555" : "#00B4A6"}
-        textColor="#2C2C2C"
-        theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
+        onChange={(e: any) => { setEmail(e.target.value); setErrorMsg(null); }}
+        onKeyDown={(e: any) => { if (e.key === "Enter") handleSendMagicLink(); }}
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          border: errorMsg ? "1px solid #E5484D" : "1px solid #E8E8E8",
+          borderRadius: 6,
+          padding: "10px 14px",
+          fontSize: 14,
+          color: "#0F0F0F",
+          backgroundColor: "#FFFFFF",
+          fontFamily: "inherit",
+          outline: "none",
+          transition: "border-color 0.15s",
+        } as any}
+        onFocus={(e: any) => {
+          if (!errorMsg) e.target.style.borderColor = "#0F0F0F";
+        }}
+        onBlur={(e: any) => {
+          if (!errorMsg) e.target.style.borderColor = "#E8E8E8";
+        }}
       />
 
       {errorMsg && (
-        <View style={styles.errorBox}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={15} color="#E05555" />
-          <Text style={styles.errorText}>{errorMsg}</Text>
-        </View>
+        <Text style={styles.errorText}>{errorMsg}</Text>
       )}
 
       <TouchableOpacity
@@ -195,14 +186,11 @@ export default function LoginScreen() {
           onPress={() => router.push("/login/guest")}
           activeOpacity={0.75}
         >
-          <View style={styles.roleIconWrap}>
-            <MaterialCommunityIcons name="account-outline" size={20} color="#00B4A6" />
-          </View>
           <View style={styles.roleTextWrap}>
             <Text style={styles.roleTitle}>Student</Text>
             <Text style={styles.roleSub}>Browse and join live classes</Text>
           </View>
-          <MaterialCommunityIcons name="chevron-right" size={18} color="#C0C0C0" />
+          <Text style={styles.roleChevron}>›</Text>
         </TouchableOpacity>
 
         <View style={styles.roleSep} />
@@ -212,18 +200,15 @@ export default function LoginScreen() {
           onPress={() => router.push("/login/instructor")}
           activeOpacity={0.75}
         >
-          <View style={styles.roleIconWrap}>
-            <MaterialCommunityIcons name="school-outline" size={20} color="#00B4A6" />
-          </View>
           <View style={styles.roleTextWrap}>
             <Text style={styles.roleTitle}>Teacher</Text>
             <Text style={styles.roleSub}>Teach and run live sessions</Text>
           </View>
-          <MaterialCommunityIcons name="chevron-right" size={18} color="#C0C0C0" />
+          <Text style={styles.roleChevron}>›</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Dev bypass — only shown when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set */}
+      {/* Dev bypass — small text links */}
       {devEmail && (
         <View style={styles.devSection}>
           <View style={styles.devDividerRow}>
@@ -231,290 +216,270 @@ export default function LoginScreen() {
             <Text style={styles.devDividerText}>dev</Text>
             <View style={styles.devDividerLine} />
           </View>
-          <TouchableOpacity
-            style={[styles.devBtn, sending && styles.btnDisabled]}
-            onPress={() => handleDevBypass("guest")}
-            disabled={sending}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons name="code-tags" size={13} color="#00B4A6" />
-            <Text style={styles.devBtnText}>Enter as Student (Dev)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.devBtn, sending && styles.btnDisabled]}
-            onPress={() => handleDevBypass("host")}
-            disabled={sending}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons name="code-tags" size={13} color="#00B4A6" />
-            <Text style={styles.devBtnText}>Enter as Instructor (Dev)</Text>
-          </TouchableOpacity>
+          <View style={styles.devLinks}>
+            <TouchableOpacity
+              onPress={() => handleDevBypass("guest")}
+              disabled={sending}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.devLink, sending && styles.devLinkDisabled]}>
+                Enter as Student
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.devLinkSep}>·</Text>
+            <TouchableOpacity
+              onPress={() => handleDevBypass("host")}
+              disabled={sending}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.devLink, sending && styles.devLinkDisabled]}>
+                Enter as Instructor
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
-    </View>
+    </>
   );
 
-  // Desktop web: split panel
+  // ── Web: centered card on white page ───────────────────────────────────────
   if (Platform.OS === "web") {
     return (
       <View style={styles.webRoot}>
-        {/* Left panel with decorative circles */}
-        <View style={styles.webLeft}>
-          <View style={styles.decoCircleTop} />
-          <View style={styles.decoCircleBottom} />
-          <View style={styles.webLeftContent}>
-            <View style={styles.webLeftLogo}>
-              <MaterialCommunityIcons name="leaf-circle-outline" size={28} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.webLeftLogoText}>Flocked</Text>
-            </View>
-            <Text style={styles.webHeadline}>{"Learn anything.\nLive."}</Text>
-            <Text style={styles.webSubtext}>Intimate live classes from real instructors.</Text>
-            <View style={styles.webLeftPills}>
-              {["Yoga", "Chess", "Dance", "Piano"].map((tag) => (
-                <View key={tag} style={styles.webLeftPill}>
-                  <Text style={styles.webLeftPillText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
         <ScrollView
-          style={styles.webRight}
-          contentContainerStyle={styles.webRightContent}
+          contentContainerStyle={styles.webScroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.webFormCard}>
-            {brandSection}
-            {formSection}
+          <View style={styles.webCard}>
+            <Text style={styles.wordmark}>Flocked</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.welcomeText}>Welcome back</Text>
+              <Text style={styles.welcomeSub}>Sign in to your account</Text>
+            </View>
+            <View style={styles.formGap}>
+              {formContent}
+            </View>
           </View>
         </ScrollView>
       </View>
     );
   }
 
-  // Mobile
+  // ── Mobile ────────────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
-      style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}
+      style={[styles.mobileRoot, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={styles.container}>
-        {brandSection}
-        {formSection}
-      </View>
+      <ScrollView
+        contentContainerStyle={styles.mobileScroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.wordmark}>Flocked</Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.welcomeText}>Welcome back</Text>
+          <Text style={styles.welcomeSub}>Sign in to your account</Text>
+        </View>
+        <View style={styles.formGap}>
+          {/* Mobile email input with react-native TextInput */}
+          {!sent && (
+            <>
+              <View style={[styles.nativeInputWrap, errorMsg ? styles.nativeInputError : null]}>
+                <Text
+                  style={styles.nativeInputPlaceholder}
+                  onPress={() => {}}
+                />
+              </View>
+            </>
+          )}
+          {formContent}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
-  container: {
+  // ── Web ────────────────────────────────────────────────────────────────────
+  webRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  webScroll: {
     flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    minHeight: "100vh" as any,
+  },
+  webCard: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    borderRadius: 8,
+    padding: 40,
+    gap: 24,
+  },
+
+  // ── Mobile ─────────────────────────────────────────────────────────────────
+  mobileRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  mobileScroll: {
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    gap: 32,
+    gap: 24,
+    paddingVertical: 40,
   },
-
-  // ── Web split panel ──────────────────────────────────────────────────────────
-  webRoot: { flex: 1, flexDirection: "row" },
-  webLeft: {
-    flex: 1,
-    backgroundColor: "#00B4A6",
-    overflow: "hidden",
-  },
-  decoCircleTop: {
-    position: "absolute",
-    top: -120,
-    right: -80,
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  decoCircleBottom: {
-    position: "absolute",
-    bottom: -160,
-    left: -100,
-    width: 440,
-    height: 440,
-    borderRadius: 220,
-    backgroundColor: "rgba(0,0,0,0.07)",
-  },
-  webLeftContent: {
-    flex: 1,
-    alignItems: "flex-start",
-    justifyContent: "flex-end",
-    paddingHorizontal: 56,
-    paddingVertical: 64,
-    gap: 20,
-  },
-  webLeftLogo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
-  },
-  webLeftLogoText: {
-    fontSize: 18,
-    fontWeight: "700",
-    fontFamily: fonts.bold,
-    color: "rgba(255,255,255,0.95)",
-    letterSpacing: -0.3,
-  },
-  webHeadline: {
-    fontSize: 52,
-    fontWeight: "800",
-    fontFamily: fonts.bold,
-    color: "#FFFFFF",
-    letterSpacing: -1.5,
-    lineHeight: 60,
-  },
-  webSubtext: {
-    fontSize: 17,
-    color: "rgba(255,255,255,0.8)",
-    lineHeight: 26,
-    fontWeight: "400",
-    fontFamily: fonts.regular,
-  },
-  webLeftPills: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 4,
-  },
-  webLeftPill: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 9999,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  webLeftPillText: {
-    fontSize: 13,
-    fontFamily: fonts.medium,
-    color: "rgba(255,255,255,0.9)",
-  },
-  webRight: { flex: 1, backgroundColor: "#FAFAFA" },
-  webRightContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 48,
-    minHeight: 600,
-  },
-  webFormCard: {
-    width: "100%",
-    maxWidth: 420,
-    gap: 28,
-  },
-
-  // ── Brand ──────────────────────────────────────────────────────────────────
-  brandSection: { alignItems: "center", gap: 8 },
-  logoMark: { marginBottom: 2 },
-  wordmark: { fontSize: 30, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
-  tagline: { fontSize: 14, color: "#888888", fontWeight: "400", fontFamily: fonts.regular },
-
-  // ── Form ──────────────────────────────────────────────────────────────────
-  formSection: { width: "100%", gap: 14 },
-  emailInput: { backgroundColor: "#FFFFFF" },
-  errorBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 6,
-    backgroundColor: "#FFF0F0",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E5484D", lineHeight: 18 },
-  primaryBtn: {
-    backgroundColor: "#00B4A6",
-    borderRadius: 10,
-    paddingVertical: 15,
-    alignItems: "center",
-  },
-  btnDisabled: { opacity: 0.5 },
-  primaryBtnText: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
-  dividerText: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
-  roleCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+  nativeInputWrap: {
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: "#E8E8E8",
+    borderRadius: 6,
+    height: 44,
+  },
+  nativeInputError: { borderColor: "#E5484D" },
+  nativeInputPlaceholder: { flex: 1 },
+
+  // ── Shared ────────────────────────────────────────────────────────────────
+  wordmark: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    letterSpacing: -0.3,
+    textAlign: "center",
+  },
+  cardHeader: { gap: 4, alignItems: "center" },
+  welcomeText: {
+    fontSize: 24,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    lineHeight: 28,
+    letterSpacing: -0.3,
+    textAlign: "center",
+  },
+  welcomeSub: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+    textAlign: "center",
+  },
+  formGap: { gap: 12, width: "100%" },
+
+  errorText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#E5484D",
+    marginTop: -4,
+  },
+
+  primaryBtn: {
+    backgroundColor: "#0F0F0F",
+    borderRadius: 6,
+    paddingVertical: 11,
+    alignItems: "center",
+    width: "100%",
+  },
+  btnDisabled: { opacity: 0.4 },
+  primaryBtnText: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#E8E8E8" },
+  dividerText: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
+
+  roleCard: {
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    borderRadius: 8,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    width: "100%",
   },
   roleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 15,
-  },
-  roleIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 9,
-    backgroundColor: "#E0F7F5",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
+    paddingVertical: 14,
   },
   roleTextWrap: { flex: 1, gap: 2 },
-  roleTitle: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
-  roleSub: { fontSize: 12, fontFamily: fonts.regular, color: "#888888" },
-  roleSep: { height: 1, backgroundColor: "#F0F0F0", marginLeft: 64 },
-
-  // ── Sent card ──────────────────────────────────────────────────────────────
-  sentCard: {
-    width: "100%",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
-    padding: 32,
-    gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+  roleTitle: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
   },
-  sentIconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#E0F7F5",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
+  roleSub: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
   },
-  sentTitle: { fontSize: 20, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A" },
-  sentBody: { fontSize: 14, fontFamily: fonts.regular, color: "#888888", textAlign: "center", lineHeight: 22 },
-  sentEmail: { fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
-  sentHint: { fontSize: 12, fontFamily: fonts.regular, color: "#AAA", textAlign: "center", lineHeight: 18 },
-  resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
-  resendText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#00B4A6" },
+  roleChevron: {
+    fontSize: 18,
+    color: "#B0B0B0",
+  },
+  roleSep: { height: 1, backgroundColor: "#E8E8E8" },
 
-  // ── Dev bypass ──────────────────────────────────────────────────────────────
-  devSection: { gap: 4 },
-  devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 2 },
+  // ── Sent state ────────────────────────────────────────────────────────────
+  sentContainer: { gap: 8, width: "100%" },
+  sentTitle: {
+    fontSize: 20,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    textAlign: "center",
+  },
+  sentBody: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  sentEmail: { color: "#0F0F0F", fontFamily: fonts.bold, fontWeight: "700" },
+  sentHint: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
+    textAlign: "center",
+  },
+  backLink: { alignSelf: "center", paddingVertical: 8 },
+  backLinkText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+
+  // ── Dev bypass ────────────────────────────────────────────────────────────
+  devSection: { gap: 8, width: "100%", marginTop: 4 },
+  devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   devDividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
-  devDividerText: { fontSize: 10, fontFamily: fonts.regular, color: "#C0C0C0", letterSpacing: 0.5, textTransform: "uppercase" },
-  devBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
+  devDividerText: {
+    fontSize: 10,
+    fontFamily: fonts.regular,
+    color: "#C0C0C0",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
-  devBtnText: { fontSize: 12, color: "#00B4A6", fontWeight: "500", fontFamily: fonts.medium },
+  devLinks: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  devLink: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
+    textDecorationLine: "underline",
+  },
+  devLinkDisabled: { opacity: 0.4 },
+  devLinkSep: { fontSize: 12, color: "#D0D0D0" },
 });

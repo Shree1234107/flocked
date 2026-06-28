@@ -17,7 +17,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { useFilters } from "../../../lib/filtersContext";
-import { useAuth } from "../../../lib/auth";
 import { listClasses, listFollowingClasses } from "../../../lib/api";
 import { useBreakpoint } from "../../../lib/useBreakpoint";
 import type { ScheduledClass } from "../../../lib/types";
@@ -28,13 +27,19 @@ type FilterTag = (typeof FILTER_TAGS)[number];
 type TimeFilter = "Today" | "Tomorrow" | "This Week" | "All";
 type FeedTab = "For You" | "Following";
 
-const CATEGORY_COLORS: Record<string, { bg: string; dot: string; label: string }> = {
-  yoga:     { bg: "#E0F7F5", dot: "#00B4A6", label: "#007A70" },
-  dance:    { bg: "#FEE8EC", dot: "#F4B8C1", label: "#C0406A" },
-  tutoring: { bg: "#FFF9E6", dot: "#FFD66B", label: "#A0820A" },
-  Yoga:     { bg: "#E0F7F5", dot: "#00B4A6", label: "#007A70" },
-  Dance:    { bg: "#FEE8EC", dot: "#F4B8C1", label: "#C0406A" },
-  Tutoring: { bg: "#FFF9E6", dot: "#FFD66B", label: "#A0820A" },
+const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
+  yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  dance:    { bg: "#F9E0E4", text: "#B03050" },
+  chess:    { bg: "#DDE8F5", text: "#2060A0" },
+  piano:    { bg: "#EDE0F5", text: "#7030A0" },
+  cooking:  { bg: "#F5EBD8", text: "#A06020" },
+  tutoring: { bg: "#F5F0D8", text: "#806020" },
+  Yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  Dance:    { bg: "#F9E0E4", text: "#B03050" },
+  Chess:    { bg: "#DDE8F5", text: "#2060A0" },
+  Piano:    { bg: "#EDE0F5", text: "#7030A0" },
+  Cooking:  { bg: "#F5EBD8", text: "#A06020" },
+  Tutoring: { bg: "#F5F0D8", text: "#806020" },
 };
 
 const DAYS_ABB = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -137,7 +142,6 @@ export default function GuestDiscoverTab() {
   const router = useRouter();
   const { filters, hasActiveFilters } = useFilters();
   const { isDesktop } = useBreakpoint();
-  const { session } = useAuth();
 
   const [selectedTag, setSelectedTag] = useState<FilterTag>("All");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("All");
@@ -149,11 +153,6 @@ export default function GuestDiscoverTab() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Greeting
-  const firstName = session?.user?.email?.split("@")[0]?.split(".")[0] ?? "there";
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
@@ -251,7 +250,7 @@ export default function GuestDiscoverTab() {
   const TIME_FILTERS: TimeFilter[] = ["Today", "Tomorrow", "This Week", "All"];
 
   const renderCard = (cls: ScheduledClass) => {
-    const colors = CATEGORY_COLORS[cls.category];
+    const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F5F5F5", text: "#6B6B6B" };
     const spotsLeft = cls.max_students - cls.current_students;
     const full = spotsLeft <= 0;
     const urgent = spotsLeft <= 3 && !full;
@@ -269,39 +268,32 @@ export default function GuestDiscoverTab() {
         ]}
         onPress={() => router.push(`/guest/class/${cls.id}`)}
       >
-        <View style={[styles.classCardBar, { backgroundColor: colors?.dot ?? "#EEEEEE" }]} />
-        <View style={[styles.classCardBody, isDesktop && styles.classCardBodyDesktop]}>
-          <View style={styles.classCardTop}>
-            <Text style={[styles.classCardTime, isDesktop && styles.classCardTimeDesktop]}>
-              {isDesktop ? formatFullDateTime(cls.scheduled_at) : formatTime(cls.scheduled_at)}
-            </Text>
-            <View style={[styles.categoryBadge, { backgroundColor: colors?.bg ?? "#F9F9F9" }]}>
-              <Text style={[styles.categoryBadgeText, { color: colors?.label ?? "#888888" }]}>
-                {cls.category}
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.classCardTitle, isDesktop && styles.classCardTitleDesktop]} numberOfLines={1}>
-            {cls.title}
+        <Text style={[styles.classCardCategory, { color: colors.text }]}>
+          {cls.category.toUpperCase()}
+        </Text>
+        <Text style={[styles.classCardTitle, isDesktop && styles.classCardTitleDesktop]} numberOfLines={1}>
+          {cls.title}
+        </Text>
+        <Pressable onPress={() => router.push(`/guest/instructor/${cls.host_id}`)}>
+          <Text style={styles.classCardHost}>with {hostName}</Text>
+        </Pressable>
+        {isDesktop && bio && (
+          <Text style={styles.classCardBio} numberOfLines={1}>{bio}</Text>
+        )}
+        {avgRating && (
+          <Text style={styles.ratingText}>★ {avgRating.toFixed(1)}</Text>
+        )}
+        <View style={styles.classCardMeta}>
+          <Text style={styles.classCardTime}>
+            {isDesktop ? formatFullDateTime(cls.scheduled_at) : formatTime(cls.scheduled_at)}
           </Text>
-          <Pressable onPress={() => router.push(`/guest/instructor/${cls.host_id}`)}>
-            <Text style={styles.classCardHost}>with {hostName}</Text>
-          </Pressable>
-          {isDesktop && bio && (
-            <Text style={styles.classCardBio} numberOfLines={1}>{bio}</Text>
-          )}
-          {avgRating && (
-            <Text style={styles.ratingText}>★ {avgRating.toFixed(1)}</Text>
-          )}
-          <View style={styles.classCardMeta}>
+          <View style={styles.classCardRight}>
             {urgent && (
-              <Text style={styles.urgencyText}>
-                🔥 {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left
-              </Text>
+              <Text style={styles.urgencyText}>{spotsLeft} left</Text>
             )}
             <View style={[styles.spotsBadge, full && styles.spotsBadgeFull]}>
               <Text style={[styles.spotsText, full && styles.spotsTextFull]}>
-                {full ? "Full" : `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left`}
+                {full ? "Full" : `${spotsLeft}/${cls.max_students}`}
               </Text>
             </View>
           </View>
@@ -315,34 +307,28 @@ export default function GuestDiscoverTab() {
       <RoleGuard requiredRole="guest">
         <View style={[styles.container, { paddingTop: isDesktop ? 0 : insets.top }]}>
 
-          {/* Header with greeting */}
+          {/* Header */}
           <View style={[styles.header, isDesktop && styles.headerDesktop]}>
-            <View style={styles.headerLeft}>
-              <Text style={[styles.greetingLine, isDesktop && styles.greetingLineDesktop]}>
-                {greeting},
-              </Text>
-              <Text style={[styles.headerTitle, isDesktop && styles.headerTitleDesktop]}>
-                {firstName}
-              </Text>
-            </View>
+            <Text style={[styles.headerTitle, isDesktop && styles.headerTitleDesktop]}>
+              Discover classes
+            </Text>
             <TouchableOpacity
               style={styles.bellBtn}
               onPress={() => router.push("/notifications")}
               activeOpacity={0.7}
             >
-              <MaterialCommunityIcons name="bell-outline" size={22} color="#1A1A1A" />
-              <View style={styles.bellDot} />
+              <MaterialCommunityIcons name="bell-outline" size={20} color="#0F0F0F" />
             </TouchableOpacity>
           </View>
 
           {/* Search bar */}
           <View style={[styles.searchRow, isDesktop && styles.searchRowDesktop]}>
             <View style={styles.searchInputWrap}>
-              <MaterialCommunityIcons name="magnify" size={18} color="#C0C0C0" />
+              <MaterialCommunityIcons name="magnify" size={16} color="#B0B0B0" />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search by class or instructor…"
-                placeholderTextColor="#C0C0C0"
+                placeholderTextColor="#B0B0B0"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 returnKeyType="search"
@@ -350,7 +336,7 @@ export default function GuestDiscoverTab() {
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery("")} activeOpacity={0.7}>
-                  <MaterialCommunityIcons name="close-circle" size={16} color="#C0C0C0" />
+                  <MaterialCommunityIcons name="close-circle" size={14} color="#C0C0C0" />
                 </TouchableOpacity>
               )}
             </View>
@@ -361,8 +347,8 @@ export default function GuestDiscoverTab() {
             >
               <MaterialCommunityIcons
                 name="tune-variant"
-                size={18}
-                color={hasActiveFilters ? "#FFFFFF" : "#1A1A1A"}
+                size={16}
+                color={hasActiveFilters ? "#FFFFFF" : "#0F0F0F"}
               />
             </TouchableOpacity>
           </View>
@@ -451,16 +437,16 @@ export default function GuestDiscoverTab() {
             </>
           )}
 
-          {/* Feed tabs — pill switcher */}
-          <View style={[styles.feedTabPillRow, isDesktop && styles.feedTabPillRowDesktop]}>
+          {/* Feed tabs — simple underline tabs */}
+          <View style={[styles.feedTabRow, isDesktop && styles.feedTabRowDesktop]}>
             {(["For You", "Following"] as FeedTab[]).map((tab) => (
               <TouchableOpacity
                 key={tab}
-                style={[styles.feedTabPill, feedTab === tab && styles.feedTabPillActive]}
+                style={[styles.feedTab, feedTab === tab && styles.feedTabActive]}
                 onPress={() => setFeedTab(tab)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.feedTabPillText, feedTab === tab && styles.feedTabPillTextActive]}>
+                <Text style={[styles.feedTabText, feedTab === tab && styles.feedTabTextActive]}>
                   {tab}
                 </Text>
               </TouchableOpacity>
@@ -470,11 +456,10 @@ export default function GuestDiscoverTab() {
           {/* Content */}
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color="#00B4A6" />
+              <ActivityIndicator color="#0F0F0F" />
             </View>
           ) : error ? (
             <View style={styles.centered}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity style={styles.retryBtn} onPress={() => loadData()} activeOpacity={0.7}>
                 <Text style={styles.retryText}>Try again</Text>
@@ -482,7 +467,6 @@ export default function GuestDiscoverTab() {
             </View>
           ) : feedTab === "Following" && followingClasses.length === 0 ? (
             <View style={styles.centered}>
-              <MaterialCommunityIcons name="account-heart-outline" size={40} color="#D0D0D0" />
               <Text style={styles.emptyText}>No classes from people you follow</Text>
               <Text style={styles.emptySubtext}>Follow instructors to see their classes here</Text>
               <TouchableOpacity style={styles.emptyHint} onPress={() => setFeedTab("For You")} activeOpacity={0.7}>
@@ -491,9 +475,8 @@ export default function GuestDiscoverTab() {
             </View>
           ) : grouped.length === 0 ? (
             <View style={styles.centered}>
-              <MaterialCommunityIcons name="calendar-blank-outline" size={36} color="#C0C0C0" />
               <Text style={styles.emptyText}>No classes found</Text>
-              <Text style={styles.emptySubtext}>Try a different filter or time range</Text>
+              <Text style={styles.emptySubtext}>Try a different filter</Text>
             </View>
           ) : (
             <ScrollView
@@ -504,13 +487,13 @@ export default function GuestDiscoverTab() {
               ]}
               showsVerticalScrollIndicator={false}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00B4A6" />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0F0F0F" />
               }
             >
               {/* Featured instructors (desktop only) */}
               {isDesktop && featuredInstructors.length > 0 && (
                 <View style={styles.featuredSection}>
-                  <Text style={styles.featuredTitle}>Featured Instructors</Text>
+                  <Text style={styles.featuredTitle}>INSTRUCTORS</Text>
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -558,111 +541,191 @@ const styles = StyleSheet.create({
   // ── Header ──────────────────────────────────────────────────────────────────
   header: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 16,
   },
-  headerDesktop: { paddingTop: 28, paddingBottom: 16, paddingHorizontal: 32 },
-  headerLeft: { gap: 1 },
-  greetingLine: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
-  greetingLineDesktop: { fontSize: 15 },
-  headerTitle: { fontSize: 24, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
-  headerTitleDesktop: { fontSize: 36, letterSpacing: -0.8 },
-  bellBtn: { position: "relative", padding: 4, marginBottom: 2 },
-  bellDot: {
-    position: "absolute", top: 4, right: 4, width: 7, height: 7,
-    borderRadius: 4, backgroundColor: "#00B4A6", borderWidth: 1.5, borderColor: "#FFFFFF",
+  headerDesktop: { paddingTop: 32, paddingBottom: 16, paddingHorizontal: 32 },
+  headerTitle: {
+    fontSize: 24,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    letterSpacing: -0.5,
   },
+  headerTitleDesktop: { fontSize: 28, letterSpacing: -0.5 },
+  bellBtn: { padding: 4 },
 
   // ── Search ──────────────────────────────────────────────────────────────────
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
   searchRowDesktop: { paddingHorizontal: 32 },
   searchInputWrap: {
-    flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "#F7F7F7", borderRadius: 10, borderWidth: 1,
-    borderColor: "#F0F0F0", paddingHorizontal: 12, height: 44,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    paddingHorizontal: 12,
+    height: 40,
   },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: fonts.regular, color: "#1A1A1A", height: 44 },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: "#0F0F0F",
+    height: 40,
+  },
   filterBtn: {
-    width: 44, height: 44, borderRadius: 10, backgroundColor: "#F7F7F7",
-    borderWidth: 1, borderColor: "#F0F0F0", alignItems: "center", justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  filterBtnActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
+  filterBtnActive: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
 
   // ── Filters ─────────────────────────────────────────────────────────────────
   desktopFiltersRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 32,
-    paddingBottom: 12,
+    paddingBottom: 8,
     gap: 8,
   },
-  desktopFilterDivider: { width: 1, height: 20, backgroundColor: "#F0F0F0" },
-  timeFilterRow: { paddingHorizontal: 20, paddingBottom: 8, gap: 4 },
-  timeFilterRowInline: { gap: 4 },
-  timeFilterBtn: { paddingHorizontal: 12, paddingVertical: 6, alignItems: "center" },
-  timeFilterText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
-  timeFilterTextActive: { fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A" },
-  timeFilterUnderline: {
-    position: "absolute", bottom: 0, left: 12, right: 12,
-    height: 2, backgroundColor: "#00B4A6", borderRadius: 1,
-  },
-  filterRow: { paddingHorizontal: 20, paddingBottom: 10, gap: 8 },
-  filterRowInline: { gap: 8 },
-  filterChip: {
-    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 9999,
-    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
-  },
-  filterChipActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  filterChipText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#666666" },
-  filterChipTextActive: { color: "#FFFFFF", fontWeight: "600", fontFamily: fonts.bold },
-
-  // ── Feed tabs — pill switcher ────────────────────────────────────────────────
-  feedTabPillRow: {
-    flexDirection: "row",
-    backgroundColor: "#F7F7F7",
-    borderRadius: 9999,
-    padding: 3,
-    marginHorizontal: 20,
-    marginBottom: 14,
-    alignSelf: "flex-start",
-  },
-  feedTabPillRowDesktop: { marginHorizontal: 32, alignSelf: "flex-start" },
-  feedTabPill: {
-    paddingHorizontal: 22,
+  desktopFilterDivider: { width: 1, height: 16, backgroundColor: "#E8E8E8", marginHorizontal: 4 },
+  timeFilterRow: { paddingHorizontal: 24, paddingBottom: 8, gap: 0 },
+  timeFilterRowInline: { gap: 0 },
+  timeFilterBtn: {
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 9999,
+    alignItems: "center",
+    position: "relative",
   },
-  feedTabPillActive: {
+  timeFilterText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  timeFilterTextActive: {
+    color: "#0F0F0F",
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+  },
+  timeFilterUnderline: {
+    position: "absolute",
+    bottom: 0,
+    left: 12,
+    right: 12,
+    height: 2,
+    backgroundColor: "#0F0F0F",
+  },
+  filterRow: { paddingHorizontal: 24, paddingBottom: 12, gap: 6 },
+  filterRowInline: { gap: 6 },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 4,
     backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
   },
-  feedTabPillText: { fontSize: 14, fontFamily: fonts.medium, color: "#888888" },
-  feedTabPillTextActive: { color: "#1A1A1A", fontWeight: "700", fontFamily: fonts.bold },
+  filterChipActive: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  filterChipText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  filterChipTextActive: { color: "#FFFFFF", fontFamily: fonts.bold, fontWeight: "700" },
+
+  // ── Feed tabs — simple underline ─────────────────────────────────────────────
+  feedTabRow: {
+    flexDirection: "row",
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8E8E8",
+    gap: 24,
+  },
+  feedTabRowDesktop: { paddingHorizontal: 32 },
+  feedTab: {
+    paddingBottom: 10,
+    paddingTop: 4,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+    marginBottom: -1,
+  },
+  feedTabActive: { borderBottomColor: "#0F0F0F" },
+  feedTabText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  feedTabTextActive: {
+    color: "#0F0F0F",
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+  },
 
   // ── States ──────────────────────────────────────────────────────────────────
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingBottom: 60 },
-  errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#888", textAlign: "center" },
-  retryBtn: { backgroundColor: "#E0F7F5", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 9999 },
-  retryText: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#00B4A6" },
-  emptyText: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
-  emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
-  emptyHint: { backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9999, marginTop: 4 },
-  emptyHintText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, paddingBottom: 60 },
+  errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", textAlign: "center" },
+  retryBtn: {
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  retryText: { fontSize: 13, fontFamily: fonts.medium, color: "#0F0F0F" },
+  emptyText: {
+    fontSize: 15,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  emptySubtext: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
+    textAlign: "center",
+  },
+  emptyHint: { paddingVertical: 6, marginTop: 4 },
+  emptyHintText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    color: "#6B6B6B",
+  },
 
   // ── List / grid ──────────────────────────────────────────────────────────────
-  listContent: { paddingHorizontal: 20, paddingTop: 4, gap: 24 },
+  listContent: { paddingHorizontal: 24, paddingTop: 8, gap: 24 },
   listContentDesktop: { paddingHorizontal: 32 },
-  daySection: { gap: 12 },
+  daySection: { gap: 8 },
   dayHeader: {
-    fontSize: 12, fontWeight: "600", fontFamily: fonts.bold, color: "#888888",
-    textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2,
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#B0B0B0",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 4,
   },
 
   // Desktop 2-column grid
@@ -671,93 +734,118 @@ const styles = StyleSheet.create({
 
   // ── Class card ──────────────────────────────────────────────────────────────
   classCard: {
-    flexDirection: "row", backgroundColor: "#FFFFFF", borderRadius: 16,
-    borderWidth: 1, borderColor: "#F0F0F0", overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    padding: 20,
+    gap: 4,
+    cursor: "pointer",
+  } as any,
+  classCardDesktop: {},
+  classCardHovered: { backgroundColor: "#FAFAFA" },
+  classCardCategory: {
+    fontSize: 10,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 2,
   },
-  classCardDesktop: {
-    borderRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 4,
+  classCardTitle: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    lineHeight: 20,
   },
-  classCardHovered: {
-    borderColor: "#9FE0DC",
-    shadowColor: "#00B4A6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    elevation: 4,
+  classCardTitleDesktop: { fontSize: 16 },
+  classCardHost: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
   },
-  classCardBar: { width: 4, alignSelf: "stretch" },
-  classCardBody: { flex: 1, padding: 14, gap: 4 },
-  classCardBodyDesktop: { padding: 20, gap: 6 },
-  classCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  classCardTime: { fontSize: 12, fontWeight: "600", fontFamily: fonts.medium, color: "#888888" },
-  classCardTimeDesktop: { fontSize: 13 },
-  categoryBadge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 9999 },
-  categoryBadgeText: { fontSize: 10, fontWeight: "600", fontFamily: fonts.medium },
-  classCardTitle: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
-  classCardTitleDesktop: { fontSize: 17 },
-  classCardHost: { fontSize: 12, color: "#00B4A6", fontWeight: "500", fontFamily: fonts.medium },
-  classCardBio: { fontSize: 13, fontFamily: fonts.regular, color: "#666666", lineHeight: 18 },
-  ratingText: { fontSize: 11, color: "#F4A200", fontWeight: "600", fontFamily: fonts.bold },
-  classCardMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 },
-  urgencyText: { fontSize: 11, color: "#E5484D", fontWeight: "600", fontFamily: fonts.bold },
-  spotsBadge: { backgroundColor: "#E0F7F5", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 9999 },
+  classCardBio: { fontSize: 13, fontFamily: fonts.regular, color: "#6B6B6B", lineHeight: 18 },
+  ratingText: { fontSize: 11, color: "#A08020", fontFamily: fonts.medium },
+  classCardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
+  },
+  classCardTime: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
+  classCardRight: { flexDirection: "row", alignItems: "center", gap: 6 },
+  urgencyText: {
+    fontSize: 11,
+    fontFamily: fonts.medium,
+    color: "#E5484D",
+  },
+  spotsBadge: {
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   spotsBadgeFull: { backgroundColor: "#FEF2F2" },
-  spotsText: { fontSize: 11, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
+  spotsText: { fontSize: 11, fontFamily: fonts.medium, color: "#6B6B6B" },
   spotsTextFull: { color: "#E5484D" },
 
   // ── Featured instructors (desktop) ──────────────────────────────────────────
-  featuredSection: { gap: 12, marginBottom: 8 },
-  featuredTitle: { fontSize: 16, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A" },
-  featuredScroll: { gap: 12, paddingBottom: 4 },
+  featuredSection: { gap: 10, marginBottom: 8 },
+  featuredTitle: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#B0B0B0",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  featuredScroll: { gap: 8, paddingBottom: 4 },
   featuredCard: {
     width: 140,
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderColor: "#E8E8E8",
     padding: 16,
     alignItems: "center",
     gap: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  featuredCardHovered: {
-    borderColor: "#9FE0DC",
-    shadowColor: "#00B4A6",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    elevation: 4,
-  },
+    cursor: "pointer",
+  } as any,
+  featuredCardHovered: { backgroundColor: "#F5F5F5" },
   featuredAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#E0F7F5",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F5F5F5",
     alignItems: "center",
     justifyContent: "center",
   },
-  featuredInitials: { fontSize: 18, fontWeight: "700", fontFamily: fonts.bold, color: "#00B4A6" },
-  featuredName: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A", textAlign: "center" },
-  featuredRating: { fontSize: 12, color: "#F4A200", fontWeight: "500", fontFamily: fonts.medium },
+  featuredInitials: {
+    fontSize: 16,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+  },
+  featuredName: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    textAlign: "center",
+  },
+  featuredRating: { fontSize: 11, color: "#A08020", fontFamily: fonts.medium },
   featuredFollowBtn: {
-    backgroundColor: "#E0F7F5",
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 9999,
+    backgroundColor: "#0F0F0F",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 4,
     marginTop: 2,
   },
-  featuredFollowText: { fontSize: 12, fontWeight: "600", fontFamily: fonts.bold, color: "#007A70" },
+  featuredFollowText: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
 });

@@ -12,7 +12,7 @@ export default function HostTabsLayout() {
 
   if (isDesktop) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#FAFAFA" }}>
+      <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
         <View
           style={{
             maxWidth: 1200,
@@ -22,7 +22,7 @@ export default function HostTabsLayout() {
             flexDirection: "row",
             borderLeftWidth: 1,
             borderRightWidth: 1,
-            borderColor: "#EEEEEE",
+            borderColor: "#E8E8E8",
             backgroundColor: "#FFFFFF",
           }}
         >
@@ -40,13 +40,13 @@ export default function HostTabsLayout() {
       tabBar={Platform.OS === "web" ? () => null : undefined}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#00B4A6",
+        tabBarActiveTintColor: "#0F0F0F",
         tabBarInactiveTintColor: "#C0C0C0",
         tabBarStyle: Platform.OS === "web"
           ? { display: "none" }
           : {
               backgroundColor: "#FFFFFF",
-              borderTopColor: "#EEEEEE",
+              borderTopColor: "#E8E8E8",
               borderTopWidth: 1,
               height: 60 + insets.bottom,
               paddingBottom: insets.bottom + 4,
