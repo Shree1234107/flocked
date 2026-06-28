@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { useFilters } from "../../../lib/filtersContext";
+import { useAuth } from "../../../lib/auth";
 import { listClasses, listFollowingClasses } from "../../../lib/api";
 import { useBreakpoint } from "../../../lib/useBreakpoint";
 import type { ScheduledClass } from "../../../lib/types";
@@ -28,9 +29,12 @@ type TimeFilter = "Today" | "Tomorrow" | "This Week" | "All";
 type FeedTab = "For You" | "Following";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; label: string }> = {
-  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", label: "#007A70" },
-  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", label: "#A04060" },
-  Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", label: "#3A5F80" },
+  yoga:     { bg: "#E0F7F5", dot: "#00B4A6", label: "#007A70" },
+  dance:    { bg: "#FEE8EC", dot: "#F4B8C1", label: "#C0406A" },
+  tutoring: { bg: "#FFF9E6", dot: "#FFD66B", label: "#A0820A" },
+  Yoga:     { bg: "#E0F7F5", dot: "#00B4A6", label: "#007A70" },
+  Dance:    { bg: "#FEE8EC", dot: "#F4B8C1", label: "#C0406A" },
+  Tutoring: { bg: "#FFF9E6", dot: "#FFD66B", label: "#A0820A" },
 };
 
 const DAYS_ABB = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -133,6 +137,7 @@ export default function GuestDiscoverTab() {
   const router = useRouter();
   const { filters, hasActiveFilters } = useFilters();
   const { isDesktop } = useBreakpoint();
+  const { session } = useAuth();
 
   const [selectedTag, setSelectedTag] = useState<FilterTag>("All");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("All");
@@ -144,6 +149,11 @@ export default function GuestDiscoverTab() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Greeting
+  const firstName = session?.user?.email?.split("@")[0]?.split(".")[0] ?? "there";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (!isRefresh) setLoading(true);
@@ -305,17 +315,22 @@ export default function GuestDiscoverTab() {
       <RoleGuard requiredRole="guest">
         <View style={[styles.container, { paddingTop: isDesktop ? 0 : insets.top }]}>
 
-          {/* Header */}
+          {/* Header with greeting */}
           <View style={[styles.header, isDesktop && styles.headerDesktop]}>
-            <Text style={[styles.headerTitle, isDesktop && styles.headerTitleDesktop]}>
-              Discover
-            </Text>
+            <View style={styles.headerLeft}>
+              <Text style={[styles.greetingLine, isDesktop && styles.greetingLineDesktop]}>
+                {greeting},
+              </Text>
+              <Text style={[styles.headerTitle, isDesktop && styles.headerTitleDesktop]}>
+                {firstName}
+              </Text>
+            </View>
             <TouchableOpacity
               style={styles.bellBtn}
               onPress={() => router.push("/notifications")}
               activeOpacity={0.7}
             >
-              <MaterialCommunityIcons name="bell-outline" size={22} color="#2C2C2C" />
+              <MaterialCommunityIcons name="bell-outline" size={22} color="#1A1A1A" />
               <View style={styles.bellDot} />
             </TouchableOpacity>
           </View>
@@ -347,12 +362,12 @@ export default function GuestDiscoverTab() {
               <MaterialCommunityIcons
                 name="tune-variant"
                 size={18}
-                color={hasActiveFilters ? "#FFFFFF" : "#2C2C2C"}
+                color={hasActiveFilters ? "#FFFFFF" : "#1A1A1A"}
               />
             </TouchableOpacity>
           </View>
 
-          {/* Filters: on desktop merge time + chips on one row; on mobile two separate scrolls */}
+          {/* Time filter tabs */}
           {isDesktop ? (
             <View style={styles.desktopFiltersRow}>
               <ScrollView
@@ -436,16 +451,16 @@ export default function GuestDiscoverTab() {
             </>
           )}
 
-          {/* Feed tabs */}
-          <View style={[styles.feedTabRow, isDesktop && styles.feedTabRowDesktop]}>
+          {/* Feed tabs — pill switcher */}
+          <View style={[styles.feedTabPillRow, isDesktop && styles.feedTabPillRowDesktop]}>
             {(["For You", "Following"] as FeedTab[]).map((tab) => (
               <TouchableOpacity
                 key={tab}
-                style={[styles.feedTab, isDesktop && styles.feedTabDesktop, feedTab === tab && styles.feedTabActive]}
+                style={[styles.feedTabPill, feedTab === tab && styles.feedTabPillActive]}
                 onPress={() => setFeedTab(tab)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.feedTabText, isDesktop && styles.feedTabTextDesktop, feedTab === tab && styles.feedTabTextActive]}>
+                <Text style={[styles.feedTabPillText, feedTab === tab && styles.feedTabPillTextActive]}>
                   {tab}
                 </Text>
               </TouchableOpacity>
@@ -522,7 +537,6 @@ export default function GuestDiscoverTab() {
                           {renderCard(cls)}
                         </View>
                       ))}
-                      {/* Invisible spacer so odd last item doesn't stretch */}
                       {dayCls.length % 2 !== 0 && <View style={styles.cardGridItem} />}
                     </View>
                   ) : (
@@ -544,32 +558,36 @@ const styles = StyleSheet.create({
   // ── Header ──────────────────────────────────────────────────────────────────
   header: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  headerDesktop: { paddingVertical: 24, paddingHorizontal: 32 },
-  headerTitle: { fontSize: 22, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", letterSpacing: -0.3 },
-  headerTitleDesktop: { fontSize: 36, letterSpacing: -0.5 },
-  bellBtn: { position: "relative", padding: 4 },
+  headerDesktop: { paddingTop: 28, paddingBottom: 16, paddingHorizontal: 32 },
+  headerLeft: { gap: 1 },
+  greetingLine: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
+  greetingLineDesktop: { fontSize: 15 },
+  headerTitle: { fontSize: 24, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
+  headerTitleDesktop: { fontSize: 36, letterSpacing: -0.8 },
+  bellBtn: { position: "relative", padding: 4, marginBottom: 2 },
   bellDot: {
     position: "absolute", top: 4, right: 4, width: 7, height: 7,
     borderRadius: 4, backgroundColor: "#00B4A6", borderWidth: 1.5, borderColor: "#FFFFFF",
   },
 
   // ── Search ──────────────────────────────────────────────────────────────────
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
+  searchRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
   searchRowDesktop: { paddingHorizontal: 32 },
   searchInputWrap: {
     flex: 1, flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "#F9F9F9", borderRadius: 10, borderWidth: 1,
-    borderColor: "#EEEEEE", paddingHorizontal: 12, height: 44,
+    backgroundColor: "#F7F7F7", borderRadius: 10, borderWidth: 1,
+    borderColor: "#F0F0F0", paddingHorizontal: 12, height: 44,
   },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: fonts.regular, color: "#2C2C2C", height: 44 },
+  searchInput: { flex: 1, fontSize: 14, fontFamily: fonts.regular, color: "#1A1A1A", height: 44 },
   filterBtn: {
-    width: 44, height: 44, borderRadius: 10, backgroundColor: "#F9F9F9",
-    borderWidth: 1, borderColor: "#EEEEEE", alignItems: "center", justifyContent: "center",
+    width: 44, height: 44, borderRadius: 10, backgroundColor: "#F7F7F7",
+    borderWidth: 1, borderColor: "#F0F0F0", alignItems: "center", justifyContent: "center",
   },
   filterBtnActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
 
@@ -581,51 +599,65 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 8,
   },
-  desktopFilterDivider: { width: 1, height: 20, backgroundColor: "#EEEEEE" },
-  timeFilterRow: { paddingHorizontal: 16, paddingBottom: 8, gap: 4 },
+  desktopFilterDivider: { width: 1, height: 20, backgroundColor: "#F0F0F0" },
+  timeFilterRow: { paddingHorizontal: 20, paddingBottom: 8, gap: 4 },
   timeFilterRowInline: { gap: 4 },
   timeFilterBtn: { paddingHorizontal: 12, paddingVertical: 6, alignItems: "center" },
   timeFilterText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
-  timeFilterTextActive: { fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
+  timeFilterTextActive: { fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A" },
   timeFilterUnderline: {
     position: "absolute", bottom: 0, left: 12, right: 12,
     height: 2, backgroundColor: "#00B4A6", borderRadius: 1,
   },
-  filterRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
+  filterRow: { paddingHorizontal: 20, paddingBottom: 10, gap: 8 },
   filterRowInline: { gap: 8 },
   filterChip: {
-    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 8,
-    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 9999,
+    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
   },
   filterChipActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  filterChipText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
+  filterChipText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#666666" },
   filterChipTextActive: { color: "#FFFFFF", fontWeight: "600", fontFamily: fonts.bold },
 
-  // ── Feed tabs ────────────────────────────────────────────────────────────────
-  feedTabRow: {
-    flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#EEEEEE",
-    marginHorizontal: 16, marginBottom: 8,
+  // ── Feed tabs — pill switcher ────────────────────────────────────────────────
+  feedTabPillRow: {
+    flexDirection: "row",
+    backgroundColor: "#F7F7F7",
+    borderRadius: 9999,
+    padding: 3,
+    marginHorizontal: 20,
+    marginBottom: 14,
+    alignSelf: "flex-start",
   },
-  feedTabRowDesktop: { marginHorizontal: 32 },
-  feedTab: { flex: 1, paddingVertical: 10, alignItems: "center" },
-  feedTabDesktop: { paddingVertical: 14 },
-  feedTabActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
-  feedTabText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
-  feedTabTextDesktop: { fontSize: 16 },
-  feedTabTextActive: { fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
+  feedTabPillRowDesktop: { marginHorizontal: 32, alignSelf: "flex-start" },
+  feedTabPill: {
+    paddingHorizontal: 22,
+    paddingVertical: 8,
+    borderRadius: 9999,
+  },
+  feedTabPillActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  feedTabPillText: { fontSize: 14, fontFamily: fonts.medium, color: "#888888" },
+  feedTabPillTextActive: { color: "#1A1A1A", fontWeight: "700", fontFamily: fonts.bold },
 
   // ── States ──────────────────────────────────────────────────────────────────
   centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingBottom: 60 },
   errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#888", textAlign: "center" },
-  retryBtn: { backgroundColor: "#E0F7F5", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  retryBtn: { backgroundColor: "#E0F7F5", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 9999 },
   retryText: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#00B4A6" },
-  emptyText: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  emptyText: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
   emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
-  emptyHint: { backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 4 },
+  emptyHint: { backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9999, marginTop: 4 },
   emptyHintText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
 
   // ── List / grid ──────────────────────────────────────────────────────────────
-  listContent: { paddingHorizontal: 20, paddingTop: 8, gap: 24 },
+  listContent: { paddingHorizontal: 20, paddingTop: 4, gap: 24 },
   listContentDesktop: { paddingHorizontal: 32 },
   daySection: { gap: 12 },
   dayHeader: {
@@ -634,24 +666,33 @@ const styles = StyleSheet.create({
   },
 
   // Desktop 2-column grid
-  cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
+  cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   cardGridItem: { flex: 1, minWidth: 260, maxWidth: "50%" as any },
 
   // ── Class card ──────────────────────────────────────────────────────────────
   classCard: {
-    flexDirection: "row", backgroundColor: "#FFFFFF", borderRadius: 12,
-    borderWidth: 1, borderColor: "#EEEEEE", overflow: "hidden",
+    flexDirection: "row", backgroundColor: "#FFFFFF", borderRadius: 16,
+    borderWidth: 1, borderColor: "#F0F0F0", overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   classCardDesktop: {
-    borderRadius: 14,
+    borderRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 4,
   },
   classCardHovered: {
     borderColor: "#9FE0DC",
     shadowColor: "#00B4A6",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 4,
   },
   classCardBar: { width: 4, alignSelf: "stretch" },
   classCardBody: { flex: 1, padding: 14, gap: 4 },
@@ -659,41 +700,46 @@ const styles = StyleSheet.create({
   classCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   classCardTime: { fontSize: 12, fontWeight: "600", fontFamily: fonts.medium, color: "#888888" },
   classCardTimeDesktop: { fontSize: 13 },
-  categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  categoryBadge: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 9999 },
   categoryBadgeText: { fontSize: 10, fontWeight: "600", fontFamily: fonts.medium },
-  classCardTitle: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  classCardTitle: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
   classCardTitleDesktop: { fontSize: 17 },
   classCardHost: { fontSize: 12, color: "#00B4A6", fontWeight: "500", fontFamily: fonts.medium },
-  classCardBio: { fontSize: 13, fontFamily: fonts.regular, color: "#888888", lineHeight: 18 },
+  classCardBio: { fontSize: 13, fontFamily: fonts.regular, color: "#666666", lineHeight: 18 },
   ratingText: { fontSize: 11, color: "#F4A200", fontWeight: "600", fontFamily: fonts.bold },
   classCardMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 },
-  urgencyText: { fontSize: 11, color: "#E05555", fontWeight: "600", fontFamily: fonts.bold },
-  spotsBadge: { backgroundColor: "#E0F7F5", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
+  urgencyText: { fontSize: 11, color: "#E5484D", fontWeight: "600", fontFamily: fonts.bold },
+  spotsBadge: { backgroundColor: "#E0F7F5", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 9999 },
   spotsBadgeFull: { backgroundColor: "#FEF2F2" },
   spotsText: { fontSize: 11, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
-  spotsTextFull: { color: "#EF4444" },
+  spotsTextFull: { color: "#E5484D" },
 
   // ── Featured instructors (desktop) ──────────────────────────────────────────
   featuredSection: { gap: 12, marginBottom: 8 },
-  featuredTitle: { fontSize: 16, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
+  featuredTitle: { fontSize: 16, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A" },
   featuredScroll: { gap: 12, paddingBottom: 4 },
   featuredCard: {
     width: 140,
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0F0F0",
     padding: 16,
     alignItems: "center",
     gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   featuredCardHovered: {
     borderColor: "#9FE0DC",
     shadowColor: "#00B4A6",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 4,
   },
   featuredAvatar: {
     width: 52,
@@ -704,13 +750,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   featuredInitials: { fontSize: 18, fontWeight: "700", fontFamily: fonts.bold, color: "#00B4A6" },
-  featuredName: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C", textAlign: "center" },
+  featuredName: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A", textAlign: "center" },
   featuredRating: { fontSize: 12, color: "#F4A200", fontWeight: "500", fontFamily: fonts.medium },
   featuredFollowBtn: {
     backgroundColor: "#E0F7F5",
     paddingHorizontal: 14,
     paddingVertical: 5,
-    borderRadius: 20,
+    borderRadius: 9999,
     marginTop: 2,
   },
   featuredFollowText: { fontSize: 12, fontWeight: "600", fontFamily: fonts.bold, color: "#007A70" },

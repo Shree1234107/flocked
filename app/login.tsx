@@ -261,10 +261,25 @@ export default function LoginScreen() {
   if (Platform.OS === "web") {
     return (
       <View style={styles.webRoot}>
+        {/* Left panel with decorative circles */}
         <View style={styles.webLeft}>
-          <MaterialCommunityIcons name="leaf-circle-outline" size={72} color="rgba(255,255,255,0.45)" />
-          <Text style={styles.webHeadline}>{"Learn anything.\nLive."}</Text>
-          <Text style={styles.webSubtext}>Intimate live classes from real people.</Text>
+          <View style={styles.decoCircleTop} />
+          <View style={styles.decoCircleBottom} />
+          <View style={styles.webLeftContent}>
+            <View style={styles.webLeftLogo}>
+              <MaterialCommunityIcons name="leaf-circle-outline" size={28} color="rgba(255,255,255,0.9)" />
+              <Text style={styles.webLeftLogoText}>Flocked</Text>
+            </View>
+            <Text style={styles.webHeadline}>{"Learn anything.\nLive."}</Text>
+            <Text style={styles.webSubtext}>Intimate live classes from real instructors.</Text>
+            <View style={styles.webLeftPills}>
+              {["Yoga", "Chess", "Dance", "Piano"].map((tag) => (
+                <View key={tag} style={styles.webLeftPill}>
+                  <Text style={styles.webLeftPillText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
         </View>
         <ScrollView
           style={styles.webRight}
@@ -310,11 +325,46 @@ const styles = StyleSheet.create({
   webLeft: {
     flex: 1,
     backgroundColor: "#00B4A6",
+    overflow: "hidden",
+  },
+  decoCircleTop: {
+    position: "absolute",
+    top: -120,
+    right: -80,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  decoCircleBottom: {
+    position: "absolute",
+    bottom: -160,
+    left: -100,
+    width: 440,
+    height: 440,
+    borderRadius: 220,
+    backgroundColor: "rgba(0,0,0,0.07)",
+  },
+  webLeftContent: {
+    flex: 1,
     alignItems: "flex-start",
     justifyContent: "flex-end",
-    paddingHorizontal: 60,
-    paddingVertical: 72,
+    paddingHorizontal: 56,
+    paddingVertical: 64,
     gap: 20,
+  },
+  webLeftLogo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
+  webLeftLogoText: {
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: fonts.bold,
+    color: "rgba(255,255,255,0.95)",
+    letterSpacing: -0.3,
   },
   webHeadline: {
     fontSize: 52,
@@ -325,11 +375,28 @@ const styles = StyleSheet.create({
     lineHeight: 60,
   },
   webSubtext: {
-    fontSize: 18,
+    fontSize: 17,
     color: "rgba(255,255,255,0.8)",
-    lineHeight: 28,
+    lineHeight: 26,
     fontWeight: "400",
     fontFamily: fonts.regular,
+  },
+  webLeftPills: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 4,
+  },
+  webLeftPill: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 9999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  webLeftPillText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    color: "rgba(255,255,255,0.9)",
   },
   webRight: { flex: 1, backgroundColor: "#FAFAFA" },
   webRightContent: {
@@ -348,7 +415,7 @@ const styles = StyleSheet.create({
   // ── Brand ──────────────────────────────────────────────────────────────────
   brandSection: { alignItems: "center", gap: 8 },
   logoMark: { marginBottom: 2 },
-  wordmark: { fontSize: 32, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", letterSpacing: -0.5 },
+  wordmark: { fontSize: 30, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
   tagline: { fontSize: 14, color: "#888888", fontWeight: "400", fontFamily: fonts.regular },
 
   // ── Form ──────────────────────────────────────────────────────────────────
@@ -359,33 +426,33 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 6,
     backgroundColor: "#FFF0F0",
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
-  errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E05555", lineHeight: 18 },
+  errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E5484D", lineHeight: 18 },
   primaryBtn: {
     backgroundColor: "#00B4A6",
-    borderRadius: 12,
+    borderRadius: 10,
     paddingVertical: 15,
     alignItems: "center",
   },
   btnDisabled: { opacity: 0.5 },
   primaryBtnText: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#EEEEEE" },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
   dividerText: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
   roleCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0F0F0",
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   roleRow: {
     flexDirection: "row",
@@ -397,16 +464,16 @@ const styles = StyleSheet.create({
   roleIconWrap: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: 9,
     backgroundColor: "#E0F7F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   roleTextWrap: { flex: 1, gap: 2 },
-  roleTitle: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  roleTitle: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
   roleSub: { fontSize: 12, fontFamily: fonts.regular, color: "#888888" },
-  roleSep: { height: 1, backgroundColor: "#EEEEEE", marginLeft: 64 },
+  roleSep: { height: 1, backgroundColor: "#F0F0F0", marginLeft: 64 },
 
   // ── Sent card ──────────────────────────────────────────────────────────────
   sentCard: {
@@ -415,14 +482,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0F0F0",
     padding: 32,
     gap: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   sentIconWrap: {
     width: 64,
@@ -433,9 +500,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
-  sentTitle: { fontSize: 20, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
+  sentTitle: { fontSize: 20, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A" },
   sentBody: { fontSize: 14, fontFamily: fonts.regular, color: "#888888", textAlign: "center", lineHeight: 22 },
-  sentEmail: { fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  sentEmail: { fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
   sentHint: { fontSize: 12, fontFamily: fonts.regular, color: "#AAA", textAlign: "center", lineHeight: 18 },
   resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
   resendText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#00B4A6" },

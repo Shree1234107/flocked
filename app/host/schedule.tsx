@@ -382,7 +382,9 @@ export default function ScheduleClassScreen() {
     <AuthGate>
       <RoleGuard requiredRole="host">
         {isWeb ? (
-          <View style={styles.flex}>{formContent}</View>
+          <View style={styles.flex}>
+            <View style={styles.webContainer}>{formContent}</View>
+          </View>
         ) : (
           <KeyboardAvoidingView style={styles.flex} behavior="padding">
             {formContent}
@@ -395,69 +397,75 @@ export default function ScheduleClassScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: "#FFFFFF" },
-  content: { paddingHorizontal: 20, paddingTop: 20, gap: 24 },
+  webContainer: {
+    flex: 1,
+    maxWidth: 600,
+    width: "100%",
+    alignSelf: "center",
+  },
+  content: { paddingHorizontal: 24, paddingTop: 24, gap: 24 },
   section: { gap: 10 },
-  label: { fontSize: 13, fontWeight: "600", color: "#2C2C2C" },
+  label: { fontSize: 13, fontWeight: "600", color: "#1A1A1A" },
   optional: { fontWeight: "400", color: "#888888" },
-  textInput: { backgroundColor: "#F9F9F9" },
+  textInput: { backgroundColor: "#F7F7F7" },
 
   chipRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   chipHovered: { backgroundColor: "#F0F0F0" },
 
   categoryChip: {
-    paddingHorizontal: 18, paddingVertical: 9, borderRadius: 8,
-    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    paddingHorizontal: 18, paddingVertical: 9, borderRadius: 9999,
+    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
   },
-  categoryChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
+  categoryChipText: { fontSize: 13, fontWeight: "500", color: "#666666" },
 
   scrollRow: { gap: 8, paddingVertical: 2 },
 
   dateChip: {
-    width: 58, paddingVertical: 10, borderRadius: 10,
-    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    width: 58, paddingVertical: 10, borderRadius: 12,
+    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
     alignItems: "center", gap: 2,
   },
   dateChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
   dateChipTop: { fontSize: 10, fontWeight: "500", color: "#888888" },
   dateChipTopSelected: { color: "#FFFFFF" },
-  dateChipNum: { fontSize: 18, fontWeight: "700", color: "#2C2C2C", lineHeight: 24 },
+  dateChipNum: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", lineHeight: 24 },
   dateChipNumSelected: { color: "#FFFFFF" },
 
   timeChip: {
-    paddingHorizontal: 12, paddingVertical: 9, borderRadius: 8,
-    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    paddingHorizontal: 12, paddingVertical: 9, borderRadius: 9999,
+    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
   },
   timeChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  timeChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
+  timeChipText: { fontSize: 13, fontWeight: "500", color: "#666666" },
   timeChipTextSelected: { color: "#FFFFFF", fontWeight: "600" },
 
   durationChip: {
-    paddingHorizontal: 20, paddingVertical: 9, borderRadius: 8,
-    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    paddingHorizontal: 20, paddingVertical: 9, borderRadius: 9999,
+    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
   },
   durationChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  durationChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
+  durationChipText: { fontSize: 13, fontWeight: "500", color: "#666666" },
   durationChipTextSelected: { fontWeight: "600", color: "#FFFFFF" },
 
   counterRow: { flexDirection: "row", alignItems: "center", gap: 20 },
   counterBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
+    backgroundColor: "#F7F7F7", borderWidth: 1, borderColor: "#F0F0F0",
     alignItems: "center", justifyContent: "center",
   },
   counterBtnHovered: { backgroundColor: "#EEEEEE" },
-  counterBtnText: { fontSize: 20, fontWeight: "500", color: "#2C2C2C", lineHeight: 24 },
-  counterValue: { fontSize: 24, fontWeight: "700", color: "#2C2C2C", minWidth: 36, textAlign: "center" },
+  counterBtnText: { fontSize: 20, fontWeight: "500", color: "#1A1A1A", lineHeight: 24 },
+  counterValue: { fontSize: 24, fontWeight: "700", color: "#1A1A1A", minWidth: 36, textAlign: "center" },
 
   errorBox: {
     flexDirection: "row", alignItems: "flex-start", gap: 8,
-    backgroundColor: "#FFF0F0", borderRadius: 8,
+    backgroundColor: "#FFF0F0", borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 10,
   },
-  errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
+  errorText: { flex: 1, fontSize: 13, color: "#E5484D", lineHeight: 18 },
 
   submitBtn: {
-    backgroundColor: "#00B4A6", borderRadius: 12,
+    backgroundColor: "#00B4A6", borderRadius: 10,
     paddingVertical: 15, alignItems: "center", marginTop: 4,
   },
   submitBtnDisabled: { opacity: 0.6 },

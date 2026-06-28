@@ -110,37 +110,38 @@ function LandingPage() {
   const goLogin = () => router.push("/login");
 
   return (
+    <View style={styles.page}>
+      {/* ── Sticky Nav ──────────────────────────────────────────────────── */}
+      <View style={[styles.nav, isNarrow && styles.navNarrow]}>
+        <View style={styles.navLeft}>
+          <MaterialCommunityIcons name="leaf-circle-outline" size={26} color="#00B4A6" />
+          <Text style={styles.navLogo}>Flocked</Text>
+        </View>
+        <View style={styles.navRight}>
+          <TouchableOpacity
+            onPress={goLogin}
+            activeOpacity={0.7}
+            style={styles.navSignIn}
+          >
+            <Text style={styles.navSignInText}>Sign in</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={goLogin}
+            activeOpacity={0.85}
+            style={styles.navGetStarted}
+          >
+            <Text style={styles.navGetStartedText}>Get Started</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
     <ScrollView
-      style={styles.page}
+      style={styles.scrollView}
       contentContainerStyle={styles.pageContent}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Section 1: Hero ──────────────────────────────────────────────── */}
       <View style={[styles.hero, isNarrow && styles.heroNarrow]}>
-        {/* Nav */}
-        <View style={styles.nav}>
-          <View style={styles.navLeft}>
-            <MaterialCommunityIcons name="leaf-circle-outline" size={26} color="#00B4A6" />
-            <Text style={styles.navLogo}>Flocked</Text>
-          </View>
-          <View style={styles.navRight}>
-            <TouchableOpacity
-              onPress={goLogin}
-              activeOpacity={0.7}
-              style={styles.navSignIn}
-            >
-              <Text style={styles.navSignInText}>Sign in</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={goLogin}
-              activeOpacity={0.85}
-              style={styles.navGetStarted}
-            >
-              <Text style={styles.navGetStartedText}>Get Started</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Hero body */}
         <View style={[styles.heroBody, isNarrow && styles.heroBodyNarrow]}>
           {/* Left */}
@@ -299,6 +300,7 @@ function LandingPage() {
         </View>
       </View>
     </ScrollView>
+    </View>
   );
 }
 
@@ -306,25 +308,34 @@ function LandingPage() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#FFFFFF" },
+  scrollView: { flex: 1 },
   pageContent: { flexGrow: 1 },
 
   // ── Hero ────────────────────────────────────────────────────────────────────
   hero: {
-    minHeight: 640,
+    minHeight: 560,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 80,
-    paddingTop: 0,
+    paddingTop: 32,
     paddingBottom: 60,
   },
   heroNarrow: { paddingHorizontal: 24 },
 
-  // Nav
+  // Nav — sticky on web
   nav: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 24,
-  },
+    paddingVertical: 18,
+    paddingHorizontal: 80,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+  } as any,
+  navNarrow: { paddingHorizontal: 24 },
   navLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   navLogo: {
     fontSize: 22,
@@ -344,7 +355,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#00B4A6",
     paddingHorizontal: 18,
     paddingVertical: 9,
-    borderRadius: 8,
+    borderRadius: 10,
     cursor: "pointer",
   } as any,
   navGetStartedText: {
@@ -400,7 +411,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#00B4A6",
     paddingHorizontal: 32,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     cursor: "pointer",
   } as any,
   ctaPrimaryText: {
@@ -413,7 +424,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 32,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: "#00B4A6",
     cursor: "pointer",
@@ -466,12 +477,12 @@ const styles = StyleSheet.create({
   mockCard: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     elevation: 3,
     marginBottom: 10,
   },
@@ -505,7 +516,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF8E7",
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 9999,
     flexShrink: 0,
   },
   ratingText: {
@@ -523,7 +534,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0F7F5",
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 9999,
     marginTop: 2,
   },
   mockCardSpotsText: {
@@ -538,7 +549,7 @@ const styles = StyleSheet.create({
     paddingVertical: 80,
     paddingHorizontal: 80,
     borderTopWidth: 1,
-    borderTopColor: "#F4F4F4",
+    borderTopColor: "#F0F0F0",
   },
   howSectionNarrow: { paddingHorizontal: 24, paddingVertical: 56 },
 
@@ -657,7 +668,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#00B4A6",
     paddingHorizontal: 28,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 10,
     marginTop: 8,
     cursor: "pointer",
   } as any,
@@ -730,7 +741,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 36,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     marginTop: 12,
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.4)",

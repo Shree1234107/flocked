@@ -22,11 +22,11 @@ import { fonts } from "../../../lib/fonts";
 // Handle both legacy title-case and new lowercase category values from backend
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
   yoga:     { bg: "#E0F7F5", text: "#007A70", bar: "#00B4A6" },
-  dance:    { bg: "#FDF0F2", text: "#A04060", bar: "#E0A0B0" },
-  tutoring: { bg: "#EEF3F8", text: "#3A5F80", bar: "#94B4D2" },
+  dance:    { bg: "#FEE8EC", text: "#C0406A", bar: "#F4B8C1" },
+  tutoring: { bg: "#FFF9E6", text: "#A0820A", bar: "#FFD66B" },
   Yoga:     { bg: "#E0F7F5", text: "#007A70", bar: "#00B4A6" },
-  Dance:    { bg: "#FDF0F2", text: "#A04060", bar: "#E0A0B0" },
-  Tutoring: { bg: "#EEF3F8", text: "#3A5F80", bar: "#94B4D2" },
+  Dance:    { bg: "#FEE8EC", text: "#C0406A", bar: "#F4B8C1" },
+  Tutoring: { bg: "#FFF9E6", text: "#A0820A", bar: "#FFD66B" },
 };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -89,6 +89,10 @@ export default function InstructorHomeTab() {
     (c) => new Date(c.scheduled_at) < now || c.status === "completed" || c.status === "cancelled"
   ).sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
+  // Stats
+  const totalStudentsEnrolled = upcoming.reduce((sum, c) => sum + c.current_students, 0);
+  const liveNow = classes.filter((c) => c.status === "live").length;
+
   const doCancel = async (id: string) => {
     setCancelling(id);
     setConfirmCancelId(null);
@@ -139,6 +143,24 @@ export default function InstructorHomeTab() {
               <Text style={styles.scheduleBtnText}>Schedule</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Stats row */}
+          {!loading && !error && (
+            <View style={styles.statsRow}>
+              <View style={styles.statCard}>
+                <Text style={styles.statNum}>{upcoming.length}</Text>
+                <Text style={styles.statLabel}>Upcoming</Text>
+              </View>
+              <View style={[styles.statCard, styles.statCardMiddle]}>
+                <Text style={styles.statNum}>{totalStudentsEnrolled}</Text>
+                <Text style={styles.statLabel}>Enrolled</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={[styles.statNum, liveNow > 0 && styles.statNumLive]}>{liveNow}</Text>
+                <Text style={styles.statLabel}>Live Now</Text>
+              </View>
+            </View>
+          )}
 
           {/* Tab row */}
           <View style={styles.tabRow}>
@@ -203,9 +225,10 @@ export default function InstructorHomeTab() {
               showsVerticalScrollIndicator={false}
             >
               {displayed.map((cls) => {
-                const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F9F9F9", text: "#888888", bar: "#EEEEEE" };
+                const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F7F7F7", text: "#666666", bar: "#EEEEEE" };
                 const isConfirming = confirmCancelId === cls.id;
                 const isCancelling = cancelling === cls.id;
+                const fillPct = cls.max_students > 0 ? cls.current_students / cls.max_students : 0;
 
                 return (
                   <View key={cls.id} style={styles.card}>
@@ -237,7 +260,7 @@ export default function InstructorHomeTab() {
                         <Text style={styles.metaText}>{cls.duration_minutes} min</Text>
                       </View>
 
-                      {/* Students */}
+                      {/* Students + progress bar */}
                       <View style={styles.metaRow}>
                         <MaterialCommunityIcons name="account-group-outline" size={13} color="#888888" />
                         <Text style={styles.metaText}>
@@ -247,11 +270,23 @@ export default function InstructorHomeTab() {
                         </Text>
                       </View>
 
+                      {/* Enrollment progress bar (upcoming only) */}
+                      {tab === "upcoming" && (
+                        <View style={styles.progressBg}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              { width: `${Math.min(fillPct * 100, 100)}%` as any },
+                              fillPct >= 1 && styles.progressFillFull,
+                            ]}
+                          />
+                        </View>
+                      )}
+
                       {/* Upcoming actions */}
                       {tab === "upcoming" && (
                         <View style={styles.actions}>
                           {isConfirming ? (
-                            // Inline cancel confirmation (web-safe)
                             <View style={styles.confirmRow}>
                               <Text style={styles.confirmText}>Cancel this class?</Text>
                               <View style={styles.confirmBtns}>
@@ -269,7 +304,7 @@ export default function InstructorHomeTab() {
                                   activeOpacity={0.7}
                                 >
                                   {isCancelling ? (
-                                    <ActivityIndicator size="small" color="#EF4444" />
+                                    <ActivityIndicator size="small" color="#E5484D" />
                                   ) : (
                                     <Text style={styles.confirmCancelText}>Yes, Cancel</Text>
                                   )}
@@ -293,7 +328,7 @@ export default function InstructorHomeTab() {
                                 activeOpacity={0.7}
                               >
                                 {isCancelling ? (
-                                  <ActivityIndicator size="small" color="#EF4444" />
+                                  <ActivityIndicator size="small" color="#E5484D" />
                                 ) : (
                                   <Text style={styles.cancelClassBtnText}>Cancel Class</Text>
                                 )}
@@ -331,26 +366,53 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  headerTitle: { fontSize: 22, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", letterSpacing: -0.3 },
+  headerTitle: { fontSize: 24, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
   scheduleBtn: {
     flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "#00B4A6", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+    backgroundColor: "#00B4A6", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
   },
   scheduleBtnText: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
+
+  // ── Stats row ────────────────────────────────────────────────────────────────
+  statsRow: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#F7F7F7",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    gap: 2,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  statCardMiddle: {
+    backgroundColor: "#E0F7F5",
+    borderColor: "#B0E8E3",
+  },
+  statNum: { fontSize: 24, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", letterSpacing: -0.5 },
+  statNumLive: { color: "#00B4A6" },
+  statLabel: { fontSize: 11, fontFamily: fonts.regular, color: "#888888", textAlign: "center" },
 
   tabRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
+    borderBottomColor: "#F0F0F0",
     marginHorizontal: 20,
     marginBottom: 4,
   },
   tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center" },
   tabBtnActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
   tabBtnText: { fontSize: 15, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
-  tabBtnTextActive: { color: "#2C2C2C", fontWeight: "700", fontFamily: fonts.bold },
+  tabBtnTextActive: { color: "#1A1A1A", fontWeight: "700", fontFamily: fonts.bold },
   tabCount: { fontSize: 13, fontFamily: fonts.regular, color: "#C0C0C0" },
   tabCountActive: { fontSize: 13, fontFamily: fonts.medium, color: "#00B4A6" },
 
@@ -358,11 +420,11 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
   retryBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+    backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9999,
   },
   retryText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
 
-  emptyTitle: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  emptyTitle: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#1A1A1A" },
   emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
   emptyScheduleBtn: {
     backgroundColor: "#00B4A6", borderRadius: 10,
@@ -375,28 +437,43 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0F0F0",
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowRadius: 12,
+    elevation: 3,
   },
   cardBar: { width: 5, alignSelf: "stretch" },
   cardBody: { flex: 1, padding: 16, gap: 6 },
 
   cardTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 2 },
-  cardTitle: { flex: 1, fontSize: 17, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", lineHeight: 22 },
-  categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, flexShrink: 0 },
+  cardTitle: { flex: 1, fontSize: 17, fontWeight: "700", fontFamily: fonts.bold, color: "#1A1A1A", lineHeight: 22 },
+  categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9999, flexShrink: 0 },
   categoryBadgeText: { fontSize: 11, fontWeight: "600", fontFamily: fonts.medium },
 
   metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   metaText: { fontSize: 13, fontFamily: fonts.regular, color: "#666666" },
 
-  actions: { marginTop: 10, gap: 8 },
+  // Progress bar
+  progressBg: {
+    height: 4,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 9999,
+    marginTop: 2,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 4,
+    backgroundColor: "#00B4A6",
+    borderRadius: 9999,
+  },
+  progressFillFull: { backgroundColor: "#E5484D" },
+
+  actions: { marginTop: 8, gap: 8 },
   startBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 8, backgroundColor: "#00B4A6", borderRadius: 10,
@@ -404,21 +481,21 @@ const styles = StyleSheet.create({
   },
   startBtnText: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
   cancelClassBtn: { alignItems: "center", paddingVertical: 6 },
-  cancelClassBtnText: { fontSize: 13, color: "#EF4444", fontWeight: "500", fontFamily: fonts.medium },
+  cancelClassBtnText: { fontSize: 13, color: "#E5484D", fontWeight: "500", fontFamily: fonts.medium },
 
   confirmRow: { gap: 8 },
-  confirmText: { fontSize: 13, color: "#2C2C2C", fontWeight: "500", fontFamily: fonts.medium, textAlign: "center" },
+  confirmText: { fontSize: 13, color: "#1A1A1A", fontWeight: "500", fontFamily: fonts.medium, textAlign: "center" },
   confirmBtns: { flexDirection: "row", gap: 10 },
   confirmKeepBtn: {
     flex: 1, alignItems: "center", paddingVertical: 9,
-    borderRadius: 8, borderWidth: 1, borderColor: "#EEEEEE",
+    borderRadius: 10, borderWidth: 1, borderColor: "#F0F0F0",
   },
   confirmKeepText: { fontSize: 13, color: "#888888", fontWeight: "500", fontFamily: fonts.medium },
   confirmCancelBtn: {
     flex: 1, alignItems: "center", paddingVertical: 9,
-    borderRadius: 8, backgroundColor: "#FEF2F2",
+    borderRadius: 10, backgroundColor: "#FEF2F2",
   },
-  confirmCancelText: { fontSize: 13, color: "#EF4444", fontWeight: "600", fontFamily: fonts.bold },
+  confirmCancelText: { fontSize: 13, color: "#E5484D", fontWeight: "600", fontFamily: fonts.bold },
 
   fab: {
     position: "absolute",
