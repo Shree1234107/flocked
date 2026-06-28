@@ -1,19 +1,46 @@
 import "react-native-gesture-handler";
 
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { MD3LightTheme, PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  useFonts,
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+} from "@expo-google-fonts/dm-sans";
+import * as SplashScreen from "expo-splash-screen";
 
 import { AuthProvider } from "../lib/auth";
 import { RoleProvider } from "../lib/role";
 import { FavoritesProvider } from "../lib/favorites";
 import { FiltersProvider } from "../lib/filtersContext";
+import { fonts } from "../lib/fonts";
+
+SplashScreen.preventAutoHideAsync();
 
 const theme = {
   ...MD3LightTheme,
   roundness: 2,
+  fonts: {
+    ...MD3LightTheme.fonts,
+    // Apply DM Sans to react-native-paper typography
+    bodyLarge: { ...MD3LightTheme.fonts.bodyLarge, fontFamily: fonts.regular },
+    bodyMedium: { ...MD3LightTheme.fonts.bodyMedium, fontFamily: fonts.regular },
+    bodySmall: { ...MD3LightTheme.fonts.bodySmall, fontFamily: fonts.regular },
+    labelLarge: { ...MD3LightTheme.fonts.labelLarge, fontFamily: fonts.medium },
+    labelMedium: { ...MD3LightTheme.fonts.labelMedium, fontFamily: fonts.medium },
+    labelSmall: { ...MD3LightTheme.fonts.labelSmall, fontFamily: fonts.medium },
+    titleLarge: { ...MD3LightTheme.fonts.titleLarge, fontFamily: fonts.bold },
+    titleMedium: { ...MD3LightTheme.fonts.titleMedium, fontFamily: fonts.bold },
+    titleSmall: { ...MD3LightTheme.fonts.titleSmall, fontFamily: fonts.medium },
+    headlineLarge: { ...MD3LightTheme.fonts.headlineLarge, fontFamily: fonts.bold },
+    headlineMedium: { ...MD3LightTheme.fonts.headlineMedium, fontFamily: fonts.bold },
+    headlineSmall: { ...MD3LightTheme.fonts.headlineSmall, fontFamily: fonts.bold },
+  },
   colors: {
     ...MD3LightTheme.colors,
     primary: "#00B4A6",
@@ -29,6 +56,18 @@ const theme = {
 };
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -44,7 +83,12 @@ export default function RootLayout() {
                       headerStyle: { backgroundColor: "#FFFFFF" },
                       headerTintColor: "#2C2C2C",
                       headerShadowVisible: false,
-                      headerTitleStyle: { fontWeight: "600", fontSize: 17, color: "#2C2C2C" },
+                      headerTitleStyle: {
+                        fontFamily: fonts.bold,
+                        fontWeight: "600",
+                        fontSize: 17,
+                        color: "#2C2C2C",
+                      },
                       headerBackTitleVisible: false,
                     }}
                   >

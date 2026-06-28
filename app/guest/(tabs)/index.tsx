@@ -20,6 +20,7 @@ import { useFilters } from "../../../lib/filtersContext";
 import { listClasses, listFollowingClasses } from "../../../lib/api";
 import { useBreakpoint } from "../../../lib/useBreakpoint";
 import type { ScheduledClass } from "../../../lib/types";
+import { fonts } from "../../../lib/fonts";
 
 const FILTER_TAGS = ["All", "Yoga", "Dance", "Tutoring"] as const;
 type FilterTag = (typeof FILTER_TAGS)[number];
@@ -549,7 +550,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   headerDesktop: { paddingVertical: 24, paddingHorizontal: 32 },
-  headerTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.3 },
+  headerTitle: { fontSize: 22, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", letterSpacing: -0.3 },
   headerTitleDesktop: { fontSize: 36, letterSpacing: -0.5 },
   bellBtn: { position: "relative", padding: 4 },
   bellDot: {
@@ -565,7 +566,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9F9F9", borderRadius: 10, borderWidth: 1,
     borderColor: "#EEEEEE", paddingHorizontal: 12, height: 44,
   },
-  searchInput: { flex: 1, fontSize: 14, color: "#2C2C2C", height: 44 },
+  searchInput: { flex: 1, fontSize: 14, fontFamily: fonts.regular, color: "#2C2C2C", height: 44 },
   filterBtn: {
     width: 44, height: 44, borderRadius: 10, backgroundColor: "#F9F9F9",
     borderWidth: 1, borderColor: "#EEEEEE", alignItems: "center", justifyContent: "center",
@@ -584,8 +585,8 @@ const styles = StyleSheet.create({
   timeFilterRow: { paddingHorizontal: 16, paddingBottom: 8, gap: 4 },
   timeFilterRowInline: { gap: 4 },
   timeFilterBtn: { paddingHorizontal: 12, paddingVertical: 6, alignItems: "center" },
-  timeFilterText: { fontSize: 14, fontWeight: "500", color: "#888888" },
-  timeFilterTextActive: { fontWeight: "700", color: "#2C2C2C" },
+  timeFilterText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
+  timeFilterTextActive: { fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
   timeFilterUnderline: {
     position: "absolute", bottom: 0, left: 12, right: 12,
     height: 2, backgroundColor: "#00B4A6", borderRadius: 1,
@@ -597,8 +598,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9F9F9", borderWidth: 1, borderColor: "#EEEEEE",
   },
   filterChipActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  filterChipText: { fontSize: 13, fontWeight: "500", color: "#888888" },
-  filterChipTextActive: { color: "#FFFFFF", fontWeight: "600" },
+  filterChipText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
+  filterChipTextActive: { color: "#FFFFFF", fontWeight: "600", fontFamily: fonts.bold },
 
   // ── Feed tabs ────────────────────────────────────────────────────────────────
   feedTabRow: {
@@ -609,26 +610,26 @@ const styles = StyleSheet.create({
   feedTab: { flex: 1, paddingVertical: 10, alignItems: "center" },
   feedTabDesktop: { paddingVertical: 14 },
   feedTabActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
-  feedTabText: { fontSize: 14, fontWeight: "500", color: "#888888" },
+  feedTabText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
   feedTabTextDesktop: { fontSize: 16 },
-  feedTabTextActive: { fontWeight: "700", color: "#2C2C2C" },
+  feedTabTextActive: { fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
 
   // ── States ──────────────────────────────────────────────────────────────────
   centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, paddingBottom: 60 },
-  errorText: { fontSize: 14, color: "#888", textAlign: "center" },
+  errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#888", textAlign: "center" },
   retryBtn: { backgroundColor: "#E0F7F5", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  retryText: { fontSize: 13, fontWeight: "600", color: "#00B4A6" },
-  emptyText: { fontSize: 16, fontWeight: "600", color: "#2C2C2C" },
-  emptySubtext: { fontSize: 13, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
+  retryText: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#00B4A6" },
+  emptyText: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
   emptyHint: { backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 4 },
-  emptyHintText: { fontSize: 13, fontWeight: "500", color: "#007A70" },
+  emptyHintText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
 
   // ── List / grid ──────────────────────────────────────────────────────────────
   listContent: { paddingHorizontal: 20, paddingTop: 8, gap: 24 },
   listContentDesktop: { paddingHorizontal: 32 },
   daySection: { gap: 12 },
   dayHeader: {
-    fontSize: 12, fontWeight: "600", color: "#888888",
+    fontSize: 12, fontWeight: "600", fontFamily: fonts.bold, color: "#888888",
     textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2,
   },
 
@@ -656,25 +657,25 @@ const styles = StyleSheet.create({
   classCardBody: { flex: 1, padding: 14, gap: 4 },
   classCardBodyDesktop: { padding: 20, gap: 6 },
   classCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  classCardTime: { fontSize: 12, fontWeight: "600", color: "#888888" },
+  classCardTime: { fontSize: 12, fontWeight: "600", fontFamily: fonts.medium, color: "#888888" },
   classCardTimeDesktop: { fontSize: 13 },
   categoryBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  categoryBadgeText: { fontSize: 10, fontWeight: "600" },
-  classCardTitle: { fontSize: 15, fontWeight: "600", color: "#2C2C2C" },
+  categoryBadgeText: { fontSize: 10, fontWeight: "600", fontFamily: fonts.medium },
+  classCardTitle: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
   classCardTitleDesktop: { fontSize: 17 },
-  classCardHost: { fontSize: 12, color: "#00B4A6", fontWeight: "500" },
-  classCardBio: { fontSize: 13, color: "#888888", lineHeight: 18 },
-  ratingText: { fontSize: 11, color: "#F4A200", fontWeight: "600" },
+  classCardHost: { fontSize: 12, color: "#00B4A6", fontWeight: "500", fontFamily: fonts.medium },
+  classCardBio: { fontSize: 13, fontFamily: fonts.regular, color: "#888888", lineHeight: 18 },
+  ratingText: { fontSize: 11, color: "#F4A200", fontWeight: "600", fontFamily: fonts.bold },
   classCardMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 },
-  urgencyText: { fontSize: 11, color: "#E05555", fontWeight: "600" },
+  urgencyText: { fontSize: 11, color: "#E05555", fontWeight: "600", fontFamily: fonts.bold },
   spotsBadge: { backgroundColor: "#E0F7F5", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
   spotsBadgeFull: { backgroundColor: "#FEF2F2" },
-  spotsText: { fontSize: 11, fontWeight: "500", color: "#007A70" },
+  spotsText: { fontSize: 11, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
   spotsTextFull: { color: "#EF4444" },
 
   // ── Featured instructors (desktop) ──────────────────────────────────────────
   featuredSection: { gap: 12, marginBottom: 8 },
-  featuredTitle: { fontSize: 16, fontWeight: "700", color: "#2C2C2C" },
+  featuredTitle: { fontSize: 16, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
   featuredScroll: { gap: 12, paddingBottom: 4 },
   featuredCard: {
     width: 140,
@@ -702,9 +703,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  featuredInitials: { fontSize: 18, fontWeight: "700", color: "#00B4A6" },
-  featuredName: { fontSize: 13, fontWeight: "600", color: "#2C2C2C", textAlign: "center" },
-  featuredRating: { fontSize: 12, color: "#F4A200", fontWeight: "500" },
+  featuredInitials: { fontSize: 18, fontWeight: "700", fontFamily: fonts.bold, color: "#00B4A6" },
+  featuredName: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C", textAlign: "center" },
+  featuredRating: { fontSize: 12, color: "#F4A200", fontWeight: "500", fontFamily: fonts.medium },
   featuredFollowBtn: {
     backgroundColor: "#E0F7F5",
     paddingHorizontal: 14,
@@ -712,5 +713,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginTop: 2,
   },
-  featuredFollowText: { fontSize: 12, fontWeight: "600", color: "#007A70" },
+  featuredFollowText: { fontSize: 12, fontWeight: "600", fontFamily: fonts.bold, color: "#007A70" },
 });

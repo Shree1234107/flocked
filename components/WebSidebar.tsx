@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "expo-router";
 import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
+import { fonts } from "../lib/fonts";
 
 type Role = "guest" | "host";
 
@@ -114,6 +115,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: "700",
+    fontFamily: fonts.bold,
     color: "#1A1A1A",
     letterSpacing: -0.3,
   },
@@ -129,8 +131,8 @@ const styles = StyleSheet.create({
   },
   navItemActive: { backgroundColor: "#E0F7F5" },
   navItemHovered: { backgroundColor: "#F9F9F9" },
-  navLabel: { fontSize: 14, fontWeight: "500", color: "#888888" },
-  navLabelActive: { color: "#00B4A6", fontWeight: "600" },
+  navLabel: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
+  navLabelActive: { color: "#00B4A6", fontWeight: "600", fontFamily: fonts.bold },
   bottom: {
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",
@@ -152,7 +154,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  avatarInitials: { fontSize: 12, fontWeight: "700", color: "#FFFFFF" },
-  displayName: { flex: 1, fontSize: 13, color: "#1A1A1A", fontWeight: "500" },
-  signOutText: { fontSize: 12, color: "#888888", fontWeight: "500" },
+  avatarInitials: { fontSize: 12, fontWeight: "700", fontFamily: fonts.bold, color: "#FFFFFF" },
+  displayName: { flex: 1, fontSize: 13, color: "#1A1A1A", fontWeight: "500", fontFamily: fonts.medium },
+  signOutText: { fontSize: 12, color: "#888888", fontWeight: "500", fontFamily: fonts.medium },
 });

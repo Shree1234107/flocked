@@ -17,6 +17,7 @@ import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri } from "../lib/auth-helpers";
 import * as SecureStore from "../lib/secure-store";
+import { fonts } from "../lib/fonts";
 
 function friendlyAuthError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
@@ -318,6 +319,7 @@ const styles = StyleSheet.create({
   webHeadline: {
     fontSize: 52,
     fontWeight: "800",
+    fontFamily: fonts.bold,
     color: "#FFFFFF",
     letterSpacing: -1.5,
     lineHeight: 60,
@@ -327,6 +329,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.8)",
     lineHeight: 28,
     fontWeight: "400",
+    fontFamily: fonts.regular,
   },
   webRight: { flex: 1, backgroundColor: "#FAFAFA" },
   webRightContent: {
@@ -345,8 +348,8 @@ const styles = StyleSheet.create({
   // ── Brand ──────────────────────────────────────────────────────────────────
   brandSection: { alignItems: "center", gap: 8 },
   logoMark: { marginBottom: 2 },
-  wordmark: { fontSize: 32, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.5 },
-  tagline: { fontSize: 14, color: "#888888", fontWeight: "400" },
+  wordmark: { fontSize: 32, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", letterSpacing: -0.5 },
+  tagline: { fontSize: 14, color: "#888888", fontWeight: "400", fontFamily: fonts.regular },
 
   // ── Form ──────────────────────────────────────────────────────────────────
   formSection: { width: "100%", gap: 14 },
@@ -360,7 +363,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
-  errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
+  errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E05555", lineHeight: 18 },
   primaryBtn: {
     backgroundColor: "#00B4A6",
     borderRadius: 12,
@@ -368,10 +371,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnDisabled: { opacity: 0.5 },
-  primaryBtnText: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
+  primaryBtnText: { fontSize: 15, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
   dividerLine: { flex: 1, height: 1, backgroundColor: "#EEEEEE" },
-  dividerText: { fontSize: 13, color: "#888888" },
+  dividerText: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
   roleCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -401,8 +404,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   roleTextWrap: { flex: 1, gap: 2 },
-  roleTitle: { fontSize: 14, fontWeight: "600", color: "#2C2C2C" },
-  roleSub: { fontSize: 12, color: "#888888" },
+  roleTitle: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  roleSub: { fontSize: 12, fontFamily: fonts.regular, color: "#888888" },
   roleSep: { height: 1, backgroundColor: "#EEEEEE", marginLeft: 64 },
 
   // ── Sent card ──────────────────────────────────────────────────────────────
@@ -430,18 +433,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
-  sentTitle: { fontSize: 20, fontWeight: "700", color: "#2C2C2C" },
-  sentBody: { fontSize: 14, color: "#888888", textAlign: "center", lineHeight: 22 },
-  sentEmail: { fontWeight: "600", color: "#2C2C2C" },
-  sentHint: { fontSize: 12, color: "#AAA", textAlign: "center", lineHeight: 18 },
+  sentTitle: { fontSize: 20, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C" },
+  sentBody: { fontSize: 14, fontFamily: fonts.regular, color: "#888888", textAlign: "center", lineHeight: 22 },
+  sentEmail: { fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  sentHint: { fontSize: 12, fontFamily: fonts.regular, color: "#AAA", textAlign: "center", lineHeight: 18 },
   resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
-  resendText: { fontSize: 14, fontWeight: "500", color: "#00B4A6" },
+  resendText: { fontSize: 14, fontWeight: "500", fontFamily: fonts.medium, color: "#00B4A6" },
 
   // ── Dev bypass ──────────────────────────────────────────────────────────────
   devSection: { gap: 4 },
   devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 2 },
   devDividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
-  devDividerText: { fontSize: 10, color: "#C0C0C0", letterSpacing: 0.5, textTransform: "uppercase" },
+  devDividerText: { fontSize: 10, fontFamily: fonts.regular, color: "#C0C0C0", letterSpacing: 0.5, textTransform: "uppercase" },
   devBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -449,5 +452,5 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
   },
-  devBtnText: { fontSize: 12, color: "#00B4A6", fontWeight: "500" },
+  devBtnText: { fontSize: 12, color: "#00B4A6", fontWeight: "500", fontFamily: fonts.medium },
 });

@@ -17,6 +17,7 @@ import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { listMyClasses, cancelClass } from "../../../lib/api";
 import type { ScheduledClass } from "../../../lib/types";
+import { fonts } from "../../../lib/fonts";
 
 // Handle both legacy title-case and new lowercase category values from backend
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; bar: string }> = {
@@ -332,12 +333,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
   },
-  headerTitle: { fontSize: 22, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.3 },
+  headerTitle: { fontSize: 22, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", letterSpacing: -0.3 },
   scheduleBtn: {
     flexDirection: "row", alignItems: "center", gap: 5,
     backgroundColor: "#00B4A6", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
   },
-  scheduleBtnText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
+  scheduleBtnText: { fontSize: 13, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
 
   tabRow: {
     flexDirection: "row",
@@ -348,26 +349,26 @@ const styles = StyleSheet.create({
   },
   tabBtn: { flex: 1, paddingVertical: 12, alignItems: "center" },
   tabBtnActive: { borderBottomWidth: 2, borderBottomColor: "#00B4A6" },
-  tabBtnText: { fontSize: 15, fontWeight: "500", color: "#888888" },
-  tabBtnTextActive: { color: "#2C2C2C", fontWeight: "700" },
-  tabCount: { fontSize: 13, color: "#C0C0C0" },
-  tabCountActive: { fontSize: 13, color: "#00B4A6" },
+  tabBtnText: { fontSize: 15, fontWeight: "500", fontFamily: fonts.medium, color: "#888888" },
+  tabBtnTextActive: { color: "#2C2C2C", fontWeight: "700", fontFamily: fonts.bold },
+  tabCount: { fontSize: 13, fontFamily: fonts.regular, color: "#C0C0C0" },
+  tabCountActive: { fontSize: 13, fontFamily: fonts.medium, color: "#00B4A6" },
 
   centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, paddingBottom: 60 },
-  errorText: { fontSize: 14, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
+  errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#888888", textAlign: "center", paddingHorizontal: 32 },
   retryBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: "#E0F7F5", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
   },
-  retryText: { fontSize: 13, fontWeight: "500", color: "#007A70" },
+  retryText: { fontSize: 13, fontWeight: "500", fontFamily: fonts.medium, color: "#007A70" },
 
-  emptyTitle: { fontSize: 16, fontWeight: "600", color: "#2C2C2C" },
-  emptySubtext: { fontSize: 13, color: "#888888" },
+  emptyTitle: { fontSize: 16, fontWeight: "600", fontFamily: fonts.bold, color: "#2C2C2C" },
+  emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
   emptyScheduleBtn: {
     backgroundColor: "#00B4A6", borderRadius: 10,
     paddingHorizontal: 20, paddingVertical: 11, marginTop: 4,
   },
-  emptyScheduleBtnText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
+  emptyScheduleBtnText: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
 
   list: { paddingHorizontal: 16, paddingTop: 12, gap: 14 },
 
@@ -388,12 +389,12 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, padding: 16, gap: 6 },
 
   cardTopRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 2 },
-  cardTitle: { flex: 1, fontSize: 17, fontWeight: "700", color: "#2C2C2C", lineHeight: 22 },
+  cardTitle: { flex: 1, fontSize: 17, fontWeight: "700", fontFamily: fonts.bold, color: "#2C2C2C", lineHeight: 22 },
   categoryBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, flexShrink: 0 },
-  categoryBadgeText: { fontSize: 11, fontWeight: "600" },
+  categoryBadgeText: { fontSize: 11, fontWeight: "600", fontFamily: fonts.medium },
 
   metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  metaText: { fontSize: 13, color: "#666666" },
+  metaText: { fontSize: 13, fontFamily: fonts.regular, color: "#666666" },
 
   actions: { marginTop: 10, gap: 8 },
   startBtn: {
@@ -401,23 +402,23 @@ const styles = StyleSheet.create({
     gap: 8, backgroundColor: "#00B4A6", borderRadius: 10,
     paddingVertical: 12,
   },
-  startBtnText: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
+  startBtnText: { fontSize: 14, fontWeight: "600", fontFamily: fonts.bold, color: "#FFFFFF" },
   cancelClassBtn: { alignItems: "center", paddingVertical: 6 },
-  cancelClassBtnText: { fontSize: 13, color: "#EF4444", fontWeight: "500" },
+  cancelClassBtnText: { fontSize: 13, color: "#EF4444", fontWeight: "500", fontFamily: fonts.medium },
 
   confirmRow: { gap: 8 },
-  confirmText: { fontSize: 13, color: "#2C2C2C", fontWeight: "500", textAlign: "center" },
+  confirmText: { fontSize: 13, color: "#2C2C2C", fontWeight: "500", fontFamily: fonts.medium, textAlign: "center" },
   confirmBtns: { flexDirection: "row", gap: 10 },
   confirmKeepBtn: {
     flex: 1, alignItems: "center", paddingVertical: 9,
     borderRadius: 8, borderWidth: 1, borderColor: "#EEEEEE",
   },
-  confirmKeepText: { fontSize: 13, color: "#888888", fontWeight: "500" },
+  confirmKeepText: { fontSize: 13, color: "#888888", fontWeight: "500", fontFamily: fonts.medium },
   confirmCancelBtn: {
     flex: 1, alignItems: "center", paddingVertical: 9,
     borderRadius: 8, backgroundColor: "#FEF2F2",
   },
-  confirmCancelText: { fontSize: 13, color: "#EF4444", fontWeight: "600" },
+  confirmCancelText: { fontSize: 13, color: "#EF4444", fontWeight: "600", fontFamily: fonts.bold },
 
   fab: {
     position: "absolute",
