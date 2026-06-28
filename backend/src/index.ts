@@ -1096,10 +1096,11 @@ app.get("/api/classes", requireAuth, async (req, res) => {
     const start = req.query.start as string | undefined;
     const end = req.query.end as string | undefined;
 
+    // Fetch classes without the broken PostgREST join (no direct FK to host_profiles)
     let query = supabase
       .from("scheduled_classes")
-      .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
-      .eq("status", "upcoming")
+      .select("*")
+      .in("status", ["upcoming", "scheduled"])
       .order("scheduled_at", { ascending: true })
       .limit(500);
 
@@ -1109,15 +1110,25 @@ app.get("/api/classes", requireAuth, async (req, res) => {
     if (start) query = query.gte("scheduled_at", start);
     if (end) query = query.lte("scheduled_at", end);
 
-    const { data, error } = await query;
+    const { data: classes, error } = await query;
 
     if (error) {
       console.error("[GET /api/classes] Supabase error:", error.message, error);
       return fail(res, "Failed to load classes.", 500);
     }
 
-    const classes = data ?? [];
-    const classIds = classes.map((c) => c.id);
+    // Fetch host profiles in a separate query
+    const hostIds = [...new Set((classes ?? []).map((c) => c.host_id))];
+    const { data: hosts } = hostIds.length
+      ? await supabase
+          .from("host_profiles")
+          .select("user_id, display_name, full_name, photo_url, bio")
+          .in("user_id", hostIds)
+      : { data: [] as any[] };
+    const hostMap = Object.fromEntries((hosts ?? []).map((h) => [h.user_id, h]));
+
+    // Fetch enrollments
+    const classIds = (classes ?? []).map((c) => c.id);
     const { data: enrollments } = classIds.length
       ? await supabase
           .from("class_enrollments")
@@ -1127,7 +1138,11 @@ app.get("/api/classes", requireAuth, async (req, res) => {
       : { data: [] as { class_id: string }[] };
 
     const enrolledSet = new Set((enrollments ?? []).map((e) => e.class_id));
-    return ok(res, classes.map((c) => ({ ...c, is_enrolled: enrolledSet.has(c.id) })));
+    return ok(res, (classes ?? []).map((c) => ({
+      ...c,
+      host: hostMap[c.host_id] ?? null,
+      is_enrolled: enrolledSet.has(c.id),
+    })));
   } catch (err) {
     console.error("[GET /api/classes] Unhandled exception:", err);
     return fail(res, "Failed to load classes.", 500);
@@ -1169,9 +1184,9 @@ app.get("/api/classes/enrolled", requireAuth, async (req, res) => {
   const classIds = (enrollments ?? []).map((e) => e.class_id);
   if (!classIds.length) return ok(res, []);
 
-  const { data, error } = await supabase
+  const { data: classes, error } = await supabase
     .from("scheduled_classes")
-    .select(`*, host:host_profiles (display_name, full_name, photo_url)`)
+    .select("*")
     .in("id", classIds)
     .order("scheduled_at", { ascending: true });
 
@@ -1180,7 +1195,65 @@ app.get("/api/classes/enrolled", requireAuth, async (req, res) => {
     return fail(res, "Failed to load enrolled classes.", 500);
   }
 
-  return ok(res, data ?? []);
+  // Fetch host profiles separately (no direct FK for PostgREST join)
+  const hostIds = [...new Set((classes ?? []).map((c) => c.host_id))];
+  const { data: hosts } = hostIds.length
+    ? await supabase
+        .from("host_profiles")
+        .select("user_id, display_name, full_name, photo_url, bio")
+        .in("user_id", hostIds)
+    : { data: [] as any[] };
+  const hostMap = Object.fromEntries((hosts ?? []).map((h) => [h.user_id, h]));
+
+  return ok(res, (classes ?? []).map((c) => ({ ...c, host: hostMap[c.host_id] ?? null })));
+});
+
+// GET /api/classes/following — classes from instructors the user follows
+app.get("/api/classes/following", requireAuth, async (req, res) => {
+  try {
+    const userId = (req as AuthedRequest).userId;
+
+    const { data: follows, error: followsError } = await supabase
+      .from("user_follows")
+      .select("host_id")
+      .eq("follower_id", userId);
+
+    if (followsError) {
+      // Table may not exist yet — return empty list gracefully
+      console.error("[GET /api/classes/following] follows error:", followsError.message);
+      return ok(res, []);
+    }
+
+    if (!follows || follows.length === 0) return ok(res, []);
+
+    const hostIds = follows.map((f) => f.host_id);
+
+    const { data: classes, error } = await supabase
+      .from("scheduled_classes")
+      .select("*")
+      .in("status", ["upcoming", "scheduled"])
+      .in("host_id", hostIds)
+      .order("scheduled_at", { ascending: true })
+      .limit(200);
+
+    if (error) {
+      console.error("[GET /api/classes/following] classes error:", error.message);
+      return fail(res, "Failed to load following classes.", 500);
+    }
+
+    const { data: hosts } = hostIds.length
+      ? await supabase
+          .from("host_profiles")
+          .select("user_id, display_name, full_name, photo_url, bio")
+          .in("user_id", hostIds)
+      : { data: [] as any[] };
+    const hostMap = Object.fromEntries((hosts ?? []).map((h) => [h.user_id, h]));
+
+    return ok(res, (classes ?? []).map((c) => ({ ...c, host: hostMap[c.host_id] ?? null })));
+  } catch (err) {
+    console.error("[GET /api/classes/following] Unhandled exception:", err);
+    return fail(res, "Failed to load following classes.", 500);
+  }
 });
 
 app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res) => {

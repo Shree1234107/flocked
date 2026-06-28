@@ -189,3 +189,22 @@ CREATE POLICY "class_waitlist: authenticated all" ON class_waitlist
 -- Add editable profile fields to user_profiles (student profiles)
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS display_name text;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS photo_url text;
+
+-- User follows: tracks which guests follow which hosts
+CREATE TABLE IF NOT EXISTS user_follows (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  host_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (follower_id, host_id)
+);
+
+ALTER TABLE user_follows ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "user_follows: users manage own follows" ON user_follows
+  FOR ALL TO authenticated
+  USING (auth.uid() = follower_id)
+  WITH CHECK (auth.uid() = follower_id);
+
+CREATE POLICY "user_follows: read follower counts" ON user_follows
+  FOR SELECT TO authenticated USING (true);
