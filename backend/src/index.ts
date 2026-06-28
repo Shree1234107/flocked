@@ -54,6 +54,7 @@ app.use(
         /\.up\.railway\.app$/.test(origin) ||
         /flocked-online\.com$/.test(origin) ||
         /netlify\.app$/.test(origin);
+      console.log(`[CORS] origin=${origin ?? "(none)"} allowed=${allowed}`);
       allowed ? callback(null, true) : callback(new Error("Not allowed by CORS"));
     },
   })
