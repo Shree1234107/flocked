@@ -229,6 +229,9 @@ export default function InstructorHomeTab() {
                   </TouchableOpacity>
                 </>
               )}
+              {tab === "past" && (
+                <Text style={styles.emptyPastSubtext}>Classes you've taught will appear here</Text>
+              )}
             </View>
           ) : (
             <ScrollView
@@ -436,6 +439,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: "#E8E8E8",
+    borderTopWidth: 2,
+    borderTopColor: "#00B4A6",
   },
   statNum: {
     fontSize: 28,
@@ -507,6 +512,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
+  emptyPastSubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
   emptyScheduleBtn: {
     backgroundColor: "#0F0F0F",
     borderRadius: 6,
@@ -568,7 +574,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   startBtn: {
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 6,

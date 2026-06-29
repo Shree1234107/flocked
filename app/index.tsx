@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   },
   ctaRowNarrow: { marginTop: 28 },
   ctaPrimary: {
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 6,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: fonts.medium,
     fontWeight: "500",
-    color: "#6B6B6B",
+    color: "#00B4A6",
     letterSpacing: 2,
     textTransform: "uppercase",
     marginBottom: 4,

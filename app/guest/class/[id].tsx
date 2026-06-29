@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
   },
   seriesActionCol: { gap: 8 },
   primaryBtn: {
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: "center",

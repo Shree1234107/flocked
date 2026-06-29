@@ -45,6 +45,9 @@ export function WebSidebar({ role }: { role: Role }) {
       {/* Logo */}
       <View style={styles.logoRow}>
         <Text style={styles.logoText}>Flocked</Text>
+        <View style={styles.betaBadge}>
+          <Text style={styles.betaText}>BETA</Text>
+        </View>
       </View>
 
       {/* Nav */}
@@ -69,7 +72,7 @@ export function WebSidebar({ role }: { role: Role }) {
               <MaterialCommunityIcons
                 name={item.icon}
                 size={16}
-                color={isActive ? "#0F0F0F" : "#6B6B6B"}
+                color={isActive ? "#00B4A6" : "#6B6B6B"}
               />
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
                 {item.label}
@@ -108,6 +111,8 @@ const styles = StyleSheet.create({
   logoRow: {
     paddingHorizontal: 24,
     marginBottom: 32,
+    flexDirection: "row",
+    alignItems: "center",
   },
   logoText: {
     fontSize: 16,
@@ -115,6 +120,19 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     color: "#0F0F0F",
     letterSpacing: -0.3,
+  },
+  betaBadge: {
+    backgroundColor: "#F0F0F0",
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  betaText: {
+    fontSize: 9,
+    fontFamily: fonts.regular,
+    color: "#888888",
+    letterSpacing: 0.5,
   },
 
   nav: { flex: 1, gap: 1, paddingHorizontal: 8 },
@@ -126,7 +144,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 4,
   },
-  navItemActive: { backgroundColor: "#F5F5F5" },
+  navItemActive: {
+    backgroundColor: "#E0F7F5",
+    borderLeftWidth: 2,
+    borderLeftColor: "#00B4A6",
+    paddingLeft: 10,
+  },
   navItemHovered: { backgroundColor: "#F5F5F5" },
   navLabel: {
     fontSize: 14,
@@ -134,7 +157,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   navLabelActive: {
-    color: "#0F0F0F",
+    color: "#00B4A6",
     fontFamily: fonts.bold,
     fontWeight: "700",
   },

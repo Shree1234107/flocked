@@ -693,13 +693,13 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E5484D", lineHeight: 18 },
 
   submitBtn: {
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 4,
   },
   submitBtnDisabled: { opacity: 0.4 },
-  submitBtnHovered: { backgroundColor: "#2A2A2A" },
+  submitBtnHovered: { backgroundColor: "#009B8E" },
   submitBtnText: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
 });

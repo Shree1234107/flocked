@@ -27,6 +27,22 @@ type FilterTag = (typeof FILTER_TAGS)[number];
 type TimeFilter = "Today" | "Tomorrow" | "This Week" | "All";
 type FeedTab = "For You" | "Following";
 
+const CATEGORY_TOP_COLORS: Record<string, string> = {
+  yoga: "#00B4A6", dance: "#F4B8C1", chess: "#94B4D2",
+  piano: "#C9A8E2", tutoring: "#FFD66B", cooking: "#F6C28B",
+  Yoga: "#00B4A6", Dance: "#F4B8C1", Chess: "#94B4D2",
+  Piano: "#C9A8E2", Tutoring: "#FFD66B", Cooking: "#F6C28B",
+};
+
+function getAvatarColor(name: string): string {
+  const c = name.charAt(0).toUpperCase();
+  if (c >= "A" && c <= "E") return "#006D5B";
+  if (c >= "F" && c <= "J") return "#7B4F9E";
+  if (c >= "K" && c <= "O") return "#B85C00";
+  if (c >= "P" && c <= "T") return "#1B5E8C";
+  return "#8B1A1A";
+}
+
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
   dance:    { bg: "#F9E0E4", text: "#B03050" },
@@ -268,6 +284,7 @@ export default function GuestDiscoverTab() {
           styles.classCard,
           isDesktop && styles.classCardDesktop,
           state.hovered && styles.classCardHovered,
+          { borderTopColor: CATEGORY_TOP_COLORS[cls.category] ?? "#00B4A6", borderTopWidth: 2 },
         ]}
         onPress={() => router.push(`/guest/class/${cls.id}`)}
       >
@@ -296,7 +313,10 @@ export default function GuestDiscoverTab() {
         <Text style={[styles.classCardTitle, isDesktop && styles.classCardTitleDesktop]} numberOfLines={1}>
           {cls.title}
         </Text>
-        <Pressable onPress={() => router.push(`/guest/instructor/${cls.host_id}`)}>
+        <Pressable style={styles.hostRow} onPress={() => router.push(`/guest/instructor/${cls.host_id}`)}>
+          <View style={[styles.hostAvatar, { backgroundColor: getAvatarColor(hostName) }]}>
+            <Text style={styles.hostAvatarText}>{hostName.slice(0, 2).toUpperCase()}</Text>
+          </View>
           <Text style={styles.classCardHost}>with {hostName}</Text>
         </Pressable>
         {isDesktop && bio && (
@@ -502,6 +522,13 @@ export default function GuestDiscoverTab() {
             <View style={styles.centered}>
               <Text style={styles.emptyText}>No classes found</Text>
               <Text style={styles.emptySubtext}>Try a different filter</Text>
+              <TouchableOpacity
+                style={styles.browseAllBtn}
+                onPress={() => { setTimeFilter("All"); setSelectedTag("All"); }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.browseAllBtnText}>Browse all →</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <ScrollView
@@ -647,7 +674,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   timeFilterTextActive: {
-    color: "#0F0F0F",
+    color: "#00B4A6",
     fontFamily: fonts.bold,
     fontWeight: "700",
   },
@@ -657,7 +684,7 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 2,
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
   },
   filterRow: { paddingHorizontal: 24, paddingBottom: 12, gap: 6 },
   filterRowInline: { gap: 6 },
@@ -669,7 +696,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
   },
-  filterChipActive: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  filterChipActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
   filterChipText: {
     fontSize: 12,
     fontFamily: fonts.medium,
@@ -842,6 +869,29 @@ const styles = StyleSheet.create({
   spotsBadgeFull: { backgroundColor: "#FEF2F2" },
   spotsText: { fontSize: 11, fontFamily: fonts.medium, color: "#6B6B6B" },
   spotsTextFull: { color: "#E5484D" },
+
+  hostRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  hostAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hostAvatarText: {
+    fontSize: 10,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    lineHeight: 12,
+  },
+  browseAllBtn: { paddingVertical: 6, marginTop: 4 },
+  browseAllBtnText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#00B4A6",
+  },
 
   // ── Featured instructors (desktop) ──────────────────────────────────────────
   featuredSection: { gap: 10, marginBottom: 8 },

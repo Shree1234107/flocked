@@ -159,6 +159,8 @@ export default function LoginScreen() {
         }}
       />
 
+      <Text style={styles.helperText}>We'll send you a magic link — no password needed</Text>
+
       {errorMsg && (
         <Text style={styles.errorText}>{errorMsg}</Text>
       )}
@@ -376,8 +378,14 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
 
+  helperText: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
+    marginTop: 6,
+  },
   primaryBtn: {
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
     borderRadius: 6,
     paddingVertical: 11,
     alignItems: "center",
