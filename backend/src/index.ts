@@ -1299,6 +1299,7 @@ app.get("/api/classes/following", requireAuth, async (req, res) => {
 });
 
 app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  console.log("[POST /api/classes] body:", JSON.stringify(req.body));
   const parsed = createClassSchema.safeParse(req.body);
   if (!parsed.success) return fail(res, zodMessage(parsed.error));
 
