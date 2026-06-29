@@ -158,12 +158,12 @@ export default function ScheduleClassScreen() {
         });
 
         if (isWeb) {
-          router.back();
+          router.replace("/host/(tabs)/index");
         } else {
           Alert.alert(
             "Series Created",
             `${totalWeeks} weekly classes have been scheduled starting ${previewDay} at ${previewTime}.`,
-            [{ text: "Done", onPress: () => router.back() }]
+            [{ text: "Done", onPress: () => router.replace("/host/(tabs)/index") }]
           );
         }
       } else {
@@ -178,12 +178,12 @@ export default function ScheduleClassScreen() {
         });
 
         if (isWeb) {
-          router.back();
+          router.replace("/host/(tabs)/index");
         } else {
           Alert.alert(
             "Class Scheduled",
             "Your class has been added to the calendar.",
-            [{ text: "Done", onPress: () => router.back() }]
+            [{ text: "Done", onPress: () => router.replace("/host/(tabs)/index") }]
           );
         }
       }
