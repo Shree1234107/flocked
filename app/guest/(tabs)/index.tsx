@@ -257,6 +257,9 @@ export default function GuestDiscoverTab() {
     const hostName = (cls.host as any)?.display_name ?? "Instructor";
     const avgRating = (cls.host as any)?.avg_rating;
     const bio: string | null = (cls as any)?.host?.bio ?? cls.description ?? null;
+    const isSeries = cls.class_type === "series";
+    const isDropin = cls.class_type === "dropin";
+    const priceDollars = cls.price_cents ? (cls.price_cents / 100).toFixed(0) : null;
 
     return (
       <Pressable
@@ -268,9 +271,28 @@ export default function GuestDiscoverTab() {
         ]}
         onPress={() => router.push(`/guest/class/${cls.id}`)}
       >
-        <Text style={[styles.classCardCategory, { color: colors.text }]}>
-          {cls.category.toUpperCase()}
-        </Text>
+        <View style={styles.cardTopRow}>
+          <Text style={[styles.classCardCategory, { color: colors.text }]}>
+            {cls.category.toUpperCase()}
+          </Text>
+          <View style={styles.badgeRow}>
+            {isSeries && cls.series_week != null && cls.total_weeks != null && (
+              <View style={styles.seriesBadge}>
+                <Text style={styles.seriesBadgeText}>Week {cls.series_week} of {cls.total_weeks}</Text>
+              </View>
+            )}
+            {isDropin && (
+              <View style={styles.dropinBadge}>
+                <Text style={styles.dropinBadgeText}>Drop-in</Text>
+              </View>
+            )}
+            {cls.is_series_enrolled && (
+              <View style={styles.enrolledBadge}>
+                <Text style={styles.enrolledBadgeText}>✓ Enrolled</Text>
+              </View>
+            )}
+          </View>
+        </View>
         <Text style={[styles.classCardTitle, isDesktop && styles.classCardTitleDesktop]} numberOfLines={1}>
           {cls.title}
         </Text>
@@ -288,6 +310,9 @@ export default function GuestDiscoverTab() {
             {isDesktop ? formatFullDateTime(cls.scheduled_at) : formatTime(cls.scheduled_at)}
           </Text>
           <View style={styles.classCardRight}>
+            {priceDollars && (
+              <Text style={styles.priceText}>${priceDollars}</Text>
+            )}
             {urgent && (
               <Text style={styles.urgencyText}>{spotsLeft} left</Text>
             )}
@@ -744,13 +769,41 @@ const styles = StyleSheet.create({
   } as any,
   classCardDesktop: {},
   classCardHovered: { backgroundColor: "#FAFAFA" },
+  cardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  badgeRow: { flexDirection: "row", gap: 4, alignItems: "center" },
+  seriesBadge: {
+    backgroundColor: "#EDE0F5",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  seriesBadgeText: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#7030A0" },
+  dropinBadge: {
+    backgroundColor: "#DDE8F5",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  dropinBadgeText: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#2060A0" },
+  enrolledBadge: {
+    backgroundColor: "#D4EDE8",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  enrolledBadgeText: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#0F7B6B" },
+  priceText: { fontSize: 11, fontFamily: fonts.medium, fontWeight: "500", color: "#6B6B6B" },
   classCardCategory: {
     fontSize: 10,
     fontFamily: fonts.medium,
     fontWeight: "500",
     letterSpacing: 1,
     textTransform: "uppercase",
-    marginBottom: 2,
   },
   classCardTitle: {
     fontSize: 15,

@@ -15,8 +15,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
-import { listMyClasses, cancelClass } from "../../../lib/api";
-import type { ScheduledClass } from "../../../lib/types";
+import { listMyClasses, cancelClass, getMySeries } from "../../../lib/api";
+import type { ScheduledClass, ClassSeries } from "../../../lib/types";
 import { fonts } from "../../../lib/fonts";
 
 const CATEGORY_COLORS: Record<string, { dot: string; bg: string; text: string }> = {
@@ -66,6 +66,7 @@ export default function InstructorHomeTab() {
   const isWeb = Platform.OS === "web";
 
   const [classes, setClasses] = useState<ScheduledClass[]>([]);
+  const [series, setSeries] = useState<ClassSeries[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("upcoming");
@@ -76,8 +77,12 @@ export default function InstructorHomeTab() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listMyClasses();
+      const [data, seriesData] = await Promise.all([
+        listMyClasses(),
+        getMySeries().catch(() => [] as ClassSeries[]),
+      ]);
       setClasses(data);
+      setSeries(seriesData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load classes.");
     } finally {
@@ -98,6 +103,19 @@ export default function InstructorHomeTab() {
 
   const totalStudentsEnrolled = upcoming.reduce((sum, c) => sum + c.current_students, 0);
   const liveNow = classes.filter((c) => c.status === "live").length;
+
+  // Group series classes; non-series remain as standalone rows
+  const seriesClassMap = new Map<string, ScheduledClass[]>();
+  const standaloneUpcoming: ScheduledClass[] = [];
+  for (const cls of upcoming) {
+    if (cls.series_id) {
+      const arr = seriesClassMap.get(cls.series_id) ?? [];
+      arr.push(cls);
+      seriesClassMap.set(cls.series_id, arr);
+    } else {
+      standaloneUpcoming.push(cls);
+    }
+  }
 
   const doCancel = async (id: string) => {
     setCancelling(id);
@@ -217,7 +235,57 @@ export default function InstructorHomeTab() {
               contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
               showsVerticalScrollIndicator={false}
             >
-              {displayed.map((cls) => {
+              {/* Series groups (upcoming tab only) */}
+              {tab === "upcoming" && series.filter((s) => seriesClassMap.has(s.id)).map((s) => {
+                const seriesClasses = (seriesClassMap.get(s.id) ?? []).sort(
+                  (a, b) => (a.series_week ?? 0) - (b.series_week ?? 0)
+                );
+                const nextClass = seriesClasses[0];
+                const priceDollars = s.price_cents ? (s.price_cents / 100).toFixed(0) : null;
+                return (
+                  <View key={s.id} style={styles.seriesBlock}>
+                    <View style={styles.seriesHeader}>
+                      <View style={styles.seriesHeaderLeft}>
+                        <View style={styles.seriesLabelBadge}>
+                          <Text style={styles.seriesLabelText}>SERIES</Text>
+                        </View>
+                        <Text style={styles.seriesTitle} numberOfLines={1}>{s.title}</Text>
+                      </View>
+                      <View style={styles.seriesHeaderRight}>
+                        <Text style={styles.seriesEnrolled}>{s.current_students}/{s.max_students}</Text>
+                        {priceDollars && <Text style={styles.seriesPrice}>${priceDollars}</Text>}
+                      </View>
+                    </View>
+                    <Text style={styles.seriesMeta}>
+                      {seriesClasses.length} of {s.total_weeks} weeks remaining · {s.duration_minutes}m/session
+                    </Text>
+                    {nextClass && (
+                      <Text style={styles.seriesNextDate}>
+                        Next: {formatSmartDate(nextClass.scheduled_at)}
+                      </Text>
+                    )}
+                    {seriesClasses.map((cls) => (
+                      <View key={cls.id} style={styles.seriesWeekRow}>
+                        <Text style={styles.seriesWeekNum}>Wk {cls.series_week}</Text>
+                        <Text style={styles.seriesWeekDate} numberOfLines={1}>
+                          {formatSmartDate(cls.scheduled_at)}
+                        </Text>
+                        <Text style={styles.seriesWeekStudents}>{cls.current_students}/{cls.max_students}</Text>
+                        <TouchableOpacity
+                          style={styles.startBtn}
+                          onPress={() => router.push(`/host/room/${cls.id}` as never)}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={styles.startBtnText}>Start</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                );
+              })}
+
+              {/* Standalone (non-series) classes */}
+              {(tab === "upcoming" ? standaloneUpcoming : past).map((cls) => {
                 const colors = CATEGORY_COLORS[cls.category] ?? { dot: "#B0B0B0", bg: "#F5F5F5", text: "#6B6B6B" };
                 const isConfirming = confirmCancelId === cls.id;
                 const isCancelling = cancelling === cls.id;
@@ -253,22 +321,19 @@ export default function InstructorHomeTab() {
                       )}
                     </View>
 
-                    {/* Expanded actions row */}
                     {tab === "upcoming" && (
                       <>
-                        {tab === "upcoming" && (
-                          <View style={styles.progressRow}>
-                            <View style={styles.progressBg}>
-                              <View
-                                style={[
-                                  styles.progressFill,
-                                  { width: `${Math.min(fillPct * 100, 100)}%` as any },
-                                  fillPct >= 1 && styles.progressFillFull,
-                                ]}
-                              />
-                            </View>
+                        <View style={styles.progressRow}>
+                          <View style={styles.progressBg}>
+                            <View
+                              style={[
+                                styles.progressFill,
+                                { width: `${Math.min(fillPct * 100, 100)}%` as any },
+                                fillPct >= 1 && styles.progressFillFull,
+                              ]}
+                            />
                           </View>
-                        )}
+                        </View>
                         {isConfirming ? (
                           <View style={styles.confirmRow}>
                             <Text style={styles.confirmText}>Cancel "{cls.title}"?</Text>
@@ -566,6 +631,67 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#E5484D",
   },
+
+  // ── Series block ─────────────────────────────────────────────────────────────
+  seriesBlock: {
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 8,
+    gap: 6,
+    backgroundColor: "#FAFAFA",
+  },
+  seriesHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  seriesHeaderLeft: { flex: 1, gap: 4 },
+  seriesLabelBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#EDE0F5",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  seriesLabelText: {
+    fontSize: 9,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#7030A0",
+    letterSpacing: 1,
+  },
+  seriesTitle: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
+    lineHeight: 20,
+  },
+  seriesHeaderRight: { alignItems: "flex-end", gap: 2 },
+  seriesEnrolled: { fontSize: 13, fontFamily: fonts.medium, color: "#6B6B6B" },
+  seriesPrice: { fontSize: 12, fontFamily: fonts.regular, color: "#B0B0B0" },
+  seriesMeta: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
+  seriesNextDate: { fontSize: 12, fontFamily: fonts.medium, fontWeight: "500", color: "#0F0F0F" },
+  seriesWeekRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#EFEFEF",
+    marginTop: 4,
+  },
+  seriesWeekNum: {
+    fontSize: 11,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#B0B0B0",
+    width: 28,
+  },
+  seriesWeekDate: { flex: 1, fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
+  seriesWeekStudents: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
 
   // ── FAB ──────────────────────────────────────────────────────────────────────
   fab: {

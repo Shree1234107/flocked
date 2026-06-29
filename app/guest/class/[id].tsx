@@ -1,44 +1,56 @@
-import { Share, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useState } from "react";
 
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
-import { useFavorites } from "../../../lib/favorites";
+import { getClass, getSeries, joinClass, enrollInSeries, joinWaitlist } from "../../../lib/api";
+import type { ScheduledClass, ClassSeries } from "../../../lib/types";
+import { fonts } from "../../../lib/fonts";
 
-const MOCK_CLASS = {
-  id: "1",
-  title: "Beginner Morning Yoga",
-  category: "Yoga" as const,
-  instructor: {
-    id: "inst-1",
-    name: "Sarah Chen",
-    initials: "SC",
-    subtitle: "Certified Yoga & Dance Instructor",
-  },
-  date: "Monday, Jun 16",
-  time: "9:00 AM",
-  duration: 60,
-  currentStudents: 15,
-  maxStudents: 15,
-  description:
-    "Perfect for beginners! We'll focus on foundational poses, breathing techniques, and building body awareness. No experience needed — all levels welcome.\n\nWhat to bring: a yoga mat, water bottle, and comfortable clothing.",
+const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
+  yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  dance:    { bg: "#F9E0E4", text: "#B03050" },
+  tutoring: { bg: "#F5F0D8", text: "#806020" },
+  Yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  Dance:    { bg: "#F9E0E4", text: "#B03050" },
+  Tutoring: { bg: "#F5F0D8", text: "#806020" },
 };
 
-const MOCK_REVIEWS = [
-  { id: "r1", author: "Maya T.", initials: "MT", rating: 5, date: "Jun 10", text: "Sarah's energy is incredible. I came in nervous and left feeling so refreshed. The pacing was perfect for beginners." },
-  { id: "r2", author: "James L.", initials: "JL", rating: 5, date: "Jun 5", text: "Best online yoga class I've taken. The video quality was great and she gave really clear cues throughout." },
-  { id: "r3", author: "Priya K.", initials: "PK", rating: 4, date: "May 28", text: "Really enjoyed this class! Would love slightly more time on cool-down poses. Will definitely be back." },
-];
+const DAYS_ABB = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS_ABB = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-const CATEGORY_COLORS = {
-  Yoga: { headerBg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
-  Dance: { headerBg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
-  Tutoring: { headerBg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
-};
+function formatSmartDate(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+  const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(todayStart.getDate() + 1);
+  const dayAfterStart = new Date(tomorrowStart); dayAfterStart.setDate(tomorrowStart.getDate() + 1);
+  const h = d.getHours(); const m = d.getMinutes();
+  const ampm = h >= 12 ? "PM" : "AM";
+  const time = `${h % 12 || 12}:${m.toString().padStart(2, "0")} ${ampm}`;
+  if (d >= todayStart && d < tomorrowStart) return `Today at ${time}`;
+  if (d >= tomorrowStart && d < dayAfterStart) return `Tomorrow at ${time}`;
+  return `${DAYS_ABB[d.getDay()]}, ${MONTHS_ABB[d.getMonth()]} ${d.getDate()} at ${time}`;
+}
+
+function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  return `${DAYS_ABB[d.getDay()]}, ${MONTHS_ABB[d.getMonth()]} ${d.getDate()}`;
+}
 
 function StarRow({ rating, count }: { rating: number; count: number }) {
   return (
@@ -51,7 +63,7 @@ function StarRow({ rating, count }: { rating: number; count: number }) {
           color="#F4A200"
         />
       ))}
-      <Text style={styles.starCount}>{rating.toFixed(1)} ({count} reviews)</Text>
+      <Text style={styles.starCount}>{rating.toFixed(1)} ({count})</Text>
     </View>
   );
 }
@@ -59,20 +71,92 @@ function StarRow({ rating, count }: { rating: number; count: number }) {
 export default function ClassDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const isWeb = Platform.OS === "web";
+
+  const [cls, setCls] = useState<ScheduledClass | null>(null);
+  const [series, setSeries] = useState<ClassSeries | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [joined, setJoined] = useState(false);
+  const [seriesEnrolled, setSeriesEnrolled] = useState(false);
   const [waitlistJoined, setWaitlistJoined] = useState(false);
 
-  const cls = MOCK_CLASS;
-  const colors = CATEGORY_COLORS[cls.category];
-  const spotsLeft = cls.maxStudents - cls.currentStudents;
-  const isFull = spotsLeft <= 0;
-  const fillPct = cls.currentStudents / cls.maxStudents;
-  const favored = isFavorite(cls.instructor.id);
+  const loadData = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const classData = await getClass(id);
+      setCls(classData);
+      setJoined(classData.is_enrolled ?? false);
+      setSeriesEnrolled(classData.is_series_enrolled ?? false);
+      if (classData.series_id) {
+        try {
+          const seriesData = await getSeries(classData.series_id);
+          setSeries(seriesData);
+        } catch {
+          // series load failed — non-fatal
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load class.");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  const handleJoinClass = async () => {
+    if (!cls) return;
+    setActionLoading(true);
+    try {
+      await joinClass(cls.id);
+      setJoined(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to join class.";
+      if (isWeb) { setError(msg); } else { Alert.alert("Oops", msg); }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEnrollSeries = async () => {
+    if (!series) return;
+    setActionLoading(true);
+    try {
+      await enrollInSeries(series.id);
+      setSeriesEnrolled(true);
+      setJoined(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to enroll in series.";
+      if (isWeb) { setError(msg); } else { Alert.alert("Oops", msg); }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleJoinWaitlist = async () => {
+    if (!cls) return;
+    setActionLoading(true);
+    try {
+      await joinWaitlist(cls.id);
+      setWaitlistJoined(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to join waitlist.";
+      if (isWeb) { setError(msg); } else { Alert.alert("Oops", msg); }
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleShare = async () => {
+    if (!cls) return;
     try {
       await Share.share({
-        message: `Check out "${cls.title}" with ${cls.instructor.name} on Flocked! ${cls.date} at ${cls.time}. Join me — download the app at flocked.app`,
+        message: `Check out "${cls.title}" on Flocked! ${formatSmartDate(cls.scheduled_at)}`,
         title: cls.title,
       });
     } catch {
@@ -80,151 +164,236 @@ export default function ClassDetailScreen() {
     }
   };
 
-  const handleWaitlist = () => {
-    setWaitlistJoined(true);
-  };
+  if (loading) {
+    return (
+      <AuthGate>
+        <RoleGuard requiredRole="guest">
+          <View style={styles.centered}>
+            <ActivityIndicator color="#0F0F0F" />
+          </View>
+        </RoleGuard>
+      </AuthGate>
+    );
+  }
+
+  if (error || !cls) {
+    return (
+      <AuthGate>
+        <RoleGuard requiredRole="guest">
+          <View style={styles.centered}>
+            <Text style={styles.errorMsg}>{error ?? "Class not found."}</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={loadData} activeOpacity={0.7}>
+              <Text style={styles.retryText}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        </RoleGuard>
+      </AuthGate>
+    );
+  }
+
+  const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F5F5F5", text: "#6B6B6B" };
+  const spotsLeft = cls.max_students - cls.current_students;
+  const isFull = spotsLeft <= 0;
+  const fillPct = cls.max_students > 0 ? cls.current_students / cls.max_students : 0;
+  const hostName = cls.host?.display_name ?? "Instructor";
+  const hostInitials = hostName.slice(0, 2).toUpperCase();
+  const isSeries = cls.class_type === "series";
+  const isDropin = cls.class_type === "dropin";
+  const dropinPriceDollars = series?.dropin_price_cents ? (series.dropin_price_cents / 100).toFixed(0) : null;
+  const seriesPriceDollars = series?.price_cents ? (series.price_cents / 100).toFixed(0) : null;
+
+  const avgRating = cls.avg_rating ?? cls.host?.avg_rating;
+  const reviews = cls.reviews ?? [];
 
   return (
     <AuthGate>
       <RoleGuard requiredRole="guest">
         <View style={[styles.container, { paddingTop: insets.top }]}>
-          {/* Hero */}
-          <View style={[styles.heroSection, { backgroundColor: colors.headerBg }]}>
-            <View style={styles.heroNav}>
-              <TouchableOpacity
-                style={styles.backBtn}
-                onPress={() => router.back()}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons name="arrow-left" size={20} color="#2C2C2C" />
-              </TouchableOpacity>
-              <View style={styles.heroActions}>
-                <TouchableOpacity
-                  style={styles.heroActionBtn}
-                  onPress={() => toggleFavorite(cls.instructor.id)}
-                  activeOpacity={0.7}
-                >
-                  <MaterialCommunityIcons
-                    name={favored ? "heart" : "heart-outline"}
-                    size={20}
-                    color={favored ? "#E0F7F5" : "#2C2C2C"}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.heroActionBtn}
-                  onPress={handleShare}
-                  activeOpacity={0.7}
-                >
-                  <MaterialCommunityIcons name="share-outline" size={20} color="#2C2C2C" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={[styles.categoryBadge, { backgroundColor: colors.dot }]}>
-              <Text style={styles.categoryBadgeText}>{cls.category}</Text>
-            </View>
-
-            <Text style={styles.heroTitle}>{cls.title}</Text>
-            <StarRow rating={4.8} count={47} />
+          {/* Header */}
+          <View style={styles.topBar}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="arrow-left" size={20} color="#0F0F0F" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="share-outline" size={20} color="#0F0F0F" />
+            </TouchableOpacity>
           </View>
 
           <ScrollView
             contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+            showsVerticalScrollIndicator={false}
           >
-            {/* Instructor card */}
-            <View style={styles.instructorCard}>
-              <View style={[styles.instructorAvatar, { backgroundColor: colors.headerBg }]}>
-                <Text style={[styles.instructorInitials, { color: colors.text }]}>
-                  {cls.instructor.initials}
-                </Text>
+            {/* Title area */}
+            <View style={styles.titleSection}>
+              <View style={styles.titleTopRow}>
+                <View style={[styles.categoryBadge, { backgroundColor: colors.bg }]}>
+                  <Text style={[styles.categoryBadgeText, { color: colors.text }]}>
+                    {cls.category.toUpperCase()}
+                  </Text>
+                </View>
+                {isSeries && cls.series_week != null && cls.total_weeks != null && (
+                  <View style={styles.seriesWeekBadge}>
+                    <Text style={styles.seriesWeekBadgeText}>Week {cls.series_week} of {cls.total_weeks}</Text>
+                  </View>
+                )}
+                {isDropin && (
+                  <View style={styles.dropinBadge}>
+                    <Text style={styles.dropinBadgeText}>Drop-in</Text>
+                  </View>
+                )}
               </View>
-              <View style={styles.instructorInfo}>
-                <Text style={styles.instructorName}>{cls.instructor.name}</Text>
-                <Text style={styles.instructorSubtitle}>{cls.instructor.subtitle}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => toggleFavorite(cls.instructor.id)}
-                activeOpacity={0.7}
-                style={styles.heartBtn}
-              >
-                <MaterialCommunityIcons
-                  name={favored ? "heart" : "heart-outline"}
-                  size={22}
-                  color={favored ? "#E0F7F5" : "#C0C0C0"}
-                />
-              </TouchableOpacity>
+              <Text style={styles.titleText}>{cls.title}</Text>
+              {avgRating != null && (
+                <StarRow rating={avgRating} count={reviews.length} />
+              )}
             </View>
 
-            {/* Info card */}
+            {/* Instructor */}
+            <Pressable
+              style={(state: any) => [
+                styles.instructorCard,
+                state.hovered && styles.instructorCardHovered,
+              ]}
+              onPress={() => router.push(`/guest/instructor/${cls.host_id}`)}
+            >
+              <View style={[styles.instructorAvatar, { backgroundColor: colors.bg }]}>
+                {cls.host?.photo_url ? null : (
+                  <Text style={[styles.instructorInitials, { color: colors.text }]}>{hostInitials}</Text>
+                )}
+              </View>
+              <View style={styles.instructorInfo}>
+                <Text style={styles.instructorName}>with {hostName}</Text>
+                {cls.host?.avg_rating != null && (
+                  <Text style={styles.instructorRating}>★ {cls.host.avg_rating.toFixed(1)} instructor rating</Text>
+                )}
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={16} color="#B0B0B0" />
+            </Pressable>
+
+            {/* Class info */}
             <View style={styles.infoCard}>
-              <InfoRow icon="calendar-outline" label="Date" value={cls.date} />
+              <InfoRow icon="calendar-outline" label="Date" value={formatSmartDate(cls.scheduled_at)} />
               <View style={styles.infoDivider} />
-              <InfoRow icon="clock-outline" label="Time" value={`${cls.time} · ${cls.duration} min`} />
+              <InfoRow icon="clock-outline" label="Duration" value={`${cls.duration_minutes} min`} />
               <View style={styles.infoDivider} />
               <InfoRow
                 icon="account-group-outline"
                 label="Spots"
-                value={isFull ? "Class full" : `${spotsLeft} of ${cls.maxStudents} remaining`}
-                valueColor={isFull ? "#EF4444" : spotsLeft <= 3 ? "#F97316" : "#2C2C2C"}
+                value={isFull ? "Class full" : `${spotsLeft} of ${cls.max_students} open`}
+                valueColor={isFull ? "#E5484D" : spotsLeft <= 3 ? "#E08030" : "#0F0F0F"}
               />
+              {isSeries && series && (
+                <>
+                  <View style={styles.infoDivider} />
+                  <InfoRow
+                    icon="refresh"
+                    label="Format"
+                    value={`${series.total_weeks}-week series · ${DAYS_ABB[series.day_of_week]}s`}
+                  />
+                </>
+              )}
             </View>
 
-            {/* Capacity bar */}
+            {/* Enrollment progress */}
             <View style={styles.progressSection}>
               <View style={styles.progressTrack}>
                 <View
                   style={[
                     styles.progressFill,
-                    {
-                      width: `${Math.round(fillPct * 100)}%` as unknown as number,
-                      backgroundColor: isFull ? "#EF4444" : colors.dot,
-                    },
+                    { width: `${Math.min(fillPct * 100, 100)}%` as any },
+                    isFull && styles.progressFillFull,
                   ]}
                 />
               </View>
               <Text style={styles.progressLabel}>
-                {cls.currentStudents}/{cls.maxStudents} enrolled
+                {cls.current_students}/{cls.max_students} enrolled
               </Text>
             </View>
 
-            {/* Waitlist banner */}
-            {isFull && (
-              <View style={styles.waitlistBanner}>
-                <MaterialCommunityIcons name="clock-alert-outline" size={16} color="#A04060" />
-                <Text style={styles.waitlistBannerText}>
-                  This class is full. Join the waitlist and we'll notify you if a spot opens.
+            {/* Series enrollment panel */}
+            {isSeries && series && !seriesEnrolled && (
+              <View style={styles.seriesPanel}>
+                <Text style={styles.seriesPanelTitle}>Enroll in the series</Text>
+                <Text style={styles.seriesPanelSub}>
+                  {series.total_weeks} weekly sessions every {DAYS_ABB[series.day_of_week]}
                 </Text>
+
+                {/* Week dots */}
+                <View style={styles.weekDotsRow}>
+                  {Array.from({ length: series.total_weeks }, (_, i) => {
+                    const isPast = (cls.series_week ?? 1) > i + 1;
+                    const isCurrent = (cls.series_week ?? 1) === i + 1;
+                    return (
+                      <View
+                        key={i}
+                        style={[
+                          styles.weekDot,
+                          isPast && styles.weekDotPast,
+                          isCurrent && styles.weekDotCurrent,
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+
+                {/* Upcoming dates */}
+                {series.classes && series.classes.length > 0 && (
+                  <View style={styles.datesList}>
+                    {series.classes.slice(0, 4).map((sc) => (
+                      <View key={sc.id} style={styles.datesRow}>
+                        <Text style={styles.datesWeek}>Wk {sc.series_week}</Text>
+                        <Text style={styles.datesDate}>{formatShortDate(sc.scheduled_at)}</Text>
+                      </View>
+                    ))}
+                    {series.classes.length > 4 && (
+                      <Text style={styles.datesMore}>+{series.classes.length - 4} more sessions</Text>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Series enrolled confirmation */}
+            {isSeries && seriesEnrolled && (
+              <View style={styles.enrolledBanner}>
+                <MaterialCommunityIcons name="check-circle" size={16} color="#0F7B6B" />
+                <Text style={styles.enrolledBannerText}>You're enrolled in this series</Text>
               </View>
             )}
 
             {/* Description */}
-            <View style={styles.descSection}>
-              <Text style={styles.descLabel}>About this class</Text>
-              <Text style={styles.descText}>{cls.description}</Text>
-            </View>
-
-            {/* Ratings & Reviews */}
-            <View style={styles.reviewsSection}>
-              <View style={styles.reviewsHeader}>
-                <Text style={styles.reviewsTitle}>Reviews</Text>
-                <View style={styles.reviewsSummary}>
-                  <Text style={styles.reviewsBig}>4.8</Text>
-                  <View>
-                    <StarRow rating={4.8} count={47} />
-                    <Text style={styles.reviewsSubtext}>47 reviews</Text>
-                  </View>
-                </View>
+            {cls.description && (
+              <View style={styles.descSection}>
+                <Text style={styles.sectionTitle}>About this class</Text>
+                <Text style={styles.descText}>{cls.description}</Text>
               </View>
-              {MOCK_REVIEWS.map((r) => (
-                <View key={r.id} style={styles.reviewCard}>
-                  <View style={styles.reviewTop}>
-                    <View style={styles.reviewAvatar}>
-                      <Text style={styles.reviewInitials}>{r.initials}</Text>
+            )}
+
+            {/* Reviews */}
+            {reviews.length > 0 && (
+              <View style={styles.reviewsSection}>
+                <View style={styles.reviewsHeader}>
+                  <Text style={styles.sectionTitle}>Reviews</Text>
+                  {avgRating != null && (
+                    <View style={styles.reviewsSummaryRow}>
+                      <Text style={styles.reviewsBigNum}>{avgRating.toFixed(1)}</Text>
+                      <View>
+                        <StarRow rating={avgRating} count={reviews.length} />
+                        <Text style={styles.reviewsSubtext}>{reviews.length} review{reviews.length !== 1 ? "s" : ""}</Text>
+                      </View>
                     </View>
-                    <View style={styles.reviewMeta}>
-                      <Text style={styles.reviewAuthor}>{r.author}</Text>
-                      <View style={styles.reviewMetaRow}>
-                        <View style={styles.reviewStars}>
+                  )}
+                </View>
+                {reviews.map((r) => (
+                  <View key={r.id} style={styles.reviewCard}>
+                    <View style={styles.reviewTop}>
+                      <View style={styles.reviewAvatar}>
+                        <Text style={styles.reviewInitials}>
+                          {r.student_id.slice(0, 2).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.reviewMeta}>
+                        <View style={styles.reviewStarRow}>
                           {[1, 2, 3, 4, 5].map((i) => (
                             <MaterialCommunityIcons
                               key={i}
@@ -234,44 +403,108 @@ export default function ClassDetailScreen() {
                             />
                           ))}
                         </View>
-                        <Text style={styles.reviewDate}>{r.date}</Text>
+                        <Text style={styles.reviewDate}>
+                          {formatShortDate(r.created_at)}
+                        </Text>
                       </View>
                     </View>
+                    {r.review_text && (
+                      <Text style={styles.reviewText}>{r.review_text}</Text>
+                    )}
                   </View>
-                  <Text style={styles.reviewText}>{r.text}</Text>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
           </ScrollView>
 
-          {/* Bottom action */}
-          <View style={[styles.joinBar, { paddingBottom: insets.bottom + 16 }]}>
-            {isFull ? (
+          {/* Bottom action bar */}
+          <View style={[styles.actionBar, { paddingBottom: insets.bottom + 16 }]}>
+            {joined && !isSeries ? (
+              <View style={styles.joinedConfirmed}>
+                <MaterialCommunityIcons name="check-circle" size={18} color="#0F7B6B" />
+                <Text style={styles.joinedConfirmedText}>You've joined this class</Text>
+              </View>
+            ) : isSeries && !seriesEnrolled ? (
+              <View style={styles.seriesActionCol}>
+                {seriesPriceDollars && (
+                  <TouchableOpacity
+                    style={[styles.primaryBtn, actionLoading && styles.btnDisabled]}
+                    onPress={handleEnrollSeries}
+                    disabled={actionLoading}
+                    activeOpacity={0.85}
+                  >
+                    {actionLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.primaryBtnText}>
+                        Enroll in series — ${seriesPriceDollars} for {series?.total_weeks} weeks
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                {dropinPriceDollars && (
+                  <TouchableOpacity
+                    style={[styles.secondaryBtn, actionLoading && styles.btnDisabled]}
+                    onPress={handleJoinClass}
+                    disabled={actionLoading}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.secondaryBtnText}>
+                      Drop in this week — ${dropinPriceDollars}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {!seriesPriceDollars && !dropinPriceDollars && (
+                  <TouchableOpacity
+                    style={[styles.primaryBtn, actionLoading && styles.btnDisabled]}
+                    onPress={handleEnrollSeries}
+                    disabled={actionLoading}
+                    activeOpacity={0.85}
+                  >
+                    {actionLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.primaryBtnText}>Enroll in series</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : isFull && !joined ? (
               waitlistJoined ? (
-                <View style={styles.waitlistConfirmed}>
-                  <MaterialCommunityIcons name="check-circle" size={18} color="#00B4A6" />
-                  <Text style={styles.waitlistConfirmedText}>You're #3 on the waitlist</Text>
+                <View style={styles.joinedConfirmed}>
+                  <MaterialCommunityIcons name="check-circle" size={18} color="#0F7B6B" />
+                  <Text style={styles.joinedConfirmedText}>You're on the waitlist</Text>
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={styles.waitlistBtn}
-                  onPress={handleWaitlist}
+                  style={[styles.waitlistBtn, actionLoading && styles.btnDisabled]}
+                  onPress={handleJoinWaitlist}
+                  disabled={actionLoading}
                   activeOpacity={0.85}
                 >
-                  <MaterialCommunityIcons name="bell-plus-outline" size={18} color="#A04060" />
-                  <Text style={styles.waitlistBtnText}>Join Waitlist</Text>
+                  {actionLoading ? (
+                    <ActivityIndicator color="#6B6B6B" size="small" />
+                  ) : (
+                    <Text style={styles.waitlistBtnText}>Join Waitlist</Text>
+                  )}
                 </TouchableOpacity>
               )
-            ) : (
+            ) : !joined ? (
               <TouchableOpacity
-                style={styles.joinBtn}
-                onPress={() => router.push("/guest/class/confirmation")}
+                style={[styles.primaryBtn, actionLoading && styles.btnDisabled]}
+                onPress={handleJoinClass}
+                disabled={actionLoading}
                 activeOpacity={0.85}
               >
-                <Text style={styles.joinBtnText}>Join Class</Text>
-                <MaterialCommunityIcons name="arrow-right" size={18} color="#FFFFFF" />
+                {actionLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.primaryBtnText}>
+                    Join Class{cls.price_cents ? ` — $${(cls.price_cents / 100).toFixed(0)}` : ""}
+                  </Text>
+                )}
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         </View>
       </RoleGuard>
@@ -283,7 +516,7 @@ function InfoRow({
   icon,
   label,
   value,
-  valueColor = "#2C2C2C",
+  valueColor = "#0F0F0F",
 }: {
   icon: string;
   label: string;
@@ -292,281 +525,218 @@ function InfoRow({
 }) {
   return (
     <View style={styles.infoRow}>
-      <MaterialCommunityIcons name={icon as never} size={16} color="#C0C0C0" />
+      <MaterialCommunityIcons name={icon as never} size={16} color="#B0B0B0" />
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={[styles.infoValue, { color: valueColor }]}>{value}</Text>
+      <Text style={[styles.infoValue, { color: valueColor }]} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: "#FFFFFF" },
+  errorMsg: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", textAlign: "center", paddingHorizontal: 32 },
+  retryBtn: {
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
-  heroSection: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
-    gap: 10,
-  },
-  heroNav: {
+  retryText: { fontSize: 13, fontFamily: fonts.medium, color: "#0F0F0F" },
+
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
   },
-  heroActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  heroActionBtn: {
+  shareBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.85)",
+    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#EEEEEE",
   },
+
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, gap: 16 },
+
+  titleSection: { gap: 8 },
+  titleTopRow: { flexDirection: "row", gap: 6, flexWrap: "wrap", alignItems: "center" },
   categoryBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
-  categoryBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
+  categoryBadgeText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", letterSpacing: 1 },
+  seriesWeekBadge: {
+    backgroundColor: "#EDE0F5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
-  heroTitle: {
+  seriesWeekBadgeText: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#7030A0" },
+  dropinBadge: {
+    backgroundColor: "#DDE8F5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  dropinBadgeText: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#2060A0" },
+  titleText: {
     fontSize: 26,
+    fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#2C2C2C",
-    letterSpacing: -0.4,
+    color: "#0F0F0F",
+    letterSpacing: -0.5,
     lineHeight: 32,
   },
-  starRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-  },
-  starCount: {
-    fontSize: 12,
-    color: "#888888",
-    marginLeft: 2,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    gap: 16,
-  },
+  starRow: { flexDirection: "row", alignItems: "center", gap: 2 },
+  starCount: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B", marginLeft: 4 },
+
   instructorCard: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#E8E8E8",
     padding: 14,
     gap: 12,
-  },
+    cursor: "pointer",
+  } as any,
+  instructorCardHovered: { backgroundColor: "#F5F5F5" },
   instructorAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  instructorInitials: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  instructorInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  instructorName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  instructorSubtitle: {
-    fontSize: 12,
-    color: "#888888",
-  },
-  heartBtn: {
-    padding: 4,
-  },
+  instructorInitials: { fontSize: 16, fontFamily: fonts.bold, fontWeight: "700" },
+  instructorInfo: { flex: 1, gap: 2 },
+  instructorName: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: "#0F0F0F" },
+  instructorRating: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
+
   infoCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#E8E8E8",
     paddingHorizontal: 16,
   },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  infoRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12 },
+  infoLabel: { fontSize: 13, fontFamily: fonts.regular, color: "#6B6B6B", width: 64 },
+  infoValue: { fontSize: 13, fontFamily: fonts.medium, fontWeight: "500", flex: 1 },
+  infoDivider: { height: 1, backgroundColor: "#F0F0F0" },
+
+  progressSection: { gap: 6 },
+  progressTrack: { height: 4, backgroundColor: "#F0F0F0", borderRadius: 2, overflow: "hidden" },
+  progressFill: { height: 4, backgroundColor: "#0F0F0F", borderRadius: 2 },
+  progressFillFull: { backgroundColor: "#E5484D" },
+  progressLabel: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
+
+  seriesPanel: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
+    padding: 16,
     gap: 10,
-    paddingVertical: 13,
   },
-  infoLabel: {
-    fontSize: 13,
-    color: "#888888",
-    fontWeight: "500",
-    width: 44,
+  seriesPanelTitle: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
   },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    flex: 1,
-  },
-  infoDivider: {
-    height: 1,
-    backgroundColor: "#EEEEEE",
-  },
-  progressSection: {
-    gap: 6,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: "#F0F0F0",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  progressLabel: {
-    fontSize: 12,
-    color: "#888888",
-    fontWeight: "500",
-  },
-  waitlistBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    backgroundColor: "#FDF0F2",
-    borderRadius: 12,
+  seriesPanelSub: { fontSize: 13, fontFamily: fonts.regular, color: "#6B6B6B" },
+  weekDotsRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
+  weekDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E8E8E8",
     borderWidth: 1,
-    borderColor: "#E0F7F5",
-    padding: 14,
+    borderColor: "#D0D0D0",
   },
-  waitlistBannerText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#A04060",
-    lineHeight: 20,
-  },
-  descSection: {
-    gap: 8,
-  },
-  descLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  descText: {
-    fontSize: 14,
-    color: "#888888",
-    lineHeight: 22,
-  },
-  reviewsSection: {
-    gap: 12,
-  },
-  reviewsHeader: {
-    gap: 10,
-  },
-  reviewsTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2C2C2C",
-  },
-  reviewsSummary: {
+  weekDotPast: { backgroundColor: "#B0B0B0", borderColor: "#B0B0B0" },
+  weekDotCurrent: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  datesList: { gap: 4 },
+  datesRow: { flexDirection: "row", gap: 10, alignItems: "center" },
+  datesWeek: { fontSize: 11, fontFamily: fonts.bold, fontWeight: "700", color: "#B0B0B0", width: 28 },
+  datesDate: { fontSize: 13, fontFamily: fonts.regular, color: "#6B6B6B" },
+  datesMore: { fontSize: 12, fontFamily: fonts.regular, color: "#B0B0B0", marginTop: 2 },
+
+  enrolledBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 8,
+    backgroundColor: "#D4EDE8",
+    borderRadius: 8,
+    padding: 12,
   },
-  reviewsBig: {
-    fontSize: 40,
+  enrolledBannerText: { fontSize: 13, fontFamily: fonts.medium, fontWeight: "500", color: "#0F7B6B" },
+
+  descSection: { gap: 8 },
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: "#0F0F0F",
+  },
+  descText: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", lineHeight: 22 },
+
+  reviewsSection: { gap: 12 },
+  reviewsHeader: { gap: 8 },
+  reviewsSummaryRow: { flexDirection: "row", alignItems: "center", gap: 16 },
+  reviewsBigNum: {
+    fontSize: 40,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#0F0F0F",
     lineHeight: 44,
   },
-  reviewsSubtext: {
-    fontSize: 11,
-    color: "#888888",
-    marginTop: 2,
-  },
+  reviewsSubtext: { fontSize: 11, fontFamily: fonts.regular, color: "#B0B0B0", marginTop: 2 },
   reviewCard: {
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#E8E8E8",
     padding: 14,
     gap: 8,
   },
-  reviewTop: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
+  reviewTop: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   reviewAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#E0F7F5",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F5F5F5",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  reviewInitials: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#00B4A6",
-  },
-  reviewMeta: {
-    flex: 1,
-    gap: 3,
-  },
-  reviewAuthor: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#2C2C2C",
-  },
-  reviewMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  reviewStars: {
-    flexDirection: "row",
-    gap: 2,
-  },
-  reviewDate: {
-    fontSize: 11,
-    color: "#888888",
-  },
-  reviewText: {
-    fontSize: 13,
-    color: "#444444",
-    lineHeight: 20,
-  },
-  joinBar: {
+  reviewInitials: { fontSize: 11, fontFamily: fonts.bold, fontWeight: "700", color: "#6B6B6B" },
+  reviewMeta: { flex: 1, gap: 2 },
+  reviewStarRow: { flexDirection: "row", gap: 2 },
+  reviewDate: { fontSize: 11, fontFamily: fonts.regular, color: "#B0B0B0" },
+  reviewText: { fontSize: 13, fontFamily: fonts.regular, color: "#6B6B6B", lineHeight: 20 },
+
+  actionBar: {
     position: "absolute",
     bottom: 0,
     left: 0,
@@ -575,52 +745,65 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
+    borderTopColor: "#E8E8E8",
   },
-  joinBtn: {
-    backgroundColor: "#00B4A6",
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: "row",
+  seriesActionCol: { gap: 8 },
+  primaryBtn: {
+    backgroundColor: "#0F0F0F",
+    borderRadius: 6,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
   },
-  joinBtnText: {
-    fontSize: 16,
-    fontWeight: "600",
+  primaryBtnText: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
     color: "#FFFFFF",
   },
-  waitlistBtn: {
-    backgroundColor: "#FDF0F2",
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: "row",
+  secondaryBtn: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 6,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
     borderWidth: 1,
-    borderColor: "#E0F7F5",
+    borderColor: "#E8E8E8",
+  },
+  secondaryBtnText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  waitlistBtn: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 6,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
   },
   waitlistBtnText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#A04060",
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
   },
-  waitlistConfirmed: {
-    backgroundColor: "#E0F7F5",
-    borderRadius: 12,
-    paddingVertical: 16,
+  joinedConfirmed: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    borderWidth: 1,
-    borderColor: "#D4E8CC",
+    paddingVertical: 14,
+    backgroundColor: "#D4EDE8",
+    borderRadius: 6,
   },
-  waitlistConfirmedText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#007A70",
+  joinedConfirmedText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#0F7B6B",
   },
+  btnDisabled: { opacity: 0.4 },
 });

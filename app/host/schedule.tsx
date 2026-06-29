@@ -15,10 +15,14 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../components/AuthGate";
 import { RoleGuard } from "../../components/RoleGuard";
-import { createClass } from "../../lib/api";
+import { createClass, createSeries } from "../../lib/api";
+import { fonts } from "../../lib/fonts";
 
 const CATEGORIES = ["Yoga", "Dance", "Tutoring"] as const;
 const DURATIONS = [30, 45, 60, 90] as const;
+const WEEKS_OPTIONS = [4, 6, 8, 12] as const;
+const CLASS_TYPES = ["Single Class", "Drop-in", "Series"] as const;
+type ClassTypeOption = typeof CLASS_TYPES[number];
 
 function getDateChips(): Date[] {
   return Array.from({ length: 14 }, (_, i) => {
@@ -29,6 +33,7 @@ function getDateChips(): Date[] {
   });
 }
 
+const DAYS_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DAYS_ABB = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS_ABB = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -62,6 +67,11 @@ function getDefaultWebDatetime(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T09:00`;
 }
 
+function parseDollars(s: string): number {
+  const n = parseFloat(s.replace(/[^0-9.]/g, ""));
+  return isNaN(n) ? 0 : Math.round(n * 100);
+}
+
 const DATE_CHIPS = getDateChips();
 
 export default function ScheduleClassScreen() {
@@ -69,6 +79,10 @@ export default function ScheduleClassScreen() {
   const router = useRouter();
   const isWeb = Platform.OS === "web";
 
+  // Class type
+  const [classType, setClassType] = useState<ClassTypeOption>("Single Class");
+
+  // Shared fields
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<typeof CATEGORIES[number]>("Yoga");
   const [selectedDate, setSelectedDate] = useState<Date>(DATE_CHIPS[0]);
@@ -77,14 +91,34 @@ export default function ScheduleClassScreen() {
   const [duration, setDuration] = useState<number>(60);
   const [maxStudents, setMaxStudents] = useState<number>(10);
   const [description, setDescription] = useState("");
+
+  // Series-only fields
+  const [totalWeeks, setTotalWeeks] = useState<number>(6);
+  const [seriesPrice, setSeriesPrice] = useState("55");
+  const [dropinPrice, setDropinPrice] = useState("12");
+
   const [submitting, setSubmitting] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    console.log("[schedule] handleSubmit fired — title:", JSON.stringify(title), "category:", category, "duration:", duration, "maxStudents:", maxStudents, "isWeb:", isWeb, "webDatetime:", webDatetime);
+  // Derive day/time info for preview
+  const previewDate = isWeb && webDatetime
+    ? new Date(webDatetime)
+    : (() => {
+        const d = new Date(selectedDate);
+        const [h, mi] = selectedTime.split(":").map(Number);
+        d.setHours(h, mi, 0, 0);
+        return d;
+      })();
 
+  const previewDay = DAYS_FULL[previewDate.getDay()];
+  const previewTime = fmtTime(
+    isWeb && webDatetime
+      ? `${previewDate.getHours()}:${previewDate.getMinutes().toString().padStart(2, "0")}`
+      : selectedTime
+  );
+
+  const handleSubmit = async () => {
     if (!title.trim()) {
-      console.log("[schedule] blocked: title empty");
       if (isWeb) { setInlineError("Please enter a class title."); return; }
       Alert.alert("Oops", "Please enter a class title.");
       return;
@@ -92,53 +126,78 @@ export default function ScheduleClassScreen() {
 
     let scheduledAt: string;
     if (isWeb) {
-      if (!webDatetime) {
-        setInlineError("Please select a date and time.");
-        return;
-      }
+      if (!webDatetime) { setInlineError("Please select a date and time."); return; }
       scheduledAt = new Date(webDatetime).toISOString();
-      console.log("[schedule] web scheduledAt:", scheduledAt);
     } else {
       const [h, m] = selectedTime.split(":").map(Number);
       const d = new Date(selectedDate);
       d.setHours(h, m, 0, 0);
       scheduledAt = d.toISOString();
-      console.log("[schedule] mobile scheduledAt:", scheduledAt);
     }
 
     setInlineError(null);
     setSubmitting(true);
+
     try {
-      await createClass({
-        title: title.trim(),
-        category: category.toLowerCase(),
-        scheduledAt,
-        durationMinutes: duration,
-        maxStudents,
-        description: description.trim() || undefined,
-      });
-      console.log("[schedule] createClass success");
-      if (isWeb) {
-        router.back();
+      if (classType === "Series") {
+        const startDate = new Date(scheduledAt);
+        const timeOfDay = `${startDate.getHours()}:${startDate.getMinutes().toString().padStart(2, "0")}`;
+
+        await createSeries({
+          title: title.trim(),
+          description: description.trim() || undefined,
+          category: category.toLowerCase(),
+          totalWeeks,
+          priceCents: parseDollars(seriesPrice),
+          dropinPriceCents: parseDollars(dropinPrice),
+          maxStudents,
+          startDate: scheduledAt,
+          dayOfWeek: startDate.getDay(),
+          timeOfDay,
+          durationMinutes: duration,
+        });
+
+        if (isWeb) {
+          router.back();
+        } else {
+          Alert.alert(
+            "Series Created",
+            `${totalWeeks} weekly classes have been scheduled starting ${previewDay} at ${previewTime}.`,
+            [{ text: "Done", onPress: () => router.back() }]
+          );
+        }
       } else {
-        Alert.alert(
-          "Class Scheduled",
-          "Your class has been added to the calendar and students can now join.",
-          [{ text: "Done", onPress: () => router.back() }]
-        );
+        await createClass({
+          title: title.trim(),
+          category: category.toLowerCase(),
+          scheduledAt,
+          durationMinutes: duration,
+          maxStudents,
+          description: description.trim() || undefined,
+          classType: classType === "Drop-in" ? "dropin" : "single",
+        });
+
+        if (isWeb) {
+          router.back();
+        } else {
+          Alert.alert(
+            "Class Scheduled",
+            "Your class has been added to the calendar.",
+            [{ text: "Done", onPress: () => router.back() }]
+          );
+        }
       }
     } catch (err) {
-      console.log("[schedule] createClass error:", err);
       const msg = err instanceof Error ? err.message : "Failed to schedule class.";
-      if (isWeb) {
-        setInlineError(msg);
-      } else {
-        Alert.alert("Oops", msg);
-      }
+      if (isWeb) { setInlineError(msg); } else { Alert.alert("Oops", msg); }
     } finally {
       setSubmitting(false);
     }
   };
+
+  const submitLabel = classType === "Series"
+    ? `Create ${totalWeeks}-Week Series`
+    : "Schedule Class";
 
   const formContent = (
     <ScrollView
@@ -149,14 +208,46 @@ export default function ScheduleClassScreen() {
       <Text style={styles.pageTitle}>Schedule a class</Text>
       <View style={styles.titleDivider} />
 
+      {/* Class type selector */}
+      <View style={styles.section}>
+        <Text style={styles.label}>CLASS TYPE</Text>
+        <View style={styles.typeRow}>
+          {CLASS_TYPES.map((t) => {
+            const active = classType === t;
+            return (
+              <Pressable
+                key={t}
+                style={(state: any) => [
+                  styles.typeBtn,
+                  active && styles.typeBtnActive,
+                  !active && state.hovered && styles.typeBtnHovered,
+                  isWeb && ({ cursor: "pointer" } as any),
+                ]}
+                onPress={() => { setClassType(t); setInlineError(null); }}
+              >
+                <Text style={[styles.typeBtnText, active && styles.typeBtnTextActive]}>{t}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        {classType === "Drop-in" && (
+          <Text style={styles.typeHint}>Students can join any individual session. Great for open/ongoing classes.</Text>
+        )}
+        {classType === "Series" && (
+          <Text style={styles.typeHint}>Students enroll for all sessions upfront. You set the start date and it repeats weekly.</Text>
+        )}
+      </View>
+
       {/* Title */}
       <View style={styles.section}>
-        <Text style={styles.label}>CLASS TITLE</Text>
+        <Text style={styles.label}>
+          {classType === "Series" ? "SERIES TITLE" : "CLASS TITLE"}
+        </Text>
         <TextInput
           value={title}
           onChangeText={(t) => { setTitle(t); setInlineError(null); }}
           mode="outlined"
-          placeholder="e.g. Beginner Morning Yoga"
+          placeholder={classType === "Series" ? "e.g. Beginner Morning Yoga Series" : "e.g. Beginner Morning Yoga"}
           style={styles.textInput}
           outlineColor="#E8E8E8"
           activeOutlineColor="#0F0F0F"
@@ -183,9 +274,7 @@ export default function ScheduleClassScreen() {
                 ]}
                 onPress={() => setCategory(cat)}
               >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                  {cat}
-                </Text>
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{cat}</Text>
               </Pressable>
             );
           })}
@@ -195,8 +284,10 @@ export default function ScheduleClassScreen() {
       {/* Date + Time */}
       {isWeb ? (
         <View style={styles.section}>
-          <Text style={styles.label}>DATE & TIME</Text>
-          {/* @ts-ignore — native HTML input */}
+          <Text style={styles.label}>
+            {classType === "Series" ? "START DATE & TIME" : "DATE & TIME"}
+          </Text>
+          {/* @ts-ignore */}
           <input
             type="datetime-local"
             value={webDatetime}
@@ -205,10 +296,7 @@ export default function ScheduleClassScreen() {
               const pad = (n: number) => n.toString().padStart(2, "0");
               return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
             })()}
-            onChange={(e: any) => {
-              console.log("[schedule] datetime-local changed:", e.target.value);
-              setWebDatetime(e.target.value);
-            }}
+            onChange={(e: any) => setWebDatetime(e.target.value)}
             style={{
               padding: "10px 14px",
               borderRadius: 6,
@@ -227,7 +315,9 @@ export default function ScheduleClassScreen() {
       ) : (
         <>
           <View style={styles.section}>
-            <Text style={styles.label}>DATE</Text>
+            <Text style={styles.label}>
+              {classType === "Series" ? "START DATE" : "DATE"}
+            </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollRow}>
               {DATE_CHIPS.map((date, i) => {
                 const { day, num, month } = chipLabel(date);
@@ -258,13 +348,89 @@ export default function ScheduleClassScreen() {
                     style={[styles.chip, selected && styles.chipSelected]}
                     onPress={() => setSelectedTime(slot)}
                   >
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-                      {fmtTime(slot)}
-                    </Text>
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{fmtTime(slot)}</Text>
                   </Pressable>
                 );
               })}
             </ScrollView>
+          </View>
+        </>
+      )}
+
+      {/* Series-specific fields */}
+      {classType === "Series" && (
+        <>
+          <View style={styles.section}>
+            <Text style={styles.label}>NUMBER OF WEEKS</Text>
+            <View style={styles.chipRow}>
+              {WEEKS_OPTIONS.map((w) => {
+                const selected = totalWeeks === w;
+                return (
+                  <Pressable
+                    key={w}
+                    style={(state: any) => [
+                      styles.chip,
+                      selected && styles.chipSelected,
+                      !selected && state.hovered && styles.chipHovered,
+                      isWeb && ({ cursor: "pointer" } as any),
+                    ]}
+                    onPress={() => setTotalWeeks(w)}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{w} weeks</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.priceRow}>
+            <View style={[styles.section, { flex: 1 }]}>
+              <Text style={styles.label}>SERIES PRICE</Text>
+              <TextInput
+                value={seriesPrice}
+                onChangeText={setSeriesPrice}
+                mode="outlined"
+                placeholder="55"
+                keyboardType="decimal-pad"
+                left={<TextInput.Affix text="$" />}
+                style={styles.textInput}
+                outlineColor="#E8E8E8"
+                activeOutlineColor="#0F0F0F"
+                textColor="#0F0F0F"
+                theme={{ colors: { onSurfaceVariant: "#B0B0B0", background: "#FFFFFF" } }}
+              />
+            </View>
+            <View style={[styles.section, { flex: 1 }]}>
+              <Text style={styles.label}>DROP-IN PRICE</Text>
+              <TextInput
+                value={dropinPrice}
+                onChangeText={setDropinPrice}
+                mode="outlined"
+                placeholder="12"
+                keyboardType="decimal-pad"
+                left={<TextInput.Affix text="$" />}
+                style={styles.textInput}
+                outlineColor="#E8E8E8"
+                activeOutlineColor="#0F0F0F"
+                textColor="#0F0F0F"
+                theme={{ colors: { onSurfaceVariant: "#B0B0B0", background: "#FFFFFF" } }}
+              />
+            </View>
+          </View>
+
+          {/* Preview */}
+          <View style={styles.previewBox}>
+            <Text style={styles.previewText}>
+              This will create{" "}
+              <Text style={styles.previewBold}>{totalWeeks} weekly classes</Text>
+              {" "}every{" "}
+              <Text style={styles.previewBold}>{previewDay}</Text>
+              {" "}at{" "}
+              <Text style={styles.previewBold}>{previewTime}</Text>
+            </Text>
+            <Text style={styles.previewSub}>
+              Series: ${seriesPrice || "0"} total · Drop-in: ${dropinPrice || "0"}/class
+            </Text>
           </View>
         </>
       )}
@@ -284,9 +450,7 @@ export default function ScheduleClassScreen() {
               ]}
               onPress={() => setDuration(d)}
             >
-              <Text style={[styles.chipText, duration === d && styles.chipTextSelected]}>
-                {d}m
-              </Text>
+              <Text style={[styles.chipText, duration === d && styles.chipTextSelected]}>{d}m</Text>
             </Pressable>
           ))}
         </View>
@@ -341,7 +505,6 @@ export default function ScheduleClassScreen() {
         />
       </View>
 
-      {/* Inline error */}
       {inlineError && (
         <View style={styles.errorBox}>
           <MaterialCommunityIcons name="alert-circle-outline" size={14} color="#E5484D" />
@@ -349,7 +512,6 @@ export default function ScheduleClassScreen() {
         </View>
       )}
 
-      {/* Submit */}
       <Pressable
         style={(state: any) => [
           styles.submitBtn,
@@ -357,16 +519,13 @@ export default function ScheduleClassScreen() {
           state.hovered && !submitting && styles.submitBtnHovered,
           isWeb && ({ cursor: submitting ? "default" : "pointer" } as any),
         ]}
-        onPress={() => {
-          console.log("[schedule] submit Pressable tapped");
-          handleSubmit();
-        }}
+        onPress={handleSubmit}
         disabled={submitting}
       >
         {submitting ? (
           <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Text style={styles.submitBtnText}>Schedule Class</Text>
+          <Text style={styles.submitBtnText}>{submitLabel}</Text>
         )}
       </Pressable>
     </ScrollView>
@@ -401,6 +560,7 @@ const styles = StyleSheet.create({
 
   pageTitle: {
     fontSize: 28,
+    fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#0F0F0F",
     letterSpacing: -0.5,
@@ -415,13 +575,40 @@ const styles = StyleSheet.create({
   section: { gap: 8 },
   label: {
     fontSize: 11,
+    fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#6B6B6B",
     letterSpacing: 1,
     textTransform: "uppercase",
   },
-  optional: { fontSize: 11, fontWeight: "400", color: "#B0B0B0", textTransform: "none" },
+  optional: { fontSize: 11, fontWeight: "400", fontFamily: fonts.regular, color: "#B0B0B0", textTransform: "none" },
   textInput: { backgroundColor: "#FFFFFF" },
+
+  typeRow: { flexDirection: "row", gap: 8 },
+  typeBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    alignItems: "center",
+  },
+  typeBtnActive: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  typeBtnHovered: { backgroundColor: "#F5F5F5" },
+  typeBtnText: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  typeBtnTextActive: { color: "#FFFFFF", fontFamily: fonts.bold, fontWeight: "700" },
+  typeHint: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
+    lineHeight: 18,
+    marginTop: 2,
+  },
 
   chipRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
   chip: {
@@ -434,12 +621,8 @@ const styles = StyleSheet.create({
   },
   chipSelected: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
   chipHovered: { backgroundColor: "#F5F5F5" },
-  chipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#6B6B6B",
-  },
-  chipTextSelected: { color: "#FFFFFF", fontWeight: "700" },
+  chipText: { fontSize: 13, fontFamily: fonts.medium, fontWeight: "500", color: "#6B6B6B" },
+  chipTextSelected: { color: "#FFFFFF", fontFamily: fonts.bold, fontWeight: "700" },
 
   scrollRow: { gap: 6, paddingVertical: 2 },
 
@@ -454,10 +637,27 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   dateChipSelected: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
-  dateChipTop: { fontSize: 10, fontWeight: "500", color: "#6B6B6B" },
+  dateChipTop: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#6B6B6B" },
   dateChipTopSelected: { color: "#FFFFFF" },
-  dateChipNum: { fontSize: 18, fontWeight: "700", color: "#0F0F0F", lineHeight: 24 },
+  dateChipNum: { fontSize: 18, fontFamily: fonts.bold, fontWeight: "700", color: "#0F0F0F", lineHeight: 24 },
   dateChipNumSelected: { color: "#FFFFFF" },
+
+  priceRow: { flexDirection: "row", gap: 12 },
+
+  previewBox: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 6,
+    padding: 14,
+    gap: 4,
+  },
+  previewText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+    lineHeight: 20,
+  },
+  previewBold: { fontFamily: fonts.bold, fontWeight: "700", color: "#0F0F0F" },
+  previewSub: { fontSize: 12, fontFamily: fonts.regular, color: "#B0B0B0" },
 
   counterRow: { flexDirection: "row", alignItems: "center", gap: 20 },
   counterBtn: {
@@ -471,9 +671,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   counterBtnHovered: { backgroundColor: "#F5F5F5" },
-  counterBtnText: { fontSize: 18, fontWeight: "500", color: "#0F0F0F", lineHeight: 24 },
+  counterBtnText: { fontSize: 18, fontFamily: fonts.medium, fontWeight: "500", color: "#0F0F0F", lineHeight: 24 },
   counterValue: {
     fontSize: 22,
+    fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#0F0F0F",
     minWidth: 32,
@@ -489,7 +690,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  errorText: { flex: 1, fontSize: 13, color: "#E5484D", lineHeight: 18 },
+  errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E5484D", lineHeight: 18 },
 
   submitBtn: {
     backgroundColor: "#0F0F0F",
@@ -500,5 +701,5 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { opacity: 0.4 },
   submitBtnHovered: { backgroundColor: "#2A2A2A" },
-  submitBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+  submitBtnText: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
 });

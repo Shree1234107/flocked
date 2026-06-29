@@ -1087,6 +1087,25 @@ const createClassSchema = z.object({
   }),
   maxStudents: z.number().int().min(1).max(50),
   description: z.string().max(500).optional(),
+  classType: z.enum(["single", "dropin"]).default("single"),
+});
+
+const createSeriesSchema = z.object({
+  title: z.string().min(1, "Title is required.").max(100),
+  description: z.string().max(500).optional(),
+  category: z.enum(["yoga", "dance", "tutoring"]),
+  totalWeeks: z.number().int().refine((v) => [4, 6, 8, 12].includes(v), {
+    message: "Total weeks must be 4, 6, 8, or 12.",
+  }),
+  priceCents: z.number().int().min(0),
+  dropinPriceCents: z.number().int().min(0),
+  maxStudents: z.number().int().min(1).max(50),
+  startDate: z.string().datetime({ message: "Invalid start date." }),
+  dayOfWeek: z.number().int().min(0).max(6),
+  timeOfDay: z.string().regex(/^\d{1,2}:\d{2}$/, "Invalid time format (use HH:MM)."),
+  durationMinutes: z.number().int().refine((v) => [30, 45, 60, 90].includes(v), {
+    message: "Duration must be 30, 45, 60, or 90 minutes.",
+  }),
 });
 
 app.get("/api/classes", requireAuth, async (req, res) => {
@@ -1138,10 +1157,33 @@ app.get("/api/classes", requireAuth, async (req, res) => {
       : { data: [] as { class_id: string }[] };
 
     const enrolledSet = new Set((enrollments ?? []).map((e) => e.class_id));
+
+    // Fetch series data for series classes (total_weeks, prices)
+    const seriesIds = [...new Set((classes ?? []).filter((c) => c.series_id).map((c) => c.series_id as string))];
+    const { data: seriesRows } = seriesIds.length
+      ? await supabase
+          .from("class_series")
+          .select("id, total_weeks, price_cents, dropin_price_cents, title")
+          .in("id", seriesIds)
+      : { data: [] as any[] };
+    const seriesMap = Object.fromEntries((seriesRows ?? []).map((s) => [s.id, s]));
+
+    // Fetch series enrollments
+    const { data: seriesEnrollments } = seriesIds.length
+      ? await supabase
+          .from("series_enrollments")
+          .select("series_id")
+          .eq("user_id", userId)
+          .in("series_id", seriesIds)
+      : { data: [] as { series_id: string }[] };
+    const seriesEnrolledSet = new Set((seriesEnrollments ?? []).map((e) => e.series_id));
+
     return ok(res, (classes ?? []).map((c) => ({
       ...c,
       host: hostMap[c.host_id] ?? null,
       is_enrolled: enrolledSet.has(c.id),
+      is_series_enrolled: c.series_id ? seriesEnrolledSet.has(c.series_id) : false,
+      total_weeks: c.series_id ? (seriesMap[c.series_id]?.total_weeks ?? null) : null,
     })));
   } catch (err) {
     console.error("[GET /api/classes] Unhandled exception:", err);
@@ -1261,7 +1303,7 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
   if (!parsed.success) return fail(res, zodMessage(parsed.error));
 
   const userId = (req as AuthedRequest).userId;
-  const { title, category, scheduledAt, durationMinutes, maxStudents, description } = parsed.data;
+  const { title, category, scheduledAt, durationMinutes, maxStudents, description, classType } = parsed.data;
 
   if (new Date(scheduledAt).getTime() <= Date.now() + 30 * 60 * 1000) {
     return fail(res, "Class must be scheduled at least 30 minutes in the future.");
@@ -1272,13 +1314,15 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
     .insert({
       host_id: userId,
       title,
-      category: category.toLowerCase(), // normalized before insert
+      category: category.toLowerCase(),
       scheduled_at: scheduledAt,
       duration_minutes: durationMinutes,
       max_students: maxStudents,
       current_students: 0,
       description: description ?? null,
-      status: "upcoming",
+      status: "scheduled",
+      class_type: classType ?? "single",
+      price_cents: 0,
     })
     .select()
     .single();
@@ -1384,6 +1428,292 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
   }).catch((err) => console.error("[Email] Enrollment confirm failed:", err));
 
   return ok(res, { ...(updated ?? cls), is_enrolled: true });
+});
+
+// ─── Single class detail ──────────────────────────────────────────────────────
+
+app.get("/api/classes/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const { data: cls, error } = await supabase
+    .from("scheduled_classes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !cls) return fail(res, "Class not found.", 404);
+
+  const { data: host } = await supabase
+    .from("host_profiles")
+    .select("user_id, display_name, full_name, photo_url, bio")
+    .eq("user_id", cls.host_id)
+    .maybeSingle();
+
+  const { data: enrollment } = await supabase
+    .from("class_enrollments")
+    .select("id")
+    .eq("class_id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  let is_series_enrolled = false;
+  if (cls.series_id) {
+    const { data: se } = await supabase
+      .from("series_enrollments")
+      .select("id")
+      .eq("series_id", cls.series_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    is_series_enrolled = !!se;
+  }
+
+  const { data: reviews } = await supabase
+    .from("class_reviews")
+    .select("id, rating, review_text, created_at, student_id")
+    .eq("class_id", id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const allReviews = reviews ?? [];
+  const avg_rating =
+    allReviews.length
+      ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
+      : null;
+
+  let total_weeks: number | null = null;
+  if (cls.series_id) {
+    const { data: series } = await supabase
+      .from("class_series")
+      .select("total_weeks")
+      .eq("id", cls.series_id)
+      .maybeSingle();
+    total_weeks = series?.total_weeks ?? null;
+  }
+
+  return ok(res, {
+    ...cls,
+    host: host ?? null,
+    is_enrolled: !!enrollment,
+    is_series_enrolled,
+    total_weeks,
+    reviews: allReviews,
+    avg_rating,
+  });
+});
+
+// ─── Series routes ────────────────────────────────────────────────────────────
+
+app.post("/api/series", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  const parsed = createSeriesSchema.safeParse(req.body);
+  if (!parsed.success) return fail(res, zodMessage(parsed.error));
+
+  const userId = (req as AuthedRequest).userId;
+  const {
+    title, description, category, totalWeeks, priceCents, dropinPriceCents,
+    maxStudents, startDate, dayOfWeek, timeOfDay, durationMinutes,
+  } = parsed.data;
+
+  const { data: series, error: seriesError } = await supabase
+    .from("class_series")
+    .insert({
+      host_id: userId,
+      title,
+      description: description ?? null,
+      category: category.toLowerCase(),
+      total_weeks: totalWeeks,
+      price_cents: priceCents,
+      dropin_price_cents: dropinPriceCents,
+      max_students: maxStudents,
+      current_students: 0,
+      start_date: startDate,
+      day_of_week: dayOfWeek,
+      time_of_day: timeOfDay,
+      duration_minutes: durationMinutes,
+      status: "active",
+    })
+    .select()
+    .single();
+
+  if (seriesError || !series) {
+    console.error("[POST /api/series] create series:", seriesError?.message);
+    return fail(res, "Failed to create series.", 500);
+  }
+
+  const [hours, minutes] = timeOfDay.split(":").map(Number);
+  const baseDate = new Date(startDate);
+
+  const classInserts = Array.from({ length: totalWeeks }, (_, i) => {
+    const week = i + 1;
+    const classDate = new Date(baseDate);
+    classDate.setDate(baseDate.getDate() + i * 7);
+    classDate.setHours(hours, minutes, 0, 0);
+    return {
+      host_id: userId,
+      title: `${title} — Week ${week}`,
+      category: category.toLowerCase(),
+      scheduled_at: classDate.toISOString(),
+      duration_minutes: durationMinutes,
+      max_students: maxStudents,
+      current_students: 0,
+      description: description ?? null,
+      status: "scheduled",
+      class_type: "series",
+      series_id: series.id,
+      series_week: week,
+      price_cents: dropinPriceCents,
+    };
+  });
+
+  const { data: classes, error: classesError } = await supabase
+    .from("scheduled_classes")
+    .insert(classInserts)
+    .select();
+
+  if (classesError) {
+    console.error("[POST /api/series] create classes:", classesError.message);
+    await supabase.from("class_series").delete().eq("id", series.id);
+    return fail(res, "Failed to generate series classes.", 500);
+  }
+
+  return ok(res, { ...series, classes: classes ?? [] }, 201);
+});
+
+app.get("/api/series/mine", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const { data, error } = await supabase
+    .from("class_series")
+    .select("*")
+    .eq("host_id", userId)
+    .neq("status", "cancelled")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[GET /api/series/mine]", error.message);
+    return fail(res, "Failed to load your series.", 500);
+  }
+
+  return ok(res, data ?? []);
+});
+
+app.get("/api/series", requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("class_series")
+    .select("*")
+    .eq("status", "active")
+    .order("start_date", { ascending: true })
+    .limit(100);
+
+  if (error) {
+    console.error("[GET /api/series]", error.message);
+    return fail(res, "Failed to load series.", 500);
+  }
+
+  return ok(res, data ?? []);
+});
+
+app.get("/api/series/:id", requireAuth, async (req, res) => {
+  const { id } = req.params;
+
+  const { data: series, error } = await supabase
+    .from("class_series")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !series) return fail(res, "Series not found.", 404);
+
+  const { data: classes } = await supabase
+    .from("scheduled_classes")
+    .select("id, series_week, scheduled_at, status, current_students, max_students")
+    .eq("series_id", id)
+    .order("series_week", { ascending: true });
+
+  return ok(res, { ...series, classes: classes ?? [] });
+});
+
+app.post("/api/series/:id/enroll", requireAuth, requireUserRole(["guest"]), async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const { data: series, error: seriesError } = await supabase
+    .from("class_series")
+    .select("id, status, max_students, current_students, title")
+    .eq("id", id)
+    .single();
+
+  if (seriesError || !series) return fail(res, "Series not found.", 404);
+  if (series.status !== "active") return fail(res, "This series is no longer available.");
+  if (series.current_students >= series.max_students) return fail(res, "This series is full.");
+
+  const { data: existing } = await supabase
+    .from("series_enrollments")
+    .select("id")
+    .eq("series_id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing) return fail(res, "You're already enrolled in this series.");
+
+  const { error: enrollError } = await supabase
+    .from("series_enrollments")
+    .insert({ series_id: id, user_id: userId });
+
+  if (enrollError) {
+    console.error("[POST /api/series/:id/enroll]", enrollError.message);
+    return fail(res, "Failed to enroll in series.", 500);
+  }
+
+  const { data: seriesClasses } = await supabase
+    .from("scheduled_classes")
+    .select("id")
+    .eq("series_id", id)
+    .neq("status", "cancelled")
+    .order("series_week", { ascending: true });
+
+  const classIds = (seriesClasses ?? []).map((c) => c.id);
+
+  if (classIds.length > 0) {
+    const { data: alreadyEnrolled } = await supabase
+      .from("class_enrollments")
+      .select("class_id")
+      .eq("user_id", userId)
+      .in("class_id", classIds);
+
+    const alreadySet = new Set((alreadyEnrolled ?? []).map((e) => e.class_id));
+    const toEnroll = classIds.filter((cid) => !alreadySet.has(cid));
+
+    if (toEnroll.length > 0) {
+      await supabase
+        .from("class_enrollments")
+        .insert(toEnroll.map((class_id) => ({ class_id, user_id: userId })));
+
+      // Recount students for each enrolled class
+      for (const classId of toEnroll) {
+        const { count } = await supabase
+          .from("class_enrollments")
+          .select("*", { count: "exact", head: true })
+          .eq("class_id", classId);
+        await supabase
+          .from("scheduled_classes")
+          .update({ current_students: count ?? 0 })
+          .eq("id", classId);
+      }
+    }
+  }
+
+  const { count: seriesCount } = await supabase
+    .from("series_enrollments")
+    .select("*", { count: "exact", head: true })
+    .eq("series_id", id);
+
+  await supabase
+    .from("class_series")
+    .update({ current_students: seriesCount ?? 0 })
+    .eq("id", id);
+
+  return ok(res, { series_id: id, enrolled: true });
 });
 
 // ─── Review routes ────────────────────────────────────────────────────────────

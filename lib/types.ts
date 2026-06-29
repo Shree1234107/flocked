@@ -40,6 +40,7 @@ export type InstructorApplicationStatus = {
 export type ClassCategory = "Yoga" | "Dance" | "Tutoring";
 export type ClassStatus = "upcoming" | "scheduled" | "live" | "completed" | "cancelled";
 export type ClassDuration = 30 | 45 | 60 | 90;
+export type ClassType = "single" | "series" | "dropin";
 
 export type ScheduledClass = {
   id: string;
@@ -53,13 +54,49 @@ export type ScheduledClass = {
   description: string | null;
   status: ClassStatus;
   created_at: string;
+  class_type?: ClassType;
+  series_id?: string | null;
+  series_week?: number | null;
+  price_cents?: number;
+  total_weeks?: number | null;
+  is_enrolled?: boolean;
+  is_series_enrolled?: boolean;
+  avg_rating?: number | null;
+  reviews?: ClassReviewSummary[];
   host?: {
     display_name: string | null;
     full_name: string | null;
     photo_url: string | null;
     avg_rating?: number | null;
   };
-  is_enrolled?: boolean;
+};
+
+export type ClassReviewSummary = {
+  id: string;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+  student_id: string;
+};
+
+export type ClassSeries = {
+  id: string;
+  host_id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  total_weeks: number;
+  price_cents: number;
+  dropin_price_cents: number;
+  max_students: number;
+  current_students: number;
+  start_date: string;
+  day_of_week: number;
+  time_of_day: string;
+  duration_minutes: number;
+  status: string;
+  created_at: string;
+  classes?: ScheduledClass[];
 };
 
 export type InstructorPublicProfile = {

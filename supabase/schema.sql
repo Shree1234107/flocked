@@ -208,3 +208,60 @@ CREATE POLICY "user_follows: users manage own follows" ON user_follows
 
 CREATE POLICY "user_follows: read follower counts" ON user_follows
   FOR SELECT TO authenticated USING (true);
+
+-- ─── Series support ───────────────────────────────────────────────────────────
+
+-- Must be created before alter table scheduled_classes references it
+CREATE TABLE IF NOT EXISTS class_series (
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  host_id            uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title              text NOT NULL,
+  description        text,
+  category           text NOT NULL,
+  total_weeks        int NOT NULL DEFAULT 6,
+  price_cents        int NOT NULL DEFAULT 5000,
+  dropin_price_cents int DEFAULT 1200,
+  max_students       int NOT NULL DEFAULT 15,
+  current_students   int DEFAULT 0,
+  start_date         timestamptz NOT NULL,
+  day_of_week        int NOT NULL,
+  time_of_day        text NOT NULL,
+  duration_minutes   int NOT NULL DEFAULT 60,
+  status             text DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'completed')),
+  created_at         timestamptz DEFAULT now()
+);
+
+ALTER TABLE class_series ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "anyone can read series" ON class_series
+  FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "hosts can create series" ON class_series
+  FOR INSERT WITH CHECK (auth.uid() = host_id);
+CREATE POLICY "hosts can update own series" ON class_series
+  FOR UPDATE USING (auth.uid() = host_id);
+
+-- Add series columns to scheduled_classes
+ALTER TABLE scheduled_classes
+  ADD COLUMN IF NOT EXISTS class_type text DEFAULT 'single'
+    CHECK (class_type IN ('single', 'series', 'dropin')),
+  ADD COLUMN IF NOT EXISTS series_id uuid REFERENCES class_series(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS series_week int,
+  ADD COLUMN IF NOT EXISTS price_cents int DEFAULT 0;
+
+-- Series enrollments: paying for the whole series
+CREATE TABLE IF NOT EXISTS series_enrollments (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  series_id   uuid NOT NULL REFERENCES class_series(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  enrolled_at timestamptz DEFAULT now(),
+  UNIQUE (series_id, user_id)
+);
+
+ALTER TABLE series_enrollments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "students can enroll in series" ON series_enrollments
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "students can read own series enrollments" ON series_enrollments
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "hosts can read series enrollments" ON series_enrollments
+  FOR SELECT USING (true);

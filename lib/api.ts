@@ -6,6 +6,7 @@ import {
   InstructorApplicationStatus,
   ScheduledClass,
   ClassReview,
+  ClassSeries,
 } from "./types";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
@@ -229,6 +230,10 @@ export async function listEnrolledClasses(): Promise<ScheduledClass[]> {
   return apiFetch<ScheduledClass[]>("/api/classes/enrolled");
 }
 
+export async function getClass(id: string): Promise<ScheduledClass> {
+  return apiFetch<ScheduledClass>(`/api/classes/${encodeURIComponent(id)}`);
+}
+
 export async function createClass(params: {
   title: string;
   category: string;
@@ -236,6 +241,7 @@ export async function createClass(params: {
   durationMinutes: number;
   maxStudents: number;
   description?: string;
+  classType?: "single" | "dropin";
 }): Promise<ScheduledClass> {
   return apiFetch<ScheduledClass>("/api/classes", {
     method: "POST",
@@ -379,4 +385,44 @@ export async function uploadAvatar(localUri: string, userId: string): Promise<st
 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
   return data.publicUrl;
+}
+
+// ─── Series ───────────────────────────────────────────────────────────────────
+
+export async function createSeries(params: {
+  title: string;
+  description?: string;
+  category: string;
+  totalWeeks: number;
+  priceCents: number;
+  dropinPriceCents: number;
+  maxStudents: number;
+  startDate: string;
+  dayOfWeek: number;
+  timeOfDay: string;
+  durationMinutes: number;
+}): Promise<ClassSeries> {
+  return apiFetch<ClassSeries>("/api/series", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function listSeries(): Promise<ClassSeries[]> {
+  return apiFetch<ClassSeries[]>("/api/series");
+}
+
+export async function getMySeries(): Promise<ClassSeries[]> {
+  return apiFetch<ClassSeries[]>("/api/series/mine");
+}
+
+export async function getSeries(id: string): Promise<ClassSeries> {
+  return apiFetch<ClassSeries>(`/api/series/${encodeURIComponent(id)}`);
+}
+
+export async function enrollInSeries(seriesId: string): Promise<void> {
+  await apiFetch<{ series_id: string; enrolled: boolean }>(
+    `/api/series/${encodeURIComponent(seriesId)}/enroll`,
+    { method: "POST" }
+  );
 }
