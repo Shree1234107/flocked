@@ -1321,7 +1321,7 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
       max_students: maxStudents,
       current_students: 0,
       description: description ?? null,
-      status: "scheduled",
+      status: "upcoming",
       class_type: classType ?? "single",
       price_cents: 0,
     })
@@ -1558,7 +1558,7 @@ app.post("/api/series", requireAuth, requireUserRole(["host"]), async (req, res)
       max_students: maxStudents,
       current_students: 0,
       description: description ?? null,
-      status: "scheduled",
+      status: "upcoming",
       class_type: "series",
       series_id: series.id,
       series_week: week,
