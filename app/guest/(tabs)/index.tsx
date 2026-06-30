@@ -17,7 +17,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { useFilters } from "../../../lib/filtersContext";
-import { listClasses, listFollowingClasses } from "../../../lib/api";
+import { listClasses, listFollowingClasses, getStreak, StreakData } from "../../../lib/api";
 import { useBreakpoint } from "../../../lib/useBreakpoint";
 import type { ScheduledClass } from "../../../lib/types";
 import { fonts } from "../../../lib/fonts";
@@ -166,6 +166,7 @@ export default function GuestDiscoverTab() {
 
   const [forYouClasses, setForYouClasses] = useState<ScheduledClass[]>([]);
   const [followingClasses, setFollowingClasses] = useState<ScheduledClass[]>([]);
+  const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,7 +177,7 @@ export default function GuestDiscoverTab() {
     const base = process.env.EXPO_PUBLIC_API_BASE_URL ?? "(no API_BASE_URL set)";
     console.log("[Discover] loadData — API_BASE_URL:", base);
     try {
-      const [forYou, following] = await Promise.all([
+      const [forYou, following, streakData] = await Promise.all([
         listClasses().catch((err) => {
           console.error("[Discover] GET", `${base}/api/classes`, "→", err);
           throw err;
@@ -185,9 +186,11 @@ export default function GuestDiscoverTab() {
           console.error("[Discover] GET", `${base}/api/classes/following`, "→", err);
           throw err;
         }),
+        getStreak().catch(() => null),
       ]);
       setForYouClasses(forYou);
       setFollowingClasses(following);
+      setStreak(streakData);
     } catch (err) {
       console.error("[Discover] loadData failed:", err);
       setError(err instanceof Error ? err.message : "Failed to load classes.");
@@ -365,6 +368,29 @@ export default function GuestDiscoverTab() {
               <MaterialCommunityIcons name="bell-outline" size={20} color="#0F0F0F" />
             </TouchableOpacity>
           </View>
+
+          {/* Streak banner */}
+          {streak && streak.current_streak > 0 && (
+            <TouchableOpacity
+              style={styles.streakBanner}
+              onPress={() => router.push("/guest/analytics")}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.streakFlame}>🔥</Text>
+              <Text style={styles.streakCount}>
+                <Text style={styles.streakBold}>{streak.current_streak} week streak!</Text>
+              </Text>
+              {streak.this_week_attended ? (
+                <View style={styles.streakPillGreen}>
+                  <Text style={styles.streakPillTextGreen}>This week ✓</Text>
+                </View>
+              ) : (
+                <View style={styles.streakPillOrange}>
+                  <Text style={styles.streakPillTextOrange}>Keep your streak — join a class this week</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* Search bar */}
           <View style={[styles.searchRow, isDesktop && styles.searchRowDesktop]}>
@@ -609,6 +635,37 @@ const styles = StyleSheet.create({
   },
   headerTitleDesktop: { fontSize: 28, letterSpacing: -0.5 },
   bellBtn: { padding: 4 },
+
+  // ── Streak banner ────────────────────────────────────────────────────────────
+  streakBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginHorizontal: 24,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
+    flexWrap: "wrap",
+  },
+  streakFlame: { fontSize: 16 },
+  streakCount: { fontSize: 13, fontFamily: fonts.regular, color: "#0F0F0F" },
+  streakBold: { fontFamily: fonts.bold, fontWeight: "700" },
+  streakPillGreen: {
+    backgroundColor: "#D4EDE8",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  streakPillTextGreen: { fontSize: 11, fontFamily: fonts.medium, fontWeight: "500", color: "#0F7B6B" },
+  streakPillOrange: {
+    backgroundColor: "#FFF3E0",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  streakPillTextOrange: { fontSize: 11, fontFamily: fonts.medium, fontWeight: "500", color: "#B45309" },
 
   // ── Search ──────────────────────────────────────────────────────────────────
   searchRow: {

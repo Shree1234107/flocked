@@ -354,6 +354,16 @@ export async function getStudentAnalytics(): Promise<StudentAnalytics> {
   return apiFetch<StudentAnalytics>("/api/analytics/student");
 }
 
+export type StreakData = {
+  current_streak: number;
+  longest_streak: number;
+  this_week_attended: boolean;
+};
+
+export async function getStreak(): Promise<StreakData> {
+  return apiFetch<StreakData>("/api/streak");
+}
+
 export async function getInstructorAnalytics(): Promise<InstructorAnalytics> {
   return apiFetch<InstructorAnalytics>("/api/analytics/instructor");
 }

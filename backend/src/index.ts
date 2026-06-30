@@ -145,6 +145,104 @@ const requireUserRole =
     next();
   };
 
+// ─── ISO week helpers ─────────────────────────────────────────────────────────
+
+function getISOWeek(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+function isoWeekToMonday(weekStr: string): Date {
+  const [yearStr, wStr] = weekStr.split("-W");
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(wStr, 10);
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dow = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4.getTime() - (dow - 1) * 86400000 + (week - 1) * 7 * 86400000);
+  return monday;
+}
+
+function shiftWeek(weekStr: string, delta: number): string {
+  const monday = isoWeekToMonday(weekStr);
+  monday.setUTCDate(monday.getUTCDate() + delta * 7);
+  return getISOWeek(monday);
+}
+
+// ─── Streak helper ────────────────────────────────────────────────────────────
+
+async function updateStudentStreak(userId: string): Promise<void> {
+  const now = new Date();
+
+  const { data: enrollments } = await supabase
+    .from("class_enrollments")
+    .select("class_id, scheduled_classes(scheduled_at)")
+    .eq("user_id", userId);
+
+  if (!enrollments) return;
+
+  const attendedWeeks = new Set<string>();
+  for (const e of enrollments) {
+    const cls = e.scheduled_classes as { scheduled_at: string } | null;
+    if (cls?.scheduled_at && new Date(cls.scheduled_at) < now) {
+      attendedWeeks.add(getISOWeek(new Date(cls.scheduled_at)));
+    }
+  }
+
+  if (attendedWeeks.size === 0) {
+    await supabase
+      .from("user_profiles")
+      .update({ current_streak: 0, last_class_week: null })
+      .eq("user_id", userId);
+    return;
+  }
+
+  const sortedWeeks = [...attendedWeeks].sort();
+  const lastAttendedWeek = sortedWeeks[sortedWeeks.length - 1];
+  const currentWeek = getISOWeek(now);
+  const priorWeek = shiftWeek(currentWeek, -1);
+
+  // Current streak: only active if user attended this week or last week
+  let currentStreak = 0;
+  if (lastAttendedWeek === currentWeek || lastAttendedWeek === priorWeek) {
+    let checkWeek = lastAttendedWeek;
+    while (attendedWeeks.has(checkWeek)) {
+      currentStreak++;
+      checkWeek = shiftWeek(checkWeek, -1);
+    }
+  }
+
+  // Longest streak across all history
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let prev: string | null = null;
+  for (const week of sortedWeeks) {
+    if (prev === null || week === shiftWeek(prev, 1)) {
+      tempStreak++;
+    } else {
+      tempStreak = 1;
+    }
+    if (tempStreak > longestStreak) longestStreak = tempStreak;
+    prev = week;
+  }
+
+  const { data: existing } = await supabase
+    .from("user_profiles")
+    .select("longest_streak")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const newLongest = Math.max(longestStreak, existing?.longest_streak ?? 0);
+
+  await supabase
+    .from("user_profiles")
+    .update({ current_streak: currentStreak, longest_streak: newLongest, last_class_week: lastAttendedWeek })
+    .eq("user_id", userId);
+}
+
 // ─── Email helpers ────────────────────────────────────────────────────────────
 
 async function sendEmail(params: {
@@ -538,6 +636,32 @@ app.get("/api/analytics/student", requireAuth, async (req, res) => {
     unique_instructors: instructorIds.size,
     category_breakdown: categoryCount,
     recent_classes: recentClasses,
+  });
+});
+
+// ─── Streak route ─────────────────────────────────────────────────────────────
+
+app.get("/api/streak", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("current_streak, longest_streak, last_class_week")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[GET /api/streak]", error.message);
+    return fail(res, "Failed to load streak.", 500);
+  }
+
+  const currentWeek = getISOWeek(new Date());
+  const thisWeekAttended = (data?.last_class_week ?? null) === currentWeek;
+
+  return ok(res, {
+    current_streak: data?.current_streak ?? 0,
+    longest_streak: data?.longest_streak ?? 0,
+    this_week_attended: thisWeekAttended,
   });
 });
 
@@ -1416,6 +1540,11 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
     .eq("id", id)
     .select()
     .single();
+
+  // Update streak (best-effort)
+  updateStudentStreak(userId).catch((err) =>
+    console.error("[POST /api/classes/:id/join] streak update failed:", err)
+  );
 
   // Send confirmation email (best-effort)
   const instructorName = (cls.host as any)?.display_name ?? "Your instructor";

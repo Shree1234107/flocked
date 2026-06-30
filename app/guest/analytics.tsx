@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../components/AuthGate";
 import { RoleGuard } from "../../components/RoleGuard";
-import { getStudentAnalytics, StudentAnalytics } from "../../lib/api";
+import { getStudentAnalytics, getStreak, StudentAnalytics, StreakData } from "../../lib/api";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
   Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
@@ -47,6 +47,7 @@ export default function StudentAnalyticsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [analytics, setAnalytics] = useState<StudentAnalytics | null>(null);
+  const [streak, setStreak] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,10 +56,11 @@ export default function StudentAnalyticsScreen() {
       let active = true;
       setLoading(true);
       setError(null);
-      getStudentAnalytics()
-        .then((data) => {
+      Promise.all([getStudentAnalytics(), getStreak().catch(() => null)])
+        .then(([data, streakData]) => {
           if (active) {
             setAnalytics(data);
+            setStreak(streakData);
             setLoading(false);
           }
         })
@@ -114,6 +116,16 @@ export default function StudentAnalyticsScreen() {
 
           {analytics && !loading && (
             <>
+              {/* Streak card */}
+              {streak !== null && (
+                <View style={styles.streakCard}>
+                  <Text style={styles.streakEmoji}>🔥</Text>
+                  <Text style={styles.streakNumber}>{streak.current_streak}</Text>
+                  <Text style={styles.streakLabel}>week streak</Text>
+                  <Text style={styles.streakBest}>Best: {streak.longest_streak} weeks</Text>
+                </View>
+              )}
+
               {/* Overview */}
               <Text style={styles.sectionTitle}>Overview</Text>
               <View style={styles.statsGrid}>
@@ -263,6 +275,23 @@ const styles = StyleSheet.create({
   centerBox: { alignItems: "center", paddingVertical: 60, gap: 12 },
   loadingText: { color: "#888", fontSize: 14 },
   errorText: { color: "#888", fontSize: 14, textAlign: "center" },
+
+  streakCard: {
+    backgroundColor: "#00B4A6",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 20,
+    shadowColor: "#009B8E",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  streakEmoji: { fontSize: 40, marginBottom: 4 },
+  streakNumber: { fontSize: 56, fontWeight: "800", color: "#FFFFFF", lineHeight: 64 },
+  streakLabel: { fontSize: 16, fontWeight: "600", color: "#FFFFFF", opacity: 0.9 },
+  streakBest: { fontSize: 13, color: "#FFFFFF", opacity: 0.7, marginTop: 4 },
 
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 },
   statCard: {
