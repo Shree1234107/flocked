@@ -4,8 +4,10 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { Text } from "react-native-paper";
 import { Redirect, useRouter } from "expo-router";
@@ -17,6 +19,8 @@ import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri } from "../lib/auth-helpers";
 import { fonts } from "../lib/fonts";
 
+// ─── Error helper (unchanged) ─────────────────────────────────────────────────
+
 function friendlyAuthError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
   const lower = msg.toLowerCase();
@@ -24,16 +28,30 @@ function friendlyAuthError(err: unknown): string {
     return "Too many sign-in attempts. Please wait a minute and try again.";
   if (lower.includes("email already") || lower.includes("already registered"))
     return "This email is already registered. Check your inbox for a sign-in link, or try a different email.";
-  if (lower.includes("invalid email"))
-    return "Please enter a valid email address.";
+  if (lower.includes("invalid email")) return "Please enter a valid email address.";
   if (lower.includes("network") || lower.includes("fetch"))
     return "Network error — please check your connection and try again.";
   return msg || "Failed to send sign-in link. Please try again.";
 }
 
+// ─── Left panel mini cards ────────────────────────────────────────────────────
+
+const PREVIEW_CARDS = [
+  { icon: "🧘", title: "Morning Vinyasa Yoga", time: "Today · 7:00 AM", spots: "4 spots left" },
+  { icon: "♟", title: "Strategic Chess Openings", time: "Tomorrow · 6:00 PM", spots: "3 spots left" },
+  { icon: "🎹", title: "Jazz Piano Improv", time: "Sat · 5:00 PM", spots: "6 spots left" },
+];
+
+const CARD_OFFSETS = [0, 20, 40];
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= 768;
+
   const { session, loading: authLoading } = useAuth();
   const { role, loading: roleLoading, setRole } = useRole();
 
@@ -41,6 +59,7 @@ export default function LoginScreen() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [emailFocused, setEmailFocused] = useState(false);
 
   const handleSendMagicLink = async () => {
     const trimmed = email.trim();
@@ -64,28 +83,22 @@ export default function LoginScreen() {
     }
   };
 
-  // Dev bypass — only shown when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set
+  const resetForm = () => { setSent(false); setEmail(""); setErrorMsg(null); };
+
+  // Dev bypass — only when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set
   const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
 
   const handleDevBypass = async (targetRole: "guest" | "host") => {
-    console.log("[bypass] 1. clicked, targetRole:", targetRole);
     const credentials =
       targetRole === "guest"
         ? { email: "student@flockd.test", password: "devbypass123" }
         : { email: "instructor@flockd.test", password: "devbypass123" };
 
     setSending(true);
-
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
-    if (error) {
-      console.log("[bypass] 2. signInWithPassword FAILED:", error.message);
-      setSending(false);
-      return;
-    }
-    console.log("[bypass] 2. signInWithPassword OK, user:", data.session?.user?.email);
+    if (error) { setSending(false); return; }
 
     await setRole(targetRole);
-    console.log("[bypass] role set in state:", targetRole);
 
     const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
     fetch(`${apiBase}/api/auth/role`, {
@@ -95,384 +108,705 @@ export default function LoginScreen() {
         Authorization: `Bearer ${data.session!.access_token}`,
       },
       body: JSON.stringify({ role: targetRole }),
-    })
-      .then((r) => console.log("[bypass] set role response:", r.status))
-      .catch((err) => console.log("[bypass] set role error:", err));
+    }).catch(() => {});
 
-    const dest = targetRole === "guest" ? "/guest/(tabs)/index" : "/host/(tabs)/index";
-    console.log("[bypass] navigating to:", dest);
-    router.replace(dest);
+    router.replace(targetRole === "guest" ? "/guest/(tabs)/index" : "/host/(tabs)/index");
   };
 
   if (!authLoading && !roleLoading && session && role) {
     return <Redirect href="/" />;
   }
 
-  // ── Inner form ─────────────────────────────────────────────────────────────
+  // ── Sent state ───────────────────────────────────────────────────────────────
 
-  const formContent = sent ? (
-    <View style={styles.sentContainer}>
-      <Text style={styles.sentTitle}>Check your inbox</Text>
-      <Text style={styles.sentBody}>
-        We sent a sign-in link to{" "}
-        <Text style={styles.sentEmail}>{email.trim()}</Text>
+  const sentPanel = (
+    <View style={s.sentWrap}>
+      <View style={s.sentIconCircle}>
+        <Text style={s.sentIconEmoji}>✉️</Text>
+      </View>
+      <Text style={s.sentTitle}>Check your inbox</Text>
+      <Text style={s.sentBody}>
+        We sent a magic link to{" "}
+        <Text style={s.sentEmailBold}>{email.trim()}</Text>
       </Text>
-      <Text style={styles.sentHint}>
-        Didn't get it? Check your spam folder.
+      <Text style={s.sentHint}>
+        Didn't get it? Check spam or use a different email.
       </Text>
-      <TouchableOpacity
-        onPress={() => { setSent(false); setEmail(""); setErrorMsg(null); }}
-        activeOpacity={0.7}
-        style={styles.backLink}
-      >
-        <Text style={styles.backLinkText}>← Use a different email</Text>
+      <TouchableOpacity onPress={resetForm} activeOpacity={0.7} style={s.backLink}>
+        <Text style={s.backLinkText}>← Use different email</Text>
       </TouchableOpacity>
     </View>
-  ) : (
-    <>
-      {/* Email input — native for full style control */}
-      {/* @ts-ignore — web input */}
+  );
+
+  // ── Form ─────────────────────────────────────────────────────────────────────
+
+  const formPanel = (
+    <View style={s.formWrap}>
+      {/* Email input — native HTML on web for full style control */}
+      {/* @ts-ignore */}
       <input
         type="email"
-        placeholder="you@example.com"
+        placeholder="Enter your email"
         value={email}
         onChange={(e: any) => { setEmail(e.target.value); setErrorMsg(null); }}
         onKeyDown={(e: any) => { if (e.key === "Enter") handleSendMagicLink(); }}
+        onFocus={() => setEmailFocused(true)}
+        onBlur={() => setEmailFocused(false)}
         style={{
           width: "100%",
           boxSizing: "border-box",
-          border: errorMsg ? "1px solid #E5484D" : "1px solid #E8E8E8",
-          borderRadius: 6,
-          padding: "10px 14px",
-          fontSize: 14,
-          color: "#0F0F0F",
+          border: errorMsg
+            ? "1.5px solid #E5484D"
+            : emailFocused
+            ? "1.5px solid #00B4A6"
+            : "1.5px solid #E8E8E8",
+          borderRadius: 10,
+          padding: "14px 16px",
+          fontSize: 15,
+          color: "#1B3A35",
           backgroundColor: "#FFFFFF",
           fontFamily: "inherit",
           outline: "none",
           transition: "border-color 0.15s",
         } as any}
-        onFocus={(e: any) => {
-          if (!errorMsg) e.target.style.borderColor = "#0F0F0F";
-        }}
-        onBlur={(e: any) => {
-          if (!errorMsg) e.target.style.borderColor = "#E8E8E8";
-        }}
       />
 
-      <Text style={styles.helperText}>We'll send you a magic link — no password needed</Text>
+      <Text style={s.helperText}>We'll send you a magic link — no password needed</Text>
 
-      {errorMsg && (
-        <Text style={styles.errorText}>{errorMsg}</Text>
-      )}
+      {errorMsg && <Text style={s.errorText}>{errorMsg}</Text>}
 
       <TouchableOpacity
-        style={[styles.primaryBtn, sending && styles.btnDisabled]}
+        style={[s.primaryBtn, sending && s.btnDisabled]}
         onPress={handleSendMagicLink}
         disabled={sending}
         activeOpacity={0.85}
       >
-        <Text style={styles.primaryBtnText}>
-          {sending ? "Sending…" : "Continue with email"}
+        <Text style={s.primaryBtnText}>
+          {sending ? "Sending…" : "Continue with email →"}
         </Text>
       </TouchableOpacity>
 
-      <View style={styles.dividerRow}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or sign in as</Text>
-        <View style={styles.dividerLine} />
+      {/* Divider */}
+      <View style={s.dividerRow}>
+        <View style={s.dividerLine} />
+        <Text style={s.dividerText}>— or sign in as —</Text>
+        <View style={s.dividerLine} />
       </View>
 
-      <View style={styles.roleCard}>
-        <TouchableOpacity
-          style={styles.roleRow}
-          onPress={() => router.push("/login/guest")}
-          activeOpacity={0.75}
-        >
-          <View style={styles.roleTextWrap}>
-            <Text style={styles.roleTitle}>Student</Text>
-            <Text style={styles.roleSub}>Browse and join live classes</Text>
-          </View>
-          <Text style={styles.roleChevron}>›</Text>
-        </TouchableOpacity>
+      {/* Role cards */}
+      <TouchableOpacity
+        style={s.roleCard as any}
+        onPress={() => router.push("/login/guest")}
+        activeOpacity={0.8}
+      >
+        <View style={s.roleIconCircle}>
+          <Text style={s.roleIconEmoji}>🎓</Text>
+        </View>
+        <View style={s.roleTextWrap}>
+          <Text style={s.roleTitle}>Student</Text>
+          <Text style={s.roleSub}>Browse and join live classes</Text>
+        </View>
+        <Text style={s.roleChevron}>›</Text>
+      </TouchableOpacity>
 
-        <View style={styles.roleSep} />
+      <TouchableOpacity
+        style={s.roleCard as any}
+        onPress={() => router.push("/login/instructor")}
+        activeOpacity={0.8}
+      >
+        <View style={s.roleIconCircle}>
+          <Text style={s.roleIconEmoji}>📚</Text>
+        </View>
+        <View style={s.roleTextWrap}>
+          <Text style={s.roleTitle}>Teacher</Text>
+          <Text style={s.roleSub}>Teach and run live sessions</Text>
+        </View>
+        <Text style={s.roleChevron}>›</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.roleRow}
-          onPress={() => router.push("/login/instructor")}
-          activeOpacity={0.75}
-        >
-          <View style={styles.roleTextWrap}>
-            <Text style={styles.roleTitle}>Teacher</Text>
-            <Text style={styles.roleSub}>Teach and run live sessions</Text>
-          </View>
-          <Text style={styles.roleChevron}>›</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Dev bypass — small text links */}
+      {/* Dev bypass */}
       {devEmail && (
-        <View style={styles.devSection}>
-          <View style={styles.devDividerRow}>
-            <View style={styles.devDividerLine} />
-            <Text style={styles.devDividerText}>dev</Text>
-            <View style={styles.devDividerLine} />
+        <View style={s.devSection}>
+          <View style={s.devDividerRow}>
+            <View style={s.devDividerLine} />
+            <Text style={s.devDividerText}>dev</Text>
+            <View style={s.devDividerLine} />
           </View>
-          <View style={styles.devLinks}>
-            <TouchableOpacity
-              onPress={() => handleDevBypass("guest")}
-              disabled={sending}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.devLink, sending && styles.devLinkDisabled]}>
-                Enter as Student
-              </Text>
+          <View style={s.devLinks}>
+            <TouchableOpacity onPress={() => handleDevBypass("guest")} disabled={sending} activeOpacity={0.7}>
+              <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Student</Text>
             </TouchableOpacity>
-            <Text style={styles.devLinkSep}>·</Text>
-            <TouchableOpacity
-              onPress={() => handleDevBypass("host")}
-              disabled={sending}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.devLink, sending && styles.devLinkDisabled]}>
-                Enter as Instructor
-              </Text>
+            <Text style={s.devLinkSep}>·</Text>
+            <TouchableOpacity onPress={() => handleDevBypass("host")} disabled={sending} activeOpacity={0.7}>
+              <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Instructor</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
-    </>
+    </View>
   );
 
-  // ── Web: centered card on white page ───────────────────────────────────────
+  // ── Web: split screen ────────────────────────────────────────────────────────
+
   if (Platform.OS === "web") {
     return (
-      <View style={styles.webRoot}>
-        <ScrollView
-          contentContainerStyle={styles.webScroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.webCard}>
-            <Text style={styles.wordmark}>Flocked</Text>
-            <View style={styles.cardHeader}>
-              <Text style={styles.welcomeText}>Welcome back</Text>
-              <Text style={styles.welcomeSub}>Sign in to your account</Text>
+      <View style={s.webRoot}>
+        {/* Left panel */}
+        {isDesktop && (
+          <View style={s.leftPanel}>
+            {/* Logo */}
+            <View style={s.leftLogo}>
+              <View style={s.logoBadge}>
+                <Text style={s.logoBadgeF}>F</Text>
+              </View>
+              <Text style={s.leftLogoText}>Flocked</Text>
             </View>
-            <View style={styles.formGap}>
-              {formContent}
+
+            {/* Center content */}
+            <View style={s.leftCenter}>
+              <Text style={s.leftHeadline}>
+                {"Your next favorite\nclass is one\nclick away."}
+              </Text>
+              <Text style={s.leftSub}>
+                Join thousands of students learning live from real instructors.
+                Small groups, big impact.
+              </Text>
+
+              {/* Staggered preview cards */}
+              <View style={s.previewCards}>
+                {PREVIEW_CARDS.map((card, i) => (
+                  <View
+                    key={card.title}
+                    style={[s.previewCard, { marginLeft: CARD_OFFSETS[i] }]}
+                  >
+                    <Text style={s.previewCardIcon}>{card.icon}</Text>
+                    <View style={s.previewCardText}>
+                      <Text style={s.previewCardTitle} numberOfLines={1}>
+                        {card.title}
+                      </Text>
+                      <Text style={s.previewCardMeta}>{card.time}</Text>
+                    </View>
+                    <View style={s.previewCardSpots}>
+                      <Text style={s.previewCardSpotsText}>{card.spots}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
             </View>
+
+            {/* Bottom hint */}
+            <Text style={s.leftHint}>
+              Don't have an account? Just enter your email — we'll create one.
+            </Text>
           </View>
-        </ScrollView>
+        )}
+
+        {/* Right panel */}
+        <View style={[s.rightPanel, !isDesktop && s.rightPanelFull]}>
+          <ScrollView
+            contentContainerStyle={s.rightScroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Back arrow */}
+            <TouchableOpacity
+              style={s.backArrow as any}
+              onPress={() => router.replace("/" as never)}
+              activeOpacity={0.7}
+            >
+              <Text style={s.backArrowText}>←</Text>
+            </TouchableOpacity>
+
+            {/* Form card */}
+            <View style={s.rightCard}>
+              {/* Logo badge */}
+              <View style={s.rightLogoBadge}>
+                <Text style={s.rightLogoBadgeF}>F</Text>
+              </View>
+
+              <Text style={s.welcomeTitle}>Welcome to Flocked</Text>
+              <Text style={s.welcomeSub}>Sign in or create your account</Text>
+
+              {sent ? sentPanel : formPanel}
+            </View>
+          </ScrollView>
+        </View>
       </View>
     );
   }
 
-  // ── Mobile ────────────────────────────────────────────────────────────────
+  // ── Mobile ────────────────────────────────────────────────────────────────────
+
   return (
     <KeyboardAvoidingView
-      style={[styles.mobileRoot, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}
+      style={[s.mobileRoot, { paddingTop: insets.top, paddingBottom: insets.bottom + 24 }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        contentContainerStyle={styles.mobileScroll}
+        contentContainerStyle={s.mobileScroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.wordmark}>Flocked</Text>
-        <View style={styles.cardHeader}>
-          <Text style={styles.welcomeText}>Welcome back</Text>
-          <Text style={styles.welcomeSub}>Sign in to your account</Text>
+        {/* Logo */}
+        <View style={s.mobileLogo}>
+          <View style={s.logoBadge}>
+            <Text style={s.logoBadgeF}>F</Text>
+          </View>
+          <Text style={s.mobileLogoText}>Flocked</Text>
         </View>
-        <View style={styles.formGap}>
-          {/* Mobile email input with react-native TextInput */}
-          {!sent && (
-            <>
-              <View style={[styles.nativeInputWrap, errorMsg ? styles.nativeInputError : null]}>
-                <Text
-                  style={styles.nativeInputPlaceholder}
-                  onPress={() => {}}
-                />
+
+        <Text style={s.welcomeTitle}>Welcome to Flocked</Text>
+        <Text style={s.welcomeSub}>Sign in or create your account</Text>
+
+        {sent ? (
+          sentPanel
+        ) : (
+          <View style={s.mobileFormWrap}>
+            <TextInput
+              style={[
+                s.mobileInput,
+                errorMsg ? s.mobileInputError : emailFocused ? s.mobileInputFocused : null,
+              ]}
+              placeholder="Enter your email"
+              placeholderTextColor="#B0B0B0"
+              value={email}
+              onChangeText={(v) => { setEmail(v); setErrorMsg(null); }}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              returnKeyType="go"
+              onSubmitEditing={handleSendMagicLink}
+            />
+
+            <Text style={s.helperText}>We'll send you a magic link — no password needed</Text>
+            {errorMsg && <Text style={s.errorText}>{errorMsg}</Text>}
+
+            <TouchableOpacity
+              style={[s.primaryBtn, sending && s.btnDisabled]}
+              onPress={handleSendMagicLink}
+              disabled={sending}
+              activeOpacity={0.85}
+            >
+              <Text style={s.primaryBtnText}>
+                {sending ? "Sending…" : "Continue with email →"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={s.dividerRow}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText}>— or sign in as —</Text>
+              <View style={s.dividerLine} />
+            </View>
+
+            <TouchableOpacity
+              style={s.roleCard as any}
+              onPress={() => router.push("/login/guest")}
+              activeOpacity={0.8}
+            >
+              <View style={s.roleIconCircle}>
+                <Text style={s.roleIconEmoji}>🎓</Text>
               </View>
-            </>
-          )}
-          {formContent}
-        </View>
+              <View style={s.roleTextWrap}>
+                <Text style={s.roleTitle}>Student</Text>
+                <Text style={s.roleSub}>Browse and join live classes</Text>
+              </View>
+              <Text style={s.roleChevron}>›</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={s.roleCard as any}
+              onPress={() => router.push("/login/instructor")}
+              activeOpacity={0.8}
+            >
+              <View style={s.roleIconCircle}>
+                <Text style={s.roleIconEmoji}>📚</Text>
+              </View>
+              <View style={s.roleTextWrap}>
+                <Text style={s.roleTitle}>Teacher</Text>
+                <Text style={s.roleSub}>Teach and run live sessions</Text>
+              </View>
+              <Text style={s.roleChevron}>›</Text>
+            </TouchableOpacity>
+
+            {devEmail && (
+              <View style={s.devSection}>
+                <View style={s.devDividerRow}>
+                  <View style={s.devDividerLine} />
+                  <Text style={s.devDividerText}>dev</Text>
+                  <View style={s.devDividerLine} />
+                </View>
+                <View style={s.devLinks}>
+                  <TouchableOpacity onPress={() => handleDevBypass("guest")} disabled={sending} activeOpacity={0.7}>
+                    <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Student</Text>
+                  </TouchableOpacity>
+                  <Text style={s.devLinkSep}>·</Text>
+                  <TouchableOpacity onPress={() => handleDevBypass("host")} disabled={sending} activeOpacity={0.7}>
+                    <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Instructor</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  // ── Web ────────────────────────────────────────────────────────────────────
-  webRoot: { flex: 1, backgroundColor: "#FFFFFF" },
-  webScroll: {
-    flex: 1,
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  // ── Shared logo badge ────────────────────────────────────────────────────────
+  logoBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#00B4A6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoBadgeF: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  // ── Web root ─────────────────────────────────────────────────────────────────
+  webRoot: { flex: 1, flexDirection: "row" },
+
+  // ── Left panel ───────────────────────────────────────────────────────────────
+  leftPanel: {
+    width: "50%",
+    backgroundColor: "#1B3A35",
+    paddingHorizontal: 48,
+    paddingTop: 40,
+    paddingBottom: 40,
+    justifyContent: "space-between",
+  },
+  leftLogo: { flexDirection: "row", alignItems: "center", gap: 10 },
+  leftLogoText: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: -0.3,
+  },
+  leftCenter: { flex: 1, justifyContent: "center", paddingVertical: 40 },
+  leftHeadline: {
+    fontSize: 48,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    lineHeight: 54,
+    letterSpacing: -1,
+  },
+  leftSub: {
+    fontSize: 18,
+    fontFamily: fonts.regular,
+    color: "rgba(255,255,255,0.7)",
+    lineHeight: 28,
+    marginTop: 16,
+    maxWidth: 380,
+  },
+  previewCards: { marginTop: 40, gap: 10 },
+  previewCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+    maxWidth: 360,
+  },
+  previewCardIcon: { fontSize: 22 },
+  previewCardText: { flex: 1 },
+  previewCardTitle: {
+    fontSize: 13,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#1B3A35",
+    lineHeight: 18,
+  },
+  previewCardMeta: {
+    fontSize: 11,
+    fontFamily: fonts.regular,
+    color: "#888888",
+    marginTop: 1,
+  },
+  previewCardSpots: {
+    backgroundColor: "#E8F5F3",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  previewCardSpotsText: {
+    fontSize: 10,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#00796B",
+  },
+  leftHint: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "rgba(255,255,255,0.5)",
+    lineHeight: 20,
+  },
+
+  // ── Right panel ──────────────────────────────────────────────────────────────
+  rightPanel: { width: "50%", backgroundColor: "#FFFFFF" },
+  rightPanelFull: { width: "100%" },
+  rightScroll: {
+    flexGrow: 1,
+    minHeight: "100vh" as any,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 48,
     paddingHorizontal: 24,
-    minHeight: "100vh" as any,
   },
-  webCard: {
+  backArrow: {
+    position: "absolute",
+    top: 24,
+    left: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F5F7F5",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+  },
+  backArrowText: {
+    fontSize: 18,
+    color: "#1B3A35",
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    lineHeight: 20,
+  },
+  rightCard: {
     width: "100%",
     maxWidth: 400,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E8E8E8",
-    borderRadius: 8,
-    padding: 40,
-    gap: 24,
+    alignItems: "center",
+    gap: 0,
+  },
+  rightLogoBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#00B4A6",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  rightLogoBadgeF: {
+    fontSize: 18,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 
-  // ── Mobile ─────────────────────────────────────────────────────────────────
+  // ── Mobile root ───────────────────────────────────────────────────────────────
   mobileRoot: { flex: 1, backgroundColor: "#FFFFFF" },
   mobileScroll: {
     flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-    gap: 24,
     paddingVertical: 40,
+    gap: 8,
   },
-  nativeInputWrap: {
-    borderWidth: 1,
+  mobileLogo: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+  mobileLogoText: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#1B3A35",
+    letterSpacing: -0.3,
+  },
+  mobileFormWrap: { gap: 12, width: "100%", marginTop: 24 },
+  mobileInput: {
+    width: "100%",
+    borderWidth: 1.5,
     borderColor: "#E8E8E8",
-    borderRadius: 6,
-    height: 44,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: "#1B3A35",
+    backgroundColor: "#FFFFFF",
   },
-  nativeInputError: { borderColor: "#E5484D" },
-  nativeInputPlaceholder: { flex: 1 },
+  mobileInputFocused: { borderColor: "#00B4A6" },
+  mobileInputError: { borderColor: "#E5484D" },
 
-  // ── Shared ────────────────────────────────────────────────────────────────
-  wordmark: {
-    fontSize: 18,
+  // ── Shared form elements ──────────────────────────────────────────────────────
+  welcomeTitle: {
+    fontSize: 28,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#0F0F0F",
-    letterSpacing: -0.3,
+    color: "#1B3A35",
     textAlign: "center",
-  },
-  cardHeader: { gap: 4, alignItems: "center" },
-  welcomeText: {
-    fontSize: 24,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#0F0F0F",
-    lineHeight: 28,
-    letterSpacing: -0.3,
-    textAlign: "center",
+    letterSpacing: -0.4,
+    lineHeight: 34,
   },
   welcomeSub: {
-    fontSize: 13,
+    fontSize: 15,
     fontFamily: fonts.regular,
-    color: "#6B6B6B",
+    color: "#666666",
     textAlign: "center",
+    marginTop: 6,
+    marginBottom: 0,
   },
-  formGap: { gap: 12, width: "100%" },
-
+  formWrap: { gap: 12, width: "100%", marginTop: 32 },
+  helperText: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: "#B0B0B0",
+    marginTop: 2,
+  },
   errorText: {
     fontSize: 13,
     fontFamily: fonts.regular,
     color: "#E5484D",
     marginTop: -4,
   },
-
-  helperText: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: "#B0B0B0",
-    marginTop: 6,
-  },
   primaryBtn: {
-    backgroundColor: "#00B4A6",
-    borderRadius: 6,
-    paddingVertical: 11,
+    backgroundColor: "#1B3A35",
+    borderRadius: 10,
+    paddingVertical: 14,
     alignItems: "center",
     width: "100%",
+    marginTop: 4,
   },
-  btnDisabled: { opacity: 0.4 },
+  btnDisabled: { opacity: 0.45 },
   primaryBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#FFFFFF",
   },
-
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 4 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#E8E8E8" },
-  dividerText: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
-
-  roleCard: {
-    borderWidth: 1,
-    borderColor: "#E8E8E8",
-    borderRadius: 8,
-    overflow: "hidden",
-    width: "100%",
-  },
-  roleRow: {
+  dividerRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 4,
   },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "#EBEBEB" },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#C0C0C0",
+    textAlign: "center",
+  },
+  roleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    borderRadius: 10,
+    padding: 16,
+    width: "100%",
+    cursor: "pointer",
+  },
+  roleIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E8F5F3",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  roleIconEmoji: { fontSize: 18 },
   roleTextWrap: { flex: 1, gap: 2 },
   roleTitle: {
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#0F0F0F",
+    color: "#1B3A35",
   },
   roleSub: {
     fontSize: 12,
     fontFamily: fonts.regular,
-    color: "#6B6B6B",
+    color: "#888888",
   },
   roleChevron: {
-    fontSize: 18,
-    color: "#B0B0B0",
-  },
-  roleSep: { height: 1, backgroundColor: "#E8E8E8" },
-
-  // ── Sent state ────────────────────────────────────────────────────────────
-  sentContainer: { gap: 8, width: "100%" },
-  sentTitle: {
     fontSize: 20,
+    color: "#C0C0C0",
+    fontFamily: fonts.regular,
+    lineHeight: 24,
+  },
+
+  // ── Sent state ────────────────────────────────────────────────────────────────
+  sentWrap: {
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    marginTop: 32,
+    paddingHorizontal: 8,
+  },
+  sentIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#E8F5F3",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  sentIconEmoji: { fontSize: 28 },
+  sentTitle: {
+    fontSize: 24,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#0F0F0F",
+    color: "#1B3A35",
     textAlign: "center",
   },
   sentBody: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: fonts.regular,
-    color: "#6B6B6B",
+    color: "#666666",
     textAlign: "center",
-    lineHeight: 22,
+    lineHeight: 24,
+    marginTop: 4,
   },
-  sentEmail: { color: "#0F0F0F", fontFamily: fonts.bold, fontWeight: "700" },
+  sentEmailBold: {
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#1B3A35",
+  },
   sentHint: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: fonts.regular,
     color: "#B0B0B0",
     textAlign: "center",
+    marginTop: 8,
   },
-  backLink: { alignSelf: "center", paddingVertical: 8 },
+  backLink: { paddingVertical: 10, marginTop: 4 },
   backLinkText: {
-    fontSize: 13,
-    fontFamily: fonts.medium,
-    fontWeight: "500",
-    color: "#6B6B6B",
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#00B4A6",
   },
 
-  // ── Dev bypass ────────────────────────────────────────────────────────────
-  devSection: { gap: 8, width: "100%", marginTop: 4 },
+  // ── Dev bypass ────────────────────────────────────────────────────────────────
+  devSection: { gap: 6, width: "100%", marginTop: 8 },
   devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   devDividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
   devDividerText: {
     fontSize: 10,
     fontFamily: fonts.regular,
-    color: "#C0C0C0",
+    color: "#C8C8C8",
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
@@ -483,11 +817,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   devLink: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: fonts.regular,
-    color: "#B0B0B0",
+    color: "#C0C0C0",
     textDecorationLine: "underline",
   },
   devLinkDisabled: { opacity: 0.4 },
-  devLinkSep: { fontSize: 12, color: "#D0D0D0" },
+  devLinkSep: { fontSize: 11, color: "#D8D8D8" },
 });
