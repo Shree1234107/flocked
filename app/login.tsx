@@ -12,6 +12,7 @@ import {
 import { Text } from "react-native-paper";
 import { Redirect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
@@ -37,9 +38,9 @@ function friendlyAuthError(err: unknown): string {
 // ─── Left panel mini cards ────────────────────────────────────────────────────
 
 const PREVIEW_CARDS = [
-  { icon: "🧘", title: "Morning Vinyasa Yoga", time: "Today · 7:00 AM", spots: "4 spots left" },
-  { icon: "♟", title: "Strategic Chess Openings", time: "Tomorrow · 6:00 PM", spots: "3 spots left" },
-  { icon: "🎹", title: "Jazz Piano Improv", time: "Sat · 5:00 PM", spots: "6 spots left" },
+  { title: "Morning Vinyasa Yoga", time: "Today · 7:00 AM", spots: "4 spots left" },
+  { title: "Strategic Chess Openings", time: "Tomorrow · 6:00 PM", spots: "3 spots left" },
+  { title: "Jazz Piano Improv", time: "Saturday · 5:00 PM", spots: "6 spots left" },
 ];
 
 const CARD_OFFSETS = [0, 20, 40];
@@ -122,7 +123,7 @@ export default function LoginScreen() {
   const sentPanel = (
     <View style={s.sentWrap}>
       <View style={s.sentIconCircle}>
-        <Text style={s.sentIconEmoji}>✉️</Text>
+        <MaterialCommunityIcons name="email-outline" size={28} color="#00B4A6" />
       </View>
       <Text style={s.sentTitle}>Check your inbox</Text>
       <Text style={s.sentBody}>
@@ -163,7 +164,7 @@ export default function LoginScreen() {
           borderRadius: 10,
           padding: "14px 16px",
           fontSize: 15,
-          color: "#1B3A35",
+          color: "#007A70",
           backgroundColor: "#FFFFFF",
           fontFamily: "inherit",
           outline: "none",
@@ -200,7 +201,7 @@ export default function LoginScreen() {
         activeOpacity={0.8}
       >
         <View style={s.roleIconCircle}>
-          <Text style={s.roleIconEmoji}>🎓</Text>
+          <MaterialCommunityIcons name="account-outline" size={20} color="#007A70" />
         </View>
         <View style={s.roleTextWrap}>
           <Text style={s.roleTitle}>Student</Text>
@@ -215,7 +216,7 @@ export default function LoginScreen() {
         activeOpacity={0.8}
       >
         <View style={s.roleIconCircle}>
-          <Text style={s.roleIconEmoji}>📚</Text>
+          <MaterialCommunityIcons name="school-outline" size={20} color="#007A70" />
         </View>
         <View style={s.roleTextWrap}>
           <Text style={s.roleTitle}>Teacher</Text>
@@ -253,10 +254,12 @@ export default function LoginScreen() {
       <View style={s.webRoot}>
         {/* Left panel */}
         {isDesktop && (
-          <View style={s.leftPanel}>
+          <View
+            style={[s.leftPanel, { background: "linear-gradient(160deg, #00B4A6 0%, #009B8E 100%)" } as any]}
+          >
             {/* Logo */}
             <View style={s.leftLogo}>
-              <View style={s.logoBadge}>
+              <View style={[s.logoBadge, s.logoBadgeOnColor]}>
                 <Text style={s.logoBadgeF}>F</Text>
               </View>
               <Text style={s.leftLogoText}>Flocked</Text>
@@ -265,11 +268,10 @@ export default function LoginScreen() {
             {/* Center content */}
             <View style={s.leftCenter}>
               <Text style={s.leftHeadline}>
-                {"Your next favorite\nclass is one\nclick away."}
+                {"Your next class\nis waiting for you."}
               </Text>
               <Text style={s.leftSub}>
-                Join thousands of students learning live from real instructors.
-                Small groups, big impact.
+                Real instructors. Small groups. Show up, learn something, come back next week.
               </Text>
 
               {/* Staggered preview cards */}
@@ -279,7 +281,6 @@ export default function LoginScreen() {
                     key={card.title}
                     style={[s.previewCard, { marginLeft: CARD_OFFSETS[i] }]}
                   >
-                    <Text style={s.previewCardIcon}>{card.icon}</Text>
                     <View style={s.previewCardText}>
                       <Text style={s.previewCardTitle} numberOfLines={1}>
                         {card.title}
@@ -324,8 +325,8 @@ export default function LoginScreen() {
                 <Text style={s.rightLogoBadgeF}>F</Text>
               </View>
 
-              <Text style={s.welcomeTitle}>Welcome to Flocked</Text>
-              <Text style={s.welcomeSub}>Sign in or create your account</Text>
+              <Text style={s.welcomeTitle}>Sign in to Flocked</Text>
+              <Text style={s.welcomeSub}>Enter your email to get started</Text>
 
               {sent ? sentPanel : formPanel}
             </View>
@@ -355,8 +356,8 @@ export default function LoginScreen() {
           <Text style={s.mobileLogoText}>Flocked</Text>
         </View>
 
-        <Text style={s.welcomeTitle}>Welcome to Flocked</Text>
-        <Text style={s.welcomeSub}>Sign in or create your account</Text>
+        <Text style={s.welcomeTitle}>Sign in to Flocked</Text>
+        <Text style={s.welcomeSub}>Enter your email to get started</Text>
 
         {sent ? (
           sentPanel
@@ -405,7 +406,7 @@ export default function LoginScreen() {
               activeOpacity={0.8}
             >
               <View style={s.roleIconCircle}>
-                <Text style={s.roleIconEmoji}>🎓</Text>
+                <MaterialCommunityIcons name="account-outline" size={20} color="#007A70" />
               </View>
               <View style={s.roleTextWrap}>
                 <Text style={s.roleTitle}>Student</Text>
@@ -420,7 +421,7 @@ export default function LoginScreen() {
               activeOpacity={0.8}
             >
               <View style={s.roleIconCircle}>
-                <Text style={s.roleIconEmoji}>📚</Text>
+                <MaterialCommunityIcons name="school-outline" size={20} color="#007A70" />
               </View>
               <View style={s.roleTextWrap}>
                 <Text style={s.roleTitle}>Teacher</Text>
@@ -466,6 +467,9 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  logoBadgeOnColor: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
   logoBadgeF: {
     fontSize: 15,
     fontFamily: fonts.bold,
@@ -479,7 +483,7 @@ const s = StyleSheet.create({
   // ── Left panel ───────────────────────────────────────────────────────────────
   leftPanel: {
     width: "50%",
-    backgroundColor: "#1B3A35",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 48,
     paddingTop: 40,
     paddingBottom: 40,
@@ -505,7 +509,7 @@ const s = StyleSheet.create({
   leftSub: {
     fontSize: 18,
     fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.8)",
     lineHeight: 28,
     marginTop: 16,
     maxWidth: 380,
@@ -519,19 +523,18 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
     maxWidth: 360,
   },
-  previewCardIcon: { fontSize: 22 },
   previewCardText: { flex: 1 },
   previewCardTitle: {
     fontSize: 13,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
     lineHeight: 18,
   },
   previewCardMeta: {
@@ -550,12 +553,12 @@ const s = StyleSheet.create({
     fontSize: 10,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00796B",
+    color: "#007A70",
   },
   leftHint: {
     fontSize: 13,
     fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.6)",
     lineHeight: 20,
   },
 
@@ -577,14 +580,14 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F5F7F5",
+    backgroundColor: "#F0FAFA",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
   },
   backArrowText: {
     fontSize: 18,
-    color: "#1B3A35",
+    color: "#007A70",
     fontFamily: fonts.bold,
     fontWeight: "700",
     lineHeight: 20,
@@ -626,7 +629,7 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
     letterSpacing: -0.3,
   },
   mobileFormWrap: { gap: 12, width: "100%", marginTop: 24 },
@@ -639,7 +642,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     fontFamily: fonts.regular,
-    color: "#1B3A35",
+    color: "#007A70",
     backgroundColor: "#FFFFFF",
   },
   mobileInputFocused: { borderColor: "#00B4A6" },
@@ -650,7 +653,7 @@ const s = StyleSheet.create({
     fontSize: 28,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
     textAlign: "center",
     letterSpacing: -0.4,
     lineHeight: 34,
@@ -677,7 +680,7 @@ const s = StyleSheet.create({
     marginTop: -4,
   },
   primaryBtn: {
-    backgroundColor: "#1B3A35",
+    backgroundColor: "#00B4A6",
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
@@ -726,13 +729,12 @@ const s = StyleSheet.create({
     justifyContent: "center",
     flexShrink: 0,
   },
-  roleIconEmoji: { fontSize: 18 },
   roleTextWrap: { flex: 1, gap: 2 },
   roleTitle: {
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
   },
   roleSub: {
     fontSize: 12,
@@ -763,12 +765,11 @@ const s = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 8,
   },
-  sentIconEmoji: { fontSize: 28 },
   sentTitle: {
     fontSize: 24,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
     textAlign: "center",
   },
   sentBody: {
@@ -782,7 +783,7 @@ const s = StyleSheet.create({
   sentEmailBold: {
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
   },
   sentHint: {
     fontSize: 13,
