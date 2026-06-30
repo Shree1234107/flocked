@@ -34,6 +34,8 @@ export default function GuestRoomScreen() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [classTitle, setClassTitle] = useState("Live Class");
+  const [instructorId, setInstructorId] = useState<string | null>(null);
+  const [instructorName, setInstructorName] = useState("Instructor");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +48,11 @@ export default function GuestRoomScreen() {
           listClasses().catch(() => []),
         ]);
         const cls = classes.find((c) => c.id === classId);
-        if (cls) setClassTitle(cls.title);
+        if (cls) {
+          setClassTitle(cls.title);
+          setInstructorId(cls.host_id);
+          setInstructorName((cls.host as any)?.display_name ?? "Instructor");
+        }
         setToken(tok);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to connect to room.");
@@ -61,8 +67,14 @@ export default function GuestRoomScreen() {
   }, [classId]);
 
   const handleLeave = useCallback(() => {
-    router.replace("/guest/(tabs)/index" as never);
-  }, [router]);
+    if (instructorId) {
+      router.replace(
+        `/guest/rating-prompt?classId=${encodeURIComponent(classId)}&instructorId=${encodeURIComponent(instructorId)}&title=${encodeURIComponent(classTitle)}&instructorName=${encodeURIComponent(instructorName)}` as never
+      );
+    } else {
+      router.replace("/guest/(tabs)/index" as never);
+    }
+  }, [router, classId, classTitle, instructorId, instructorName]);
 
   return (
     <AuthGate>
@@ -71,6 +83,7 @@ export default function GuestRoomScreen() {
           <ConnectingView />
         ) : error || !token ? (
           <ErrorView error={error} onBack={() => router.replace("/guest/(tabs)/index" as never)} />
+
         ) : (
           <LiveKitRoom
             serverUrl={LIVEKIT_URL}
