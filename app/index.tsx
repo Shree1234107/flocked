@@ -11,6 +11,7 @@ import {
 import { Text } from "react-native-paper";
 import { Redirect, useRouter } from "expo-router";
 import { ActivityIndicator } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { Screen } from "../components/Screen";
 import { useAuth } from "../lib/auth";
@@ -59,10 +60,12 @@ const AVATAR_COLORS = ["#2C3E3A", "#8B6914", "#8B7355", "#2C2C3E"];
 const CLASS_CARDS = [
   {
     category: "Yoga",
-    photoBg: "#7A6548",
-    pillBg: "#FDF0E8",
-    pillText: "#8B5E1A",
-    icon: "🧘",
+    catBg: "#E8F5F3",
+    catIcon: "yoga",
+    catIconColor: "#059669",
+    pillBg: "#E8F5F3",
+    pillText: "#00796B",
+    avatarBg: "#2C5E55",
     title: "Sunrise Vinyasa Flow",
     instructor: "Ava Chen",
     instructorInitials: "AC",
@@ -73,10 +76,12 @@ const CLASS_CARDS = [
   },
   {
     category: "Chess",
-    photoBg: "#253530",
+    catBg: "#EEF2FF",
+    catIcon: "chess-queen",
+    catIconColor: "#4F46E5",
     pillBg: "#E8F5F3",
     pillText: "#00796B",
-    icon: "♟",
+    avatarBg: "#253530",
     title: "Strategic Chess Openings",
     instructor: "Marcus Reed",
     instructorInitials: "MR",
@@ -87,10 +92,12 @@ const CLASS_CARDS = [
   },
   {
     category: "Cooking",
-    photoBg: "#7A5C10",
+    catBg: "#FFF7ED",
+    catIcon: "chef-hat",
+    catIconColor: "#D97706",
     pillBg: "#FDF8E0",
     pillText: "#6B4C00",
-    icon: "🍝",
+    avatarBg: "#7A5C10",
     title: "Italian Pasta Masterclass",
     instructor: "Zara Williams",
     instructorInitials: "ZW",
@@ -101,10 +108,12 @@ const CLASS_CARDS = [
   },
   {
     category: "Piano",
-    photoBg: "#252538",
+    catBg: "#F5F3FF",
+    catIcon: "piano",
+    catIconColor: "#7C3AED",
     pillBg: "#EEEEFC",
     pillText: "#3030A0",
-    icon: "🎹",
+    avatarBg: "#252538",
     title: "Jazz Piano Improv",
     instructor: "David Laurent",
     instructorInitials: "DL",
@@ -332,17 +341,16 @@ function LandingPage() {
           {/* Right: floating class cards (desktop only) */}
           {isDesktop && (
             <View style={s.heroCards}>
-              {/* Card 1 — large, chess, left */}
+              {/* Card 1 — chess, left */}
               <View style={[s.heroCard, s.heroCard1]}>
-                <View style={[s.heroCardPhoto, { backgroundColor: "#253530" }]}>
-                  <Text style={s.heroCardIcon}>♟</Text>
-                  <View style={s.spotsBadge}>
-                    <Text style={s.spotsBadgeText}>3 spots left</Text>
-                  </View>
-                </View>
                 <View style={s.heroCardBody}>
-                  <View style={[s.catPill, { backgroundColor: "#E8F5F3" }]}>
-                    <Text style={[s.catPillText, { color: "#00796B" }]}>Chess</Text>
+                  <View style={s.heroCardHeadRow}>
+                    <View style={[s.catPill, { backgroundColor: "#E8F5F3" }]}>
+                      <Text style={[s.catPillText, { color: "#00796B" }]}>Chess</Text>
+                    </View>
+                    <View style={s.spotsBadge}>
+                      <Text style={s.spotsBadgeText}>3 spots left</Text>
+                    </View>
                   </View>
                   <Text style={s.heroCardTitle}>Strategic Chess Openings</Text>
                   <View style={s.heroCardFooter}>
@@ -350,22 +358,22 @@ function LandingPage() {
                       <Text style={s.heroCardAvatarText}>MR</Text>
                     </View>
                     <Text style={s.heroCardInstructor}>Marcus Reed</Text>
-                    <Text style={s.heroCardCount}>👥 5/8</Text>
+                    <Text style={s.heroCardCount}>5/8</Text>
                   </View>
                 </View>
               </View>
 
               {/* Card 2 — yoga, top right */}
               <View style={[s.heroCard, s.heroCard2]}>
-                <View style={[s.heroCardPhoto, s.heroCardPhotoSm, { backgroundColor: "#7A6548" }]}>
-                  <Text style={s.heroCardIcon}>🧘</Text>
-                  <View style={s.liveBadge}>
-                    <Text style={s.liveBadgeText}>🔴 LIVE</Text>
-                  </View>
-                </View>
                 <View style={s.heroCardBody}>
-                  <View style={[s.catPill, { backgroundColor: "#FDF0E8" }]}>
-                    <Text style={[s.catPillText, { color: "#8B5E1A" }]}>Yoga</Text>
+                  <View style={s.heroCardHeadRow}>
+                    <View style={[s.catPill, { backgroundColor: "#FDF0E8" }]}>
+                      <Text style={[s.catPillText, { color: "#8B5E1A" }]}>Yoga</Text>
+                    </View>
+                    <View style={s.liveBadge}>
+                      <View style={s.liveDot} />
+                      <Text style={s.liveBadgeText}>LIVE</Text>
+                    </View>
                   </View>
                   <Text style={s.heroCardTitle} numberOfLines={1}>Morning Flow Yoga</Text>
                   <View style={s.heroCardFooter}>
@@ -373,16 +381,13 @@ function LandingPage() {
                       <Text style={s.heroCardAvatarText}>AC</Text>
                     </View>
                     <Text style={s.heroCardInstructor}>Ava Chen</Text>
-                    <Text style={s.heroCardCount}>👥 8/12</Text>
+                    <Text style={s.heroCardCount}>8/12</Text>
                   </View>
                 </View>
               </View>
 
               {/* Card 3 — cooking, bottom right */}
               <View style={[s.heroCard, s.heroCard3]}>
-                <View style={[s.heroCardPhoto, s.heroCardPhotoSm, { backgroundColor: "#7A5C10" }]}>
-                  <Text style={s.heroCardIcon}>🍝</Text>
-                </View>
                 <View style={s.heroCardBody}>
                   <View style={[s.catPill, { backgroundColor: "#FDF8E0" }]}>
                     <Text style={[s.catPillText, { color: "#6B4C00" }]}>Cooking</Text>
@@ -393,7 +398,7 @@ function LandingPage() {
                       <Text style={s.heroCardAvatarText}>ZW</Text>
                     </View>
                     <Text style={s.heroCardInstructor}>Zara Williams</Text>
-                    <Text style={s.heroCardCount}>👥 11/15</Text>
+                    <Text style={s.heroCardCount}>11/15</Text>
                   </View>
                 </View>
               </View>
@@ -433,19 +438,28 @@ function LandingPage() {
                   onPress={goLogin}
                   activeOpacity={0.88}
                 >
-                  <View style={[s.classCardPhoto, { backgroundColor: card.photoBg }]}>
-                    <Text style={s.classCardIcon}>{card.icon}</Text>
+                  {/* Color header with category icon */}
+                  <View style={[s.classCardHeader, { backgroundColor: card.catBg }]}>
+                    <MaterialCommunityIcons
+                      name={card.catIcon as any}
+                      size={38}
+                      color={card.catIconColor}
+                    />
+                    <Text style={[s.classCardHeaderText, { color: card.catIconColor }]}>
+                      {card.category}
+                    </Text>
                     <View style={s.priceTag}>
                       <Text style={s.priceTagText}>${card.price}</Text>
                     </View>
                   </View>
+
                   <View style={s.classCardBody}>
                     <View style={[s.catPill, { backgroundColor: card.pillBg }]}>
                       <Text style={[s.catPillText, { color: card.pillText }]}>{card.category}</Text>
                     </View>
                     <Text style={s.classCardTitle} numberOfLines={2}>{card.title}</Text>
                     <View style={s.classCardInstructorRow}>
-                      <View style={[s.classCardAvatar, { backgroundColor: card.photoBg }]}>
+                      <View style={[s.classCardAvatar, { backgroundColor: card.avatarBg }]}>
                         <Text style={s.classCardAvatarText}>{card.instructorInitials}</Text>
                       </View>
                       <Text style={s.classCardInstructor}>{card.instructor}</Text>
@@ -827,7 +841,7 @@ const s = StyleSheet.create({
     paddingTop: 72,
     paddingBottom: 80,
     paddingHorizontal: 24,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FAF9",
   },
   heroDesktop: {
     flexDirection: "row",
@@ -890,7 +904,7 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
   },
   heroBtnSecondary: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FAF9",
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 9999,
@@ -913,7 +927,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: "#F8FAF9",
   },
   avatarInitials: {
     fontSize: 10,
@@ -926,35 +940,30 @@ const s = StyleSheet.create({
   socialGray: { color: "#888888" },
 
   // Hero floating cards
-  heroCards: { width: 440, height: 480, position: "relative" },
+  heroCards: { width: 460, height: 380, position: "relative" },
   heroCard: {
     position: "absolute",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#E8E8E8",
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    shadowOpacity: 0.09,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
   },
-  heroCard1: { left: 0, top: 40, width: 240 },
-  heroCard2: { right: 0, top: 0, width: 190 },
-  heroCard3: { right: 16, bottom: 0, width: 205 },
-  heroCardPhoto: {
-    height: 130,
+  heroCard1: { left: 0, top: 80, width: 265 },
+  heroCard2: { right: 0, top: 0, width: 220 },
+  heroCard3: { right: 0, bottom: 0, width: 240 },
+  heroCardHeadRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
-  heroCardPhotoSm: { height: 100 },
-  heroCardIcon: { fontSize: 40 },
   spotsBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
     backgroundColor: "#FEF3C7",
     paddingHorizontal: 7,
     paddingVertical: 3,
@@ -962,28 +971,35 @@ const s = StyleSheet.create({
   },
   spotsBadgeText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", color: "#92400E" },
   liveBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#FEF2F2",
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
   },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#DC2626",
+  },
   liveBadgeText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", color: "#DC2626" },
-  heroCardBody: { padding: 14, gap: 6 },
+  heroCardBody: { padding: 16, gap: 0 },
   heroCardTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#1B3A35",
-    lineHeight: 18,
+    lineHeight: 20,
+    marginBottom: 12,
   },
-  heroCardFooter: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  heroCardFooter: { flexDirection: "row", alignItems: "center", gap: 6 },
   heroCardAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -993,8 +1009,8 @@ const s = StyleSheet.create({
     fontWeight: "700",
     color: "#FFFFFF",
   },
-  heroCardInstructor: { flex: 1, fontSize: 11, fontFamily: fonts.regular, color: "#777777" },
-  heroCardCount: { fontSize: 11, fontFamily: fonts.regular, color: "#777777" },
+  heroCardInstructor: { flex: 1, fontSize: 12, fontFamily: fonts.regular, color: "#777777" },
+  heroCardCount: { fontSize: 12, fontFamily: fonts.regular, color: "#AAAAAA" },
 
   // ── Classes Section ───────────────────────────────────────────────────────────
   classesSection: {
@@ -1032,13 +1048,19 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  classCardPhoto: {
-    height: 140,
+  classCardHeader: {
+    height: 120,
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     position: "relative",
   },
-  classCardIcon: { fontSize: 40 },
+  classCardHeaderText: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
   priceTag: {
     position: "absolute",
     top: 10,

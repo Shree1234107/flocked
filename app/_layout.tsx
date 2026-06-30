@@ -92,6 +92,7 @@ export default function RootLayout() {
                       headerBackTitleVisible: false,
                     }}
                   >
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
                     <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
                     <Stack.Screen name="login" options={{ headerShown: false }} />
                     <Stack.Screen name="login/customer" options={{ headerShown: false }} />
