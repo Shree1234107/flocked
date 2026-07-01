@@ -436,3 +436,27 @@ export async function enrollInSeries(seriesId: string): Promise<void> {
     { method: "POST" }
   );
 }
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
+export type ChatMessage = {
+  id: string;
+  user_id: string;
+  display_name: string;
+  message: string;
+  created_at: string;
+  is_mine: boolean;
+};
+
+export async function getClassMessages(classId: string): Promise<ChatMessage[]> {
+  const body = await apiFetch<{ messages: ChatMessage[] }>(`/api/classes/${encodeURIComponent(classId)}/messages`);
+  return body.messages;
+}
+
+export async function sendClassMessage(classId: string, message: string): Promise<ChatMessage> {
+  const body = await apiFetch<{ message: ChatMessage }>(
+    `/api/classes/${encodeURIComponent(classId)}/messages`,
+    { method: "POST", body: JSON.stringify({ message }) }
+  );
+  return body.message;
+}

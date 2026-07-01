@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Platform,
@@ -15,8 +15,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
+import { ClassChat } from "../../../components/ClassChat";
 import { listMyClasses, cancelClass, getMySeries } from "../../../lib/api";
 import type { ScheduledClass, ClassSeries } from "../../../lib/types";
+import { supabase } from "../../../lib/supabase";
 import { fonts } from "../../../lib/fonts";
 
 const CATEGORY_COLORS: Record<string, { dot: string; bg: string; text: string }> = {
@@ -72,6 +74,14 @@ export default function InstructorHomeTab() {
   const [tab, setTab] = useState<Tab>("upcoming");
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+  const [expandedChatId, setExpandedChatId] = useState<string | null>(null);
+  const [hostUserId, setHostUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setHostUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   const loadClasses = useCallback(async () => {
     setLoading(true);
@@ -275,6 +285,17 @@ export default function InstructorHomeTab() {
                         </Text>
                         <Text style={styles.seriesWeekStudents}>{cls.current_students}/{cls.max_students}</Text>
                         <TouchableOpacity
+                          style={[styles.chatBtn, expandedChatId === cls.id && styles.chatBtnActive]}
+                          onPress={() => setExpandedChatId(expandedChatId === cls.id ? null : cls.id)}
+                          activeOpacity={0.85}
+                        >
+                          <MaterialCommunityIcons
+                            name="chat-outline"
+                            size={13}
+                            color={expandedChatId === cls.id ? "#FFFFFF" : "#6B6B6B"}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity
                           style={styles.startBtn}
                           onPress={() => router.push(`/host/room/${cls.id}` as never)}
                           activeOpacity={0.85}
@@ -283,6 +304,14 @@ export default function InstructorHomeTab() {
                         </TouchableOpacity>
                       </View>
                     ))}
+                    {expandedChatId && hostUserId &&
+                      seriesClasses.find((c) => c.id === expandedChatId) && (
+                      <ClassChat
+                        classId={expandedChatId}
+                        currentUserId={hostUserId}
+                        isInstructor
+                      />
+                    )}
                   </View>
                 );
               })}
@@ -313,6 +342,20 @@ export default function InstructorHomeTab() {
                           ? `${cls.current_students}/${cls.max_students}`
                           : `${cls.current_students} attended`}
                       </Text>
+                      <TouchableOpacity
+                        style={[styles.chatBtn, expandedChatId === cls.id && styles.chatBtnActive]}
+                        onPress={() => setExpandedChatId(expandedChatId === cls.id ? null : cls.id)}
+                        activeOpacity={0.85}
+                      >
+                        <MaterialCommunityIcons
+                          name="chat-outline"
+                          size={13}
+                          color={expandedChatId === cls.id ? "#FFFFFF" : "#6B6B6B"}
+                        />
+                        <Text style={[styles.chatBtnText, expandedChatId === cls.id && styles.chatBtnTextActive]}>
+                          Chat
+                        </Text>
+                      </TouchableOpacity>
                       {tab === "upcoming" && !isConfirming && (
                         <TouchableOpacity
                           style={styles.startBtn}
@@ -377,6 +420,13 @@ export default function InstructorHomeTab() {
                           </TouchableOpacity>
                         )}
                       </>
+                    )}
+                    {expandedChatId === cls.id && hostUserId && (
+                      <ClassChat
+                        classId={cls.id}
+                        currentUserId={hostUserId}
+                        isInstructor
+                      />
                     )}
                   </View>
                 );
@@ -583,6 +633,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.bold,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  chatBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    backgroundColor: "#FFFFFF",
+  },
+  chatBtnActive: {
+    backgroundColor: "#0F0F0F",
+    borderColor: "#0F0F0F",
+  },
+  chatBtnText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#6B6B6B",
+  },
+  chatBtnTextActive: {
     color: "#FFFFFF",
   },
   progressRow: { paddingLeft: 20 },

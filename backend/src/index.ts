@@ -2000,6 +2000,68 @@ app.get("/api/classes/:id/waitlist/position", requireAuth, async (req, res) => {
   return ok(res, { on_waitlist: true, position: count ?? 1 });
 });
 
+// ─── Class chat ───────────────────────────────────────────────────────────────
+
+app.get("/api/classes/:id/messages", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const { data, error } = await supabase
+    .from("class_messages")
+    .select("id, user_id, display_name, message, created_at")
+    .eq("class_id", id)
+    .order("created_at", { ascending: true })
+    .limit(50);
+
+  if (error) return fail(res, error.message, 500);
+
+  const messages = (data ?? []).map((m) => ({ ...m, is_mine: m.user_id === userId }));
+  return ok(res, { messages });
+});
+
+const sendMessageSchema = z.object({
+  message: z.string().min(1).max(500),
+});
+
+app.post("/api/classes/:id/messages", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const parsed = sendMessageSchema.safeParse(req.body);
+  if (!parsed.success) return fail(res, "Message must be 1–500 characters.");
+
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  let displayName = (profile as any)?.display_name ?? null;
+  if (!displayName) {
+    const { data: hostProfile } = await supabase
+      .from("host_profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+    displayName = hostProfile?.display_name ?? "User";
+  }
+
+  const { data: msg, error } = await supabase
+    .from("class_messages")
+    .insert({
+      class_id: id,
+      user_id: userId,
+      display_name: displayName,
+      message: parsed.data.message,
+    })
+    .select("id, user_id, display_name, message, created_at")
+    .single();
+
+  if (error) return fail(res, error.message, 500);
+
+  return ok(res, { message: { ...msg, is_mine: true } });
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get("/health", (_req, res) => {

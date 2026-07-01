@@ -265,3 +265,21 @@ CREATE POLICY "students can read own series enrollments" ON series_enrollments
   FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "hosts can read series enrollments" ON series_enrollments
   FOR SELECT USING (true);
+
+-- ─── Class chat ───────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS class_messages (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  class_id     uuid NOT NULL REFERENCES scheduled_classes(id) ON DELETE CASCADE,
+  user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name text NOT NULL,
+  message      text NOT NULL,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE class_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "class_messages: authenticated read" ON class_messages
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "class_messages: authenticated insert" ON class_messages
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);

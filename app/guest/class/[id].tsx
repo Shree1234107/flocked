@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,8 +17,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
+import { ClassChat } from "../../../components/ClassChat";
 import { getClass, getSeries, joinClass, enrollInSeries, joinWaitlist } from "../../../lib/api";
 import type { ScheduledClass, ClassSeries } from "../../../lib/types";
+import { supabase } from "../../../lib/supabase";
 import { fonts } from "../../../lib/fonts";
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -82,6 +84,13 @@ export default function ClassDetailScreen() {
   const [joined, setJoined] = useState(false);
   const [seriesEnrolled, setSeriesEnrolled] = useState(false);
   const [waitlistJoined, setWaitlistJoined] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -413,6 +422,13 @@ export default function ClassDetailScreen() {
                     )}
                   </View>
                 ))}
+              </View>
+            )}
+            {/* Class chat */}
+            {currentUserId && (joined || seriesEnrolled || new Date(cls.scheduled_at) < new Date()) && (
+              <View style={styles.chatSection}>
+                <Text style={styles.sectionTitle}>Chat</Text>
+                <ClassChat classId={cls.id} currentUserId={currentUserId} />
               </View>
             )}
           </ScrollView>
@@ -806,4 +822,5 @@ const styles = StyleSheet.create({
     color: "#0F7B6B",
   },
   btnDisabled: { opacity: 0.4 },
+  chatSection: { gap: 8 },
 });
