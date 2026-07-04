@@ -28,7 +28,7 @@ export default function Index() {
   if (authLoading) {
     return (
       <Screen centered>
-        <ActivityIndicator color="#1B3A35" />
+        <ActivityIndicator color="#00B4A6" />
       </Screen>
     );
   }
@@ -37,7 +37,7 @@ export default function Index() {
     if (roleLoading) {
       return (
         <Screen centered>
-          <ActivityIndicator color="#1B3A35" />
+          <ActivityIndicator color="#00B4A6" />
         </Screen>
       );
     }
@@ -57,14 +57,24 @@ export default function Index() {
 
 const AVATAR_COLORS = ["#2C3E3A", "#8B6914", "#8B7355", "#2C2C3E"];
 
+const CATEGORY_PILLS = [
+  { label: "Yoga",     icon: "🧘", bg: "#E8F5F3", color: "#007A70" },
+  { label: "Chess",    icon: "♟",  bg: "#EAF0FA", color: "#2060A0" },
+  { label: "Piano",    icon: "🎹", bg: "#F3EEFA", color: "#7030A0" },
+  { label: "Cooking",  icon: "🍳", bg: "#FCF3E8", color: "#A06020" },
+  { label: "Dance",    icon: "💃", bg: "#FCEEF0", color: "#B03050" },
+  { label: "Tutoring", icon: "📚", bg: "#FBF9E8", color: "#806020" },
+];
+
 const CLASS_CARDS = [
   {
     category: "Yoga",
     catBg: "#E8F5F3",
+    catBorder: "#B2DDD8",
     catIcon: "yoga",
     catIconColor: "#059669",
     pillBg: "#E8F5F3",
-    pillText: "#00796B",
+    pillText: "#007A70",
     avatarBg: "#2C5E55",
     title: "Sunrise Vinyasa Flow",
     instructor: "Ava Chen",
@@ -76,11 +86,12 @@ const CLASS_CARDS = [
   },
   {
     category: "Chess",
-    catBg: "#EEF2FF",
+    catBg: "#EAF0FA",
+    catBorder: "#BECAE8",
     catIcon: "chess-queen",
     catIconColor: "#4F46E5",
-    pillBg: "#E8F5F3",
-    pillText: "#00796B",
+    pillBg: "#EAF0FA",
+    pillText: "#2060A0",
     avatarBg: "#253530",
     title: "Strategic Chess Openings",
     instructor: "Marcus Reed",
@@ -92,11 +103,12 @@ const CLASS_CARDS = [
   },
   {
     category: "Cooking",
-    catBg: "#FFF7ED",
+    catBg: "#FCF3E8",
+    catBorder: "#F0D9B8",
     catIcon: "chef-hat",
     catIconColor: "#D97706",
-    pillBg: "#FDF8E0",
-    pillText: "#6B4C00",
+    pillBg: "#FCF3E8",
+    pillText: "#A06020",
     avatarBg: "#7A5C10",
     title: "Italian Pasta Masterclass",
     instructor: "Zara Williams",
@@ -108,11 +120,12 @@ const CLASS_CARDS = [
   },
   {
     category: "Piano",
-    catBg: "#F5F3FF",
+    catBg: "#F3EEFA",
+    catBorder: "#D8C8F0",
     catIcon: "piano",
     catIconColor: "#7C3AED",
-    pillBg: "#EEEEFC",
-    pillText: "#3030A0",
+    pillBg: "#F3EEFA",
+    pillText: "#7030A0",
     avatarBg: "#252538",
     title: "Jazz Piano Improv",
     instructor: "David Laurent",
@@ -203,7 +216,6 @@ function LandingPage() {
 
   const goLogin = () => router.push("/login");
 
-  // Section scroll offsets
   const scrollRef = useRef<ScrollView>(null);
   const classesY = useRef(0);
   const howY = useRef(0);
@@ -213,12 +225,10 @@ function LandingPage() {
     scrollRef.current?.scrollTo({ y: Math.max(0, yRef.current - 68), animated: true });
   };
 
-  // Earnings calculator
   const [students, setStudents] = useState(10);
   const [classesPerWeek, setClassesPerWeek] = useState(3);
   const monthlyEarnings = Math.round(students * classesPerWeek * 4 * 10 * 0.8);
 
-  // Newsletter
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -237,9 +247,8 @@ function LandingPage() {
       {/* ── Sticky Nav ──────────────────────────────────────────────────────── */}
       <View style={s.nav as any}>
         <View style={[s.navInner, !isDesktop && s.navInnerMobile]}>
-          {/* Logo */}
           <TouchableOpacity
-            style={s.navBrand}
+            style={s.navBrand as any}
             onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
             activeOpacity={0.8}
           >
@@ -249,7 +258,6 @@ function LandingPage() {
             <Text style={s.logoWordmark}>Flocked</Text>
           </TouchableOpacity>
 
-          {/* Center links (desktop) */}
           {isDesktop && (
             <View style={s.navCenter}>
               {[
@@ -269,7 +277,6 @@ function LandingPage() {
             </View>
           )}
 
-          {/* Right CTAs */}
           <View style={s.navRight}>
             <TouchableOpacity onPress={goLogin} activeOpacity={0.7} style={s.navSignIn as any}>
               <Text style={s.navSignInText}>Sign In</Text>
@@ -290,23 +297,18 @@ function LandingPage() {
         {/* ── Hero ──────────────────────────────────────────────────────────── */}
         <View style={[s.hero, isDesktop && s.heroDesktop]}>
           <View style={[s.heroLeft, isDesktop && s.heroLeftDesktop]}>
-            {/* Pill badge */}
             <View style={s.heroPill}>
               <Text style={s.heroPillText}>✦  Live classes. Real people. Small groups.</Text>
             </View>
 
-            {/* Headline */}
             <Text style={[s.headline, !isDesktop && s.headlineMobile]}>
               {"Master the craft,\nnot the screen."}
             </Text>
 
-            {/* Subtext */}
             <Text style={[s.heroSub, !isDesktop && s.heroSubMobile]}>
-              Join intimate live classes with world-class instructors. From yoga to chess, piano to
-              pastry — learn alongside 5–15 fellow students who share your curiosity.
+              {"Real instructors. Small groups. The kind of class where people actually remember your name."}
             </Text>
 
-            {/* CTA buttons */}
             <View style={[s.heroBtns, !isDesktop && s.heroBtnsMobile]}>
               <TouchableOpacity style={s.heroBtnPrimary as any} onPress={goLogin} activeOpacity={0.85}>
                 <Text style={s.heroBtnPrimaryText}>Browse Classes →</Text>
@@ -316,7 +318,6 @@ function LandingPage() {
               </TouchableOpacity>
             </View>
 
-            {/* Social proof */}
             <View style={s.socialProof}>
               <View style={s.avatarStack}>
                 {["PR", "AK", "JL", "MT"].map((initials, i) => (
@@ -338,15 +339,13 @@ function LandingPage() {
             </View>
           </View>
 
-          {/* Right: floating class cards (desktop only) */}
           {isDesktop && (
             <View style={s.heroCards}>
-              {/* Card 1 — chess, left */}
               <View style={[s.heroCard, s.heroCard1]}>
                 <View style={s.heroCardBody}>
                   <View style={s.heroCardHeadRow}>
                     <View style={[s.catPill, { backgroundColor: "#E8F5F3" }]}>
-                      <Text style={[s.catPillText, { color: "#00796B" }]}>Chess</Text>
+                      <Text style={[s.catPillText, { color: "#007A70" }]}>Chess</Text>
                     </View>
                     <View style={s.spotsBadge}>
                       <Text style={s.spotsBadgeText}>3 spots left</Text>
@@ -363,12 +362,11 @@ function LandingPage() {
                 </View>
               </View>
 
-              {/* Card 2 — yoga, top right */}
               <View style={[s.heroCard, s.heroCard2]}>
                 <View style={s.heroCardBody}>
                   <View style={s.heroCardHeadRow}>
-                    <View style={[s.catPill, { backgroundColor: "#FDF0E8" }]}>
-                      <Text style={[s.catPillText, { color: "#8B5E1A" }]}>Yoga</Text>
+                    <View style={[s.catPill, { backgroundColor: "#FCF3E8" }]}>
+                      <Text style={[s.catPillText, { color: "#A06020" }]}>Yoga</Text>
                     </View>
                     <View style={s.liveBadge}>
                       <View style={s.liveDot} />
@@ -386,11 +384,10 @@ function LandingPage() {
                 </View>
               </View>
 
-              {/* Card 3 — cooking, bottom right */}
               <View style={[s.heroCard, s.heroCard3]}>
                 <View style={s.heroCardBody}>
-                  <View style={[s.catPill, { backgroundColor: "#FDF8E0" }]}>
-                    <Text style={[s.catPillText, { color: "#6B4C00" }]}>Cooking</Text>
+                  <View style={[s.catPill, { backgroundColor: "#FCF3E8" }]}>
+                    <Text style={[s.catPillText, { color: "#A06020" }]}>Cooking</Text>
                   </View>
                   <Text style={s.heroCardTitle} numberOfLines={1}>Italian Pasta from Scratch</Text>
                   <View style={s.heroCardFooter}>
@@ -404,6 +401,44 @@ function LandingPage() {
               </View>
             </View>
           )}
+        </View>
+
+        {/* ── Category Browse ────────────────────────────────────────────────── */}
+        <View style={s.categoryBrowse}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.categoryBrowseContent}
+          >
+            {CATEGORY_PILLS.map((cat) => (
+              <TouchableOpacity
+                key={cat.label}
+                style={[s.categoryPill, { backgroundColor: cat.bg }] as any}
+                onPress={goLogin}
+                activeOpacity={0.8}
+              >
+                <Text style={s.categoryPillIcon}>{cat.icon}</Text>
+                <Text style={[s.categoryPillLabel, { color: cat.color }]}>{cat.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* ── Stats Bar ─────────────────────────────────────────────────────── */}
+        <View style={[s.statsBar, isDesktop && s.statsBarDesktop]}>
+          {[
+            { num: "500+", label: "Students" },
+            { num: "50+",  label: "Instructors" },
+            { num: "4.9",  label: "Average Rating" },
+          ].map((stat, i) => (
+            <View key={stat.label} style={s.statsBarItem}>
+              {i > 0 && <View style={s.statsBarDivider} />}
+              <View style={s.statInner}>
+                <Text style={s.statNum}>{stat.num}</Text>
+                <Text style={s.statLabel}>{stat.label}</Text>
+              </View>
+            </View>
+          ))}
         </View>
 
         {/* ── Classes Starting Soon ──────────────────────────────────────────── */}
@@ -434,21 +469,20 @@ function LandingPage() {
               {CLASS_CARDS.map((card) => (
                 <TouchableOpacity
                   key={card.title}
-                  style={s.classCard as any}
+                  style={[s.classCard, { borderColor: card.catBorder }] as any}
                   onPress={goLogin}
                   activeOpacity={0.88}
                 >
-                  {/* Color header with category icon */}
                   <View style={[s.classCardHeader, { backgroundColor: card.catBg }]}>
                     <MaterialCommunityIcons
                       name={card.catIcon as any}
-                      size={38}
+                      size={42}
                       color={card.catIconColor}
                     />
                     <Text style={[s.classCardHeaderText, { color: card.catIconColor }]}>
                       {card.category}
                     </Text>
-                    <View style={s.priceTag}>
+                    <View style={[s.priceTag, { backgroundColor: card.catIconColor }]}>
                       <Text style={s.priceTagText}>${card.price}</Text>
                     </View>
                   </View>
@@ -468,12 +502,18 @@ function LandingPage() {
                       <Text style={s.scheduleIcon}>🕐</Text>
                       <Text style={s.scheduleText}>{card.schedule}</Text>
                     </View>
+                    <Text style={[s.classCardPrice, { color: card.catIconColor }]}>
+                      ${card.price}<Text style={s.classCardPricePer}>/class</Text>
+                    </Text>
                     <View style={s.progressRow}>
-                      <View style={s.progressTrack}>
+                      <View style={[s.progressTrack, { backgroundColor: card.catBg }]}>
                         <View
                           style={[
                             s.progressFill,
-                            { width: `${Math.round((card.joined / card.max) * 100)}%` as any },
+                            {
+                              width: `${Math.round((card.joined / card.max) * 100)}%` as any,
+                              backgroundColor: card.catIconColor,
+                            },
                           ]}
                         />
                       </View>
@@ -500,14 +540,10 @@ function LandingPage() {
               No algorithms, no pre-recorded videos. Just real classes with real people.
             </Text>
 
-            {/* Steps */}
             <View style={[s.stepsWrap, !isMid && s.stepsWrapMobile]}>
-              {/* Vertical connector line */}
               <View style={s.stepLine} />
-
               {HOW_STEPS.map((step, i) => (
                 <View key={step.title} style={[s.step, !isMid && s.stepMobile]}>
-                  {/* Icon + badge */}
                   <View style={s.stepIconWrap}>
                     <View style={s.stepIconBox}>
                       <Text style={s.stepIconEmoji}>{step.icon}</Text>
@@ -516,8 +552,6 @@ function LandingPage() {
                       <Text style={s.stepNumText}>{i + 1}</Text>
                     </View>
                   </View>
-
-                  {/* Text */}
                   <View style={s.stepContent}>
                     <Text style={s.stepEyebrow}>{step.eyebrow}</Text>
                     <Text style={s.stepTitle}>{step.title}</Text>
@@ -535,7 +569,6 @@ function LandingPage() {
           onLayout={(e) => { teachY.current = e.nativeEvent.layout.y; }}
         >
           <View style={[s.innerWrap, isDesktop && s.innerWrapDesktop, isDesktop ? s.teachInner : s.teachInnerMobile]}>
-            {/* Left photo placeholder */}
             <View style={[s.teachPhotoWrap, !isDesktop && s.teachPhotoWrapMobile]}>
               <View style={s.teachPhotoGrad}>
                 <Text style={s.teachPhotoEmoji}>👋</Text>
@@ -547,18 +580,15 @@ function LandingPage() {
               </View>
             </View>
 
-            {/* Right copy */}
             <View style={s.teachRight}>
               <Text style={s.teachEyebrow}>FOR INSTRUCTORS</Text>
               <Text style={[s.teachHeadline, !isDesktop && s.teachHeadlineMobile]}>
-                {"Turn your studio into\na global stage."}
+                {"Your students are\nwaiting. Literally."}
               </Text>
               <Text style={s.teachBody}>
-                Share your craft with intimate groups who actually show up, engage, and come back.
-                No algorithms — just real teaching, real connection, real income.
+                Set your schedule, teach what you love, and get paid to do it. No algorithm decides who sees you — real people find you because you're good.
               </Text>
 
-              {/* Earnings calculator */}
               <View style={s.calcCard}>
                 <Text style={s.calcLabel}>Projected monthly earnings</Text>
 
@@ -643,14 +673,11 @@ function LandingPage() {
           </View>
         </View>
 
-        {/* ── Newsletter / CTA ──────────────────────────────────────────────── */}
+        {/* ── CTA ───────────────────────────────────────────────────────────── */}
         <View style={[s.ctaSection, isDesktop && s.ctaSectionDesktop]}>
           <View style={[s.ctaCard, isDesktop && s.ctaCardDesktop]}>
-            <Text style={[s.ctaTitle, !isDesktop && s.ctaTitleMobile]}>Join the circle</Text>
-            <Text style={s.ctaSub}>
-              Get weekly picks of the best classes, instructor spotlights, and early access to new
-              categories.
-            </Text>
+            <Text style={[s.ctaTitle, !isDesktop && s.ctaTitleMobile]}>Ready when you are.</Text>
+            <Text style={s.ctaSub}>Your first class is one click away.</Text>
             {subscribed ? (
               <Text style={s.subscribedText}>🎉 You're in! Watch your inbox.</Text>
             ) : (
@@ -658,7 +685,7 @@ function LandingPage() {
                 <TextInput
                   style={s.ctaInput}
                   placeholder="your@email.com"
-                  placeholderTextColor="rgba(27,58,53,0.4)"
+                  placeholderTextColor="rgba(0,0,0,0.35)"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -679,7 +706,6 @@ function LandingPage() {
         {/* ── Footer ─────────────────────────────────────────────────────────── */}
         <View style={s.footer}>
           <View style={[s.footerTop, isDesktop && s.footerTopDesktop]}>
-            {/* Brand */}
             <View style={[s.footerBrand, isDesktop && s.footerBrandDesktop]}>
               <View style={s.footerLogoRow}>
                 <View style={s.logoBadge}>
@@ -692,7 +718,6 @@ function LandingPage() {
               </Text>
             </View>
 
-            {/* Columns (desktop) */}
             {isDesktop && (
               <View style={s.footerCols}>
                 {FOOTER_COLS.map((col) => (
@@ -738,16 +763,16 @@ function LandingPage() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#FFFFFF" },
+  page: { flex: 1, backgroundColor: "#FDFBF7" },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
 
   // ── Nav ──────────────────────────────────────────────────────────────────────
   nav: {
     height: 64,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FDFBF7",
     borderBottomWidth: 1,
-    borderBottomColor: "#EBEBEB",
+    borderBottomColor: "#EDE9E3",
     justifyContent: "center",
     position: "sticky",
     top: 0,
@@ -763,7 +788,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 40,
   },
   navInnerMobile: { paddingHorizontal: 20 },
-  navBrand: { flexDirection: "row", alignItems: "center", gap: 10, cursor: "pointer" } as any,
+  navBrand: { flexDirection: "row", alignItems: "center", gap: 10, cursor: "pointer" },
   logoBadge: {
     width: 32,
     height: 32,
@@ -782,7 +807,7 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#1A1A1A",
     letterSpacing: -0.3,
   },
   navCenter: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -792,7 +817,7 @@ const s = StyleSheet.create({
   navSignIn: { paddingHorizontal: 12, paddingVertical: 8, cursor: "pointer" },
   navSignInText: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B" },
   navGetStarted: {
-    backgroundColor: "#1B3A35",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 9999,
@@ -829,7 +854,7 @@ const s = StyleSheet.create({
     fontSize: 36,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#1A1A1A",
     letterSpacing: -0.5,
     lineHeight: 42,
   },
@@ -838,10 +863,10 @@ const s = StyleSheet.create({
 
   // ── Hero ─────────────────────────────────────────────────────────────────────
   hero: {
-    paddingTop: 72,
+    paddingTop: 80,
     paddingBottom: 80,
     paddingHorizontal: 24,
-    backgroundColor: "#F8FAF9",
+    backgroundColor: "#FDFBF7",
   },
   heroDesktop: {
     flexDirection: "row",
@@ -873,7 +898,7 @@ const s = StyleSheet.create({
     fontSize: 64,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#1A1A1A",
     lineHeight: 68,
     letterSpacing: -2,
     marginBottom: 24,
@@ -882,7 +907,7 @@ const s = StyleSheet.create({
   heroSub: {
     fontSize: 18,
     fontFamily: fonts.regular,
-    color: "#666666",
+    color: "#6B6B6B",
     lineHeight: 30,
     maxWidth: 500,
     marginBottom: 36,
@@ -891,7 +916,7 @@ const s = StyleSheet.create({
   heroBtns: { flexDirection: "row", gap: 12, marginBottom: 40, flexWrap: "wrap" },
   heroBtnsMobile: { gap: 10 },
   heroBtnPrimary: {
-    backgroundColor: "#1B3A35",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 9999,
@@ -904,19 +929,19 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
   },
   heroBtnSecondary: {
-    backgroundColor: "#F8FAF9",
+    backgroundColor: "#FDFBF7",
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 9999,
     borderWidth: 1.5,
-    borderColor: "#1B3A35",
+    borderColor: "#00B4A6",
     cursor: "pointer",
   },
   heroBtnSecondaryText: {
     fontSize: 15,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
   },
   socialProof: { flexDirection: "row", alignItems: "center", gap: 14 },
   avatarStack: { flexDirection: "row" },
@@ -927,7 +952,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#F8FAF9",
+    borderColor: "#FDFBF7",
   },
   avatarInitials: {
     fontSize: 10,
@@ -936,10 +961,9 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
   },
   socialText: { fontSize: 14, fontFamily: fonts.regular },
-  socialBold: { fontFamily: fonts.bold, fontWeight: "700", color: "#1B3A35" },
+  socialBold: { fontFamily: fonts.bold, fontWeight: "700", color: "#1A1A1A" },
   socialGray: { color: "#888888" },
 
-  // Hero floating cards
   heroCards: { width: 460, height: 380, position: "relative" },
   heroCard: {
     position: "absolute",
@@ -948,8 +972,8 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.09,
+    shadowColor: "#00B4A6",
+    shadowOpacity: 0.08,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
@@ -979,21 +1003,17 @@ const s = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#DC2626",
-  },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#DC2626" },
   liveBadgeText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", color: "#DC2626" },
-  heroCardBody: { padding: 16, gap: 0 },
+  heroCardBody: { padding: 16 },
   heroCardTitle: {
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#1A1A1A",
     lineHeight: 20,
     marginBottom: 12,
+    marginTop: 2,
   },
   heroCardFooter: { flexDirection: "row", alignItems: "center", gap: 6 },
   heroCardAvatar: {
@@ -1003,19 +1023,74 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  heroCardAvatarText: {
-    fontSize: 8,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
+  heroCardAvatarText: { fontSize: 8, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
   heroCardInstructor: { flex: 1, fontSize: 12, fontFamily: fonts.regular, color: "#777777" },
   heroCardCount: { fontSize: 12, fontFamily: fonts.regular, color: "#AAAAAA" },
 
+  // ── Category Browse ───────────────────────────────────────────────────────────
+  categoryBrowse: {
+    borderTopWidth: 1,
+    borderTopColor: "#EDE9E3",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EDE9E3",
+    backgroundColor: "#FDFBF7",
+    paddingVertical: 16,
+  },
+  categoryBrowseContent: {
+    paddingHorizontal: 24,
+    gap: 10,
+    alignItems: "center",
+  },
+  categoryPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 9999,
+  },
+  categoryPillIcon: { fontSize: 16 },
+  categoryPillLabel: {
+    fontSize: 14,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+  },
+
+  // ── Stats Bar ─────────────────────────────────────────────────────────────────
+  statsBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    backgroundColor: "#FDFBF7",
+  },
+  statsBarDesktop: { paddingVertical: 52 },
+  statsBarItem: { flexDirection: "row", alignItems: "center" },
+  statsBarDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: "#DDD8D0",
+    marginHorizontal: 36,
+  },
+  statInner: { alignItems: "center", gap: 3 },
+  statNum: {
+    fontSize: 34,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#00B4A6",
+    letterSpacing: -0.5,
+  },
+  statLabel: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#6B6B6B",
+  },
+
   // ── Classes Section ───────────────────────────────────────────────────────────
   classesSection: {
-    backgroundColor: "#F5F7F5",
-    paddingVertical: 80,
+    backgroundColor: "#F5F0EB",
+    paddingVertical: 100,
   },
   classesSectionHeader: {
     flexDirection: "row",
@@ -1030,26 +1105,25 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#007A70",
     textDecorationLine: "underline",
   },
   classCardsScroll: { gap: 16, paddingBottom: 4, paddingTop: 4 },
   classCard: {
-    width: 270,
+    width: 290,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderWidth: 1.5,
     cursor: "pointer",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowColor: "#00B4A6",
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   classCardHeader: {
-    height: 120,
+    height: 130,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
@@ -1063,64 +1137,67 @@ const s = StyleSheet.create({
   },
   priceTag: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    backgroundColor: "#1B3A35",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    top: 12,
+    right: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9999,
   },
   priceTagText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#FFFFFF",
   },
-  classCardBody: { padding: 16, gap: 8 },
+  classCardBody: { padding: 18, gap: 9 },
   classCardTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
-    lineHeight: 20,
+    color: "#1A1A1A",
+    lineHeight: 21,
   },
   classCardInstructorRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   classCardAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  classCardAvatarText: {
-    fontSize: 8,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
+  classCardAvatarText: { fontSize: 9, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
   classCardInstructor: { fontSize: 12, fontFamily: fonts.regular, color: "#777777" },
   scheduleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   scheduleIcon: { fontSize: 12 },
   scheduleText: { fontSize: 12, fontFamily: fonts.regular, color: "#888888" },
-  progressRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 2 },
+  classCardPrice: {
+    fontSize: 20,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+  },
+  classCardPricePer: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: "#888888",
+  },
+  progressRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   progressTrack: {
     flex: 1,
     height: 5,
-    backgroundColor: "#E8F5F3",
     borderRadius: 3,
     overflow: "hidden",
   },
-  progressFill: { height: "100%", backgroundColor: "#00B4A6", borderRadius: 3 },
+  progressFill: { height: "100%", borderRadius: 3 },
   progressLabel: { fontSize: 11, fontFamily: fonts.regular, color: "#888888" },
 
   // ── How It Works ──────────────────────────────────────────────────────────────
-  howSection: { backgroundColor: "#FFFFFF", paddingVertical: 96 },
+  howSection: { backgroundColor: "#FDFBF7", paddingVertical: 100 },
   howInner: { alignItems: "center" },
   howTitle: {
     fontSize: 40,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#1A1A1A",
     letterSpacing: -0.8,
     lineHeight: 48,
     textAlign: "center",
@@ -1136,12 +1213,7 @@ const s = StyleSheet.create({
     marginBottom: 56,
     maxWidth: 480,
   },
-  stepsWrap: {
-    width: "100%",
-    maxWidth: 720,
-    position: "relative",
-    gap: 40,
-  },
+  stepsWrap: { width: "100%", maxWidth: 720, position: "relative", gap: 40 },
   stepsWrapMobile: { maxWidth: "100%" as any },
   stepLine: {
     position: "absolute",
@@ -1151,11 +1223,7 @@ const s = StyleSheet.create({
     width: 2,
     backgroundColor: "#E8F5F3",
   },
-  step: {
-    flexDirection: "row",
-    gap: 20,
-    alignItems: "flex-start",
-  },
+  step: { flexDirection: "row", gap: 20, alignItems: "flex-start" },
   stepMobile: {},
   stepIconWrap: { position: "relative", flexShrink: 0 },
   stepIconBox: {
@@ -1173,17 +1241,12 @@ const s = StyleSheet.create({
     right: -6,
     width: 20,
     height: 20,
-    backgroundColor: "#1B3A35",
+    backgroundColor: "#00B4A6",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  stepNumText: {
-    fontSize: 10,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
+  stepNumText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
   stepContent: { flex: 1, paddingTop: 2 },
   stepEyebrow: {
     fontSize: 10,
@@ -1198,30 +1261,21 @@ const s = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1B3A35",
+    color: "#1A1A1A",
     lineHeight: 24,
     marginBottom: 8,
   },
-  stepBody: {
-    fontSize: 15,
-    fontFamily: fonts.regular,
-    color: "#666666",
-    lineHeight: 24,
-  },
+  stepBody: { fontSize: 15, fontFamily: fonts.regular, color: "#666666", lineHeight: 24 },
 
-  // ── Teach / Instructors ───────────────────────────────────────────────────────
-  teachSection: { backgroundColor: "#1B3A35", paddingVertical: 96 },
-  teachInner: {
-    flexDirection: "row",
-    gap: 80,
-    alignItems: "center",
-  },
+  // ── For Instructors ───────────────────────────────────────────────────────────
+  teachSection: { backgroundColor: "#E8F5F3", paddingVertical: 100 },
+  teachInner: { flexDirection: "row", gap: 80, alignItems: "center" },
   teachInnerMobile: { gap: 40 },
   teachPhotoWrap: { flex: 1, position: "relative", minWidth: 280 },
   teachPhotoWrapMobile: { flex: 0, width: "100%", height: 260 },
   teachPhotoGrad: {
     flex: 1,
-    backgroundColor: "#0F2820",
+    backgroundColor: "#C8EAE6",
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -1233,20 +1287,15 @@ const s = StyleSheet.create({
     bottom: 20,
     left: 20,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    shadowColor: "#000",
+    shadowColor: "#00B4A6",
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-  teachPhotoBadgeLabel: {
-    fontSize: 11,
-    fontFamily: fonts.regular,
-    color: "#888888",
-    marginBottom: 2,
-  },
+  teachPhotoBadgeLabel: { fontSize: 11, fontFamily: fonts.regular, color: "#888888", marginBottom: 2 },
   teachPhotoBadgeNum: {
     fontSize: 26,
     fontFamily: fonts.bold,
@@ -1254,18 +1303,13 @@ const s = StyleSheet.create({
     color: "#00B4A6",
     lineHeight: 30,
   },
-  teachPhotoBadgeSub: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: "#888888",
-    marginTop: 2,
-  },
+  teachPhotoBadgeSub: { fontSize: 12, fontFamily: fonts.regular, color: "#888888", marginTop: 2 },
   teachRight: { flex: 1, gap: 20 },
   teachEyebrow: {
     fontSize: 11,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: "#007A70",
     letterSpacing: 2,
     textTransform: "uppercase",
   },
@@ -1273,44 +1317,31 @@ const s = StyleSheet.create({
     fontSize: 44,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#1A1A1A",
     lineHeight: 52,
     letterSpacing: -0.8,
   },
   teachHeadlineMobile: { fontSize: 30, lineHeight: 38 },
-  teachBody: {
-    fontSize: 16,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.7)",
-    lineHeight: 26,
-  },
+  teachBody: { fontSize: 16, fontFamily: fonts.regular, color: "#6B6B6B", lineHeight: 26 },
   calcCard: {
-    backgroundColor: "#0F2820",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 24,
     gap: 16,
+    shadowColor: "#00B4A6",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  calcLabel: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.6)",
-    letterSpacing: 0.5,
-  },
-  calcRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  calcRowLabel: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.8)",
-  },
+  calcLabel: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B", letterSpacing: 0.5 },
+  calcRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  calcRowLabel: { fontSize: 14, fontFamily: fonts.regular, color: "#1A1A1A" },
   stepper: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#F0EDE8",
     borderRadius: 8,
     padding: 2,
   },
@@ -1319,35 +1350,26 @@ const s = StyleSheet.create({
     height: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "#E4E0DA",
     borderRadius: 6,
     cursor: "pointer",
   },
-  stepperBtnText: {
-    fontSize: 18,
-    fontFamily: fonts.regular,
-    color: "#FFFFFF",
-    lineHeight: 20,
-  },
+  stepperBtnText: { fontSize: 18, fontFamily: fonts.regular, color: "#1A1A1A", lineHeight: 20 },
   stepperVal: {
     width: 32,
     textAlign: "center",
     fontSize: 15,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#1A1A1A",
   },
-  calcDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.1)" },
-  calcPotentialLabel: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.6)",
-  },
+  calcDivider: { height: 1, backgroundColor: "#E8E8E8" },
+  calcPotentialLabel: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
   calcAmount: {
     fontSize: 40,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#00B4A6",
     letterSpacing: -1,
   },
   applyBtn: {
@@ -1358,31 +1380,27 @@ const s = StyleSheet.create({
     borderRadius: 9999,
     cursor: "pointer",
   },
-  applyBtnText: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#1B3A35",
-  },
+  applyBtnText: { fontSize: 15, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
 
   // ── Testimonials ──────────────────────────────────────────────────────────────
-  testimonialsSection: { backgroundColor: "#FFFFFF", paddingVertical: 96 },
+  testimonialsSection: { backgroundColor: "#FDFBF7", paddingVertical: 100 },
   testimonialsInner: { alignItems: "center" },
   testimonialsTitleCentered: { textAlign: "center", marginTop: 12, marginBottom: 48 },
-  testimonialsGrid: {
-    flexDirection: "row",
-    gap: 24,
-    width: "100%",
-  },
+  testimonialsGrid: { flexDirection: "row", gap: 24, width: "100%" },
   testimonialsGridMobile: { flexDirection: "column" },
   testimonialCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E8E8E8",
-    borderRadius: 12,
+    borderColor: "#EDE9E3",
+    borderRadius: 16,
     padding: 28,
     gap: 16,
+    shadowColor: "#00B4A6",
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   testimonialStars: { fontSize: 16, color: "#F59E0B", letterSpacing: 2 },
   testimonialQuote: {
@@ -1401,57 +1419,47 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  testimonialAvatarText: {
-    fontSize: 13,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  testimonialName: {
-    fontSize: 14,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#1B3A35",
-  },
+  testimonialAvatarText: { fontSize: 13, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
+  testimonialName: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: "#1A1A1A" },
   testimonialRole: { fontSize: 12, fontFamily: fonts.regular, color: "#888888" },
 
-  // ── Newsletter CTA ────────────────────────────────────────────────────────────
-  ctaSection: { paddingHorizontal: 24, paddingVertical: 40 },
+  // ── CTA ───────────────────────────────────────────────────────────────────────
+  ctaSection: { paddingHorizontal: 24, paddingVertical: 60, backgroundColor: "#FDFBF7" },
   ctaSectionDesktop: { paddingHorizontal: 40 },
   ctaCard: {
-    backgroundColor: "#1B3A35",
-    borderRadius: 16,
-    padding: 40,
+    backgroundColor: "#00B4A6",
+    borderRadius: 24,
+    padding: 48,
     alignItems: "center",
     gap: 16,
     maxWidth: 1060,
     alignSelf: "center",
     width: "100%",
   },
-  ctaCardDesktop: { padding: 64 },
+  ctaCardDesktop: { padding: 72 },
   ctaTitle: {
-    fontSize: 36,
+    fontSize: 40,
     fontFamily: fonts.bold,
     fontWeight: "700",
     color: "#FFFFFF",
     textAlign: "center",
     letterSpacing: -0.5,
-    lineHeight: 42,
+    lineHeight: 48,
   },
-  ctaTitleMobile: { fontSize: 26, lineHeight: 34 },
+  ctaTitleMobile: { fontSize: 28, lineHeight: 36 },
   ctaSub: {
-    fontSize: 15,
+    fontSize: 17,
     fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(255,255,255,0.88)",
     textAlign: "center",
-    maxWidth: 480,
-    lineHeight: 24,
+    maxWidth: 380,
+    lineHeight: 26,
   },
   subscribedText: {
     fontSize: 16,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: "#FFFFFF",
     textAlign: "center",
     paddingVertical: 8,
   },
@@ -1465,10 +1473,10 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 14,
     fontFamily: fonts.regular,
-    color: "#1B3A35",
+    color: "#1A1A1A",
   },
   ctaSubBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: "#007A70",
     paddingHorizontal: 22,
     paddingVertical: 14,
     borderRadius: 9999,
@@ -1476,15 +1484,10 @@ const s = StyleSheet.create({
     justifyContent: "center",
     cursor: "pointer",
   },
-  ctaSubBtnText: {
-    fontSize: 14,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
+  ctaSubBtnText: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
 
   // ── Footer ────────────────────────────────────────────────────────────────────
-  footer: { backgroundColor: "#1B3A35" },
+  footer: { backgroundColor: "#F0FAF9" },
   footerTop: {
     paddingHorizontal: 24,
     paddingTop: 60,
@@ -1507,36 +1510,26 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#1A1A1A",
     letterSpacing: -0.3,
   },
-  footerTagline: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.5)",
-    lineHeight: 22,
-  },
+  footerTagline: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", lineHeight: 22 },
   footerCols: { flex: 1, flexDirection: "row", gap: 40 },
   footerCol: { flex: 1, gap: 12 },
   footerColHeading: {
     fontSize: 12,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "rgba(255,255,255,0.4)",
+    color: "#888888",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 4,
   },
   footerLinkBtn: { cursor: "pointer" },
-  footerLink: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.65)",
-    lineHeight: 26,
-  },
+  footerLink: { fontSize: 14, fontFamily: fonts.regular, color: "#444444", lineHeight: 26 },
   footerBottom: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
+    borderTopColor: "#C8E6E2",
     paddingHorizontal: 40,
     paddingVertical: 24,
     flexDirection: "row",
@@ -1548,15 +1541,7 @@ const s = StyleSheet.create({
     alignSelf: "center",
     width: "100%",
   },
-  footerCopy: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.4)",
-  },
+  footerCopy: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
   footerLegal: { flexDirection: "row", gap: 24 },
-  footerLegalLink: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: "rgba(255,255,255,0.4)",
-  },
+  footerLegalLink: { fontSize: 13, fontFamily: fonts.regular, color: "#888888" },
 });
