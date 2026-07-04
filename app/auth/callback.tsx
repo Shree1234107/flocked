@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
+import { useRole } from "../../lib/role";
 
 function getWebParams(): Record<string, string> {
   if (Platform.OS !== "web" || typeof window === "undefined") return {};
@@ -18,6 +19,7 @@ function getWebParams(): Record<string, string> {
 export default function AuthCallbackScreen() {
   const router = useRouter();
   const { session } = useAuth();
+  const { setRole } = useRole();
   const routerParams = useLocalSearchParams<{
     code?: string;
     access_token?: string;
@@ -28,16 +30,29 @@ export default function AuthCallbackScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // True once the exchange call returns (success or failure handled separately)
   const [exchangeDone, setExchangeDone] = useState(false);
+  // Guard so role setup + navigation only fires once even if session re-emits
+  const didNavigate = useRef(false);
 
   // Navigate only after AuthProvider has actually applied the session to React state.
   // Driving this from useEffect + session means we wait for the real state update,
   // avoiding the race where router.replace("/") fires before setSession propagates.
   useEffect(() => {
     console.log("[auth/callback] nav effect:", { exchangeDone, hasSession: !!session, errorMsg });
-    if (!exchangeDone || errorMsg) return;
+    if (!exchangeDone || errorMsg || didNavigate.current) return;
     if (session) {
-      console.log("[auth/callback] session confirmed, navigating to /");
-      router.replace("/");
+      didNavigate.current = true;
+      // If the signup flow embedded a role in user_metadata (via signInWithOtp data:{}),
+      // persist it to SecureStore + backend before navigating so app/index.tsx sees it.
+      const metaRole = session.user.user_metadata?.role as string | undefined;
+      console.log("[auth/callback] user_metadata.role:", metaRole);
+      const persist =
+        metaRole === "host" || metaRole === "guest"
+          ? setRole(metaRole).catch(() => {})
+          : Promise.resolve();
+      persist.then(() => {
+        console.log("[auth/callback] role persisted, navigating to /");
+        router.replace("/");
+      });
       return;
     }
     // Safety net: if session never arrives after 4 s, show an error
