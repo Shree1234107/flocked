@@ -43,30 +43,34 @@ type InterestTag = (typeof INTEREST_TAGS)[number];
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      const EXPLICIT = new Set([
-        "https://flocked1.netlify.app",
-        "https://flocked-online.com",
-        "http://localhost:8080",
-        "http://localhost:8081",
-        "http://localhost:8082",
-      ]);
-      const allowed =
-        !origin ||
-        EXPLICIT.has(origin) ||
-        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
-        /^https?:\/\/(?:10|192\.168)\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
-        /\.railway\.app$/.test(origin) ||
-        /\.up\.railway\.app$/.test(origin) ||
-        /flocked-online\.com$/.test(origin) ||
-        /netlify\.app$/.test(origin);
-      console.log(`[CORS] origin=${origin ?? "(none)"} allowed=${allowed}`);
-      allowed ? callback(null, true) : callback(new Error("Not allowed by CORS"));
-    },
-  })
-);
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    const EXPLICIT = new Set([
+      "https://flocked1.netlify.app",
+      "https://flocked-online.com",
+      "http://localhost:8080",
+      "http://localhost:8081",
+      "http://localhost:8082",
+    ]);
+    const allowed =
+      !origin ||
+      EXPLICIT.has(origin) ||
+      /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^https?:\/\/(?:10|192\.168)\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(origin) ||
+      /\.railway\.app$/.test(origin) ||
+      /\.up\.railway\.app$/.test(origin) ||
+      /flocked-online\.com$/.test(origin) ||
+      /netlify\.app$/.test(origin);
+    console.log(`[CORS] origin=${origin ?? "(none)"} allowed=${allowed}`);
+    allowed ? callback(null, true) : callback(new Error("Not allowed by CORS"));
+  },
+};
+
+// app.use sets CORS headers on all responses; app.options provides an explicit
+// OPTIONS route handler so preflight requests get a 204 and never reach
+// requireAuth or Express's 404 handler.
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 // ─── External clients ─────────────────────────────────────────────────────────
@@ -2079,7 +2083,7 @@ const requireAdmin = (
 
 // ─── Instructor applications ──────────────────────────────────────────────────
 
-const instructorApplicationSchema = z.object({
+const applyToTeachSchema = z.object({
   fullName: z.string().min(1).max(200),
   email: z.string().email(),
   categories: z.array(z.string().min(1)).min(1),
@@ -2115,7 +2119,7 @@ app.get("/api/instructor-applications/me", requireAuth, async (req, res) => {
 
 app.post("/api/instructor-applications", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
-  const parsed = instructorApplicationSchema.safeParse(req.body);
+  const parsed = applyToTeachSchema.safeParse(req.body);
   if (!parsed.success) return fail(res, zodMessage(parsed.error));
 
   const { fullName, email, categories, experience, whyTeach, availability } = parsed.data;
