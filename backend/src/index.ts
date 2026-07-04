@@ -2062,6 +2062,151 @@ app.post("/api/classes/:id/messages", requireAuth, async (req, res) => {
   return ok(res, { message: { ...msg, is_mine: true } });
 });
 
+// ─── Admin middleware ─────────────────────────────────────────────────────────
+
+const requireAdmin = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  const authedReq = req as AuthedRequest;
+  const secretHeader = req.header("X-Admin-Secret");
+  const isAdminEmail = authedReq.userEmail === ADMIN_EMAIL;
+  const isAdminSecret = adminSecret && secretHeader === adminSecret;
+  if (!isAdminEmail && !isAdminSecret) return fail(res, "Forbidden.", 403);
+  next();
+};
+
+// ─── Instructor applications ──────────────────────────────────────────────────
+
+const instructorApplicationSchema = z.object({
+  fullName: z.string().min(1).max(200),
+  email: z.string().email(),
+  categories: z.array(z.string().min(1)).min(1),
+  experience: z.string().min(10).max(3000),
+  whyTeach: z.string().min(10).max(3000),
+  availability: z.string().max(500).optional(),
+});
+
+app.get("/api/instructor-applications/me", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const { data: application } = await supabase
+    .from("instructor_applications")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (application) return ok(res, { application });
+
+  // Backwards-compat: existing approved hosts have no application record
+  const { data: hostProfile } = await supabase
+    .from("host_profiles")
+    .select("is_approved")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (hostProfile?.is_approved) {
+    return ok(res, { application: { id: null, user_id: userId, status: "approved", categories: [], full_name: null, email: null, experience: null, why_teach: null, availability: null, submitted_at: null, reviewed_at: null } });
+  }
+
+  return ok(res, { application: null });
+});
+
+app.post("/api/instructor-applications", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const parsed = instructorApplicationSchema.safeParse(req.body);
+  if (!parsed.success) return fail(res, zodMessage(parsed.error));
+
+  const { fullName, email, categories, experience, whyTeach, availability } = parsed.data;
+
+  // Block if already pending or approved
+  const { data: existing } = await supabase
+    .from("instructor_applications")
+    .select("id, status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing && existing.status !== "rejected") {
+    return fail(res, "You already have a pending or approved application.");
+  }
+
+  const { data, error } = await supabase
+    .from("instructor_applications")
+    .upsert(
+      {
+        user_id: userId,
+        full_name: fullName,
+        email,
+        categories,
+        experience,
+        why_teach: whyTeach,
+        availability: availability ?? null,
+        status: "pending",
+        submitted_at: new Date().toISOString(),
+        reviewed_at: null,
+      },
+      { onConflict: "user_id" }
+    )
+    .select("*")
+    .single();
+
+  if (error) return fail(res, error.message, 500);
+  return ok(res, { application: data }, 201);
+});
+
+app.get("/api/instructor-applications", requireAuth, requireAdmin, async (_req, res) => {
+  const { data, error } = await supabase
+    .from("instructor_applications")
+    .select("*")
+    .order("submitted_at", { ascending: false });
+
+  if (error) return fail(res, error.message, 500);
+  return ok(res, { applications: data ?? [] });
+});
+
+app.post("/api/instructor-applications/:id/approve", requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("instructor_applications")
+    .update({ status: "approved", reviewed_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) return fail(res, error.message, 500);
+
+  // Approve their host profile if it exists
+  if (data?.user_id) {
+    await supabase
+      .from("host_profiles")
+      .update({ is_approved: true })
+      .eq("user_id", data.user_id);
+
+    await supabase
+      .from("user_profiles")
+      .update({ role: "host" })
+      .eq("user_id", data.user_id);
+  }
+
+  return ok(res, { application: data });
+});
+
+app.post("/api/instructor-applications/:id/reject", requireAuth, requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("instructor_applications")
+    .update({ status: "rejected", reviewed_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) return fail(res, error.message, 500);
+  return ok(res, { application: data });
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get("/health", (_req, res) => {

@@ -4,6 +4,7 @@ import {
   HostProfile,
   StudentProfile,
   InstructorApplicationStatus,
+  InstructorApplication,
   ScheduledClass,
   ClassReview,
   ClassSeries,
@@ -435,6 +436,53 @@ export async function enrollInSeries(seriesId: string): Promise<void> {
     `/api/series/${encodeURIComponent(seriesId)}/enroll`,
     { method: "POST" }
   );
+}
+
+// ─── Instructor applications (v2 — new table) ────────────────────────────────
+
+export async function getMyInstructorApplication(): Promise<InstructorApplication | null> {
+  const data = await apiFetch<{ application: InstructorApplication | null }>(
+    "/api/instructor-applications/me"
+  );
+  return data.application;
+}
+
+export async function applyToTeach(params: {
+  fullName: string;
+  email: string;
+  categories: string[];
+  experience: string;
+  whyTeach: string;
+  availability?: string;
+}): Promise<InstructorApplication> {
+  const data = await apiFetch<{ application: InstructorApplication }>(
+    "/api/instructor-applications",
+    { method: "POST", body: JSON.stringify(params) }
+  );
+  return data.application;
+}
+
+export async function listInstructorApplications(): Promise<InstructorApplication[]> {
+  const data = await apiFetch<{ applications: InstructorApplication[] }>(
+    "/api/instructor-applications"
+  );
+  return data.applications;
+}
+
+export async function approveInstructorApplication(id: string): Promise<InstructorApplication> {
+  const data = await apiFetch<{ application: InstructorApplication }>(
+    `/api/instructor-applications/${encodeURIComponent(id)}/approve`,
+    { method: "POST" }
+  );
+  return data.application;
+}
+
+export async function rejectInstructorApplication(id: string): Promise<InstructorApplication> {
+  const data = await apiFetch<{ application: InstructorApplication }>(
+    `/api/instructor-applications/${encodeURIComponent(id)}/reject`,
+    { method: "POST" }
+  );
+  return data.application;
 }
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────

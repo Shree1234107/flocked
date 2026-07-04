@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -17,13 +17,25 @@ import { Screen } from "../components/Screen";
 import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
 import { fonts } from "../lib/fonts";
-import { signUpForNewsletter } from "../lib/api";
+import { signUpForNewsletter, getMyInstructorApplication } from "../lib/api";
 
 // ─── Auth redirect logic ───────────────────────────────────────────────────────
 
 export default function Index() {
   const { session, loading: authLoading } = useAuth();
   const { role, loading: roleLoading } = useRole();
+  const [appStatus, setAppStatus] = useState<
+    "loading" | "none" | "pending" | "approved" | "rejected" | null
+  >(null);
+
+  useEffect(() => {
+    if (session && role === "host" && !roleLoading) {
+      setAppStatus("loading");
+      getMyInstructorApplication()
+        .then((app) => setAppStatus(app ? app.status : "none"))
+        .catch(() => setAppStatus("approved")); // fail open — don't lock out existing hosts
+    }
+  }, [session, role, roleLoading]);
 
   if (authLoading) {
     return (
@@ -42,7 +54,19 @@ export default function Index() {
       );
     }
     if (role === "guest") return <Redirect href="/guest" />;
-    if (role === "host") return <Redirect href="/host" />;
+    if (role === "host") {
+      if (appStatus === null || appStatus === "loading") {
+        return (
+          <Screen centered>
+            <ActivityIndicator color="#00B4A6" />
+          </Screen>
+        );
+      }
+      if (appStatus === "none") return <Redirect href="/instructor-apply" />;
+      if (appStatus === "pending") return <Redirect href="/instructor-pending" />;
+      if (appStatus === "rejected") return <Redirect href="/instructor-apply" />;
+      return <Redirect href="/host" />;
+    }
     return <Redirect href="/login" />;
   }
 

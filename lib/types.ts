@@ -129,3 +129,17 @@ export type WaitlistEntry = {
   created_at: string;
   position?: number;
 };
+
+export type InstructorApplication = {
+  id: string | null;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  categories: string[];
+  experience: string | null;
+  why_teach: string | null;
+  availability: string | null;
+  status: "pending" | "approved" | "rejected";
+  submitted_at: string | null;
+  reviewed_at: string | null;
+};
