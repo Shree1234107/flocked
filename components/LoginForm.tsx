@@ -226,7 +226,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     paddingHorizontal: 24,
     gap: 24,
   },

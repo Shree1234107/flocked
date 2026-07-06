@@ -165,7 +165,7 @@ export default function LoginScreen() {
           borderRadius: 10,
           padding: "14px 16px",
           fontSize: 15,
-          color: "#007A70",
+          color: colors.navy,
           backgroundColor: "#FFFFFF",
           fontFamily: "inherit",
           outline: "none",
@@ -535,7 +535,7 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#007A70",
+    color: colors.navy,
     lineHeight: 18,
   },
   previewCardMeta: {
@@ -564,7 +564,7 @@ const s = StyleSheet.create({
   },
 
   // ── Right panel ──────────────────────────────────────────────────────────────
-  rightPanel: { width: "50%", backgroundColor: "#FFFFFF" },
+  rightPanel: { width: "50%", backgroundColor: colors.cream },
   rightPanelFull: { width: "100%" },
   rightScroll: {
     flexGrow: 1,
@@ -581,7 +581,7 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F0FAFA",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
@@ -616,7 +616,7 @@ const s = StyleSheet.create({
   },
 
   // ── Mobile root ───────────────────────────────────────────────────────────────
-  mobileRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  mobileRoot: { flex: 1, backgroundColor: colors.cream },
   mobileScroll: {
     flexGrow: 1,
     alignItems: "center",
@@ -630,7 +630,7 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#007A70",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   mobileFormWrap: { gap: 12, width: "100%", marginTop: 24 },
@@ -643,7 +643,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     fontFamily: fonts.regular,
-    color: "#007A70",
+    color: colors.navy,
     backgroundColor: "#FFFFFF",
   },
   mobileInputFocused: { borderColor: colors.primary },
@@ -654,7 +654,7 @@ const s = StyleSheet.create({
     fontSize: 28,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#007A70",
+    color: colors.navy,
     textAlign: "center",
     letterSpacing: -0.4,
     lineHeight: 34,
@@ -735,7 +735,7 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#007A70",
+    color: colors.navy,
   },
   roleSub: {
     fontSize: 12,
@@ -770,7 +770,7 @@ const s = StyleSheet.create({
     fontSize: 24,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#007A70",
+    color: colors.navy,
     textAlign: "center",
   },
   sentBody: {
@@ -784,7 +784,7 @@ const s = StyleSheet.create({
   sentEmailBold: {
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#007A70",
+    color: colors.navy,
   },
   sentHint: {
     fontSize: 13,
