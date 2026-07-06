@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -114,7 +115,7 @@ export default function StudentEditProfile() {
           >
             {loading ? (
               <View style={styles.centered}>
-                <ActivityIndicator color="#00B4A6" />
+                <ActivityIndicator color={colors.primary} />
               </View>
             ) : (
               <>
@@ -156,8 +157,8 @@ export default function StudentEditProfile() {
                       maxLength={50}
                       style={styles.input}
                       outlineColor="#EEEEEE"
-                      activeOutlineColor="#00B4A6"
-                      textColor="#2C2C2C"
+                      activeOutlineColor={colors.primary}
+                      textColor={colors.navy}
                       theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
                     />
                   </View>
@@ -216,13 +217,13 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
   },
-  avatarInitials: { fontSize: 30, fontWeight: "700", color: "#00B4A6" },
+  avatarInitials: { fontSize: 30, fontWeight: "700", color: colors.primary },
   cameraOverlay: {
     position: "absolute",
     bottom: 0,
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -239,12 +240,12 @@ const styles = StyleSheet.create({
   photoHint: { fontSize: 12, color: "#888888" },
   fields: { gap: 20 },
   fieldBlock: { gap: 6 },
-  fieldLabel: { fontSize: 13, fontWeight: "600", color: "#2C2C2C" },
+  fieldLabel: { fontSize: 13, fontWeight: "600", color: colors.navy },
   input: { backgroundColor: "#FFFFFF" },
   inputReadOnly: { backgroundColor: "#F9F9F9" },
   fieldHint: { fontSize: 11, color: "#BBBBBB" },
   saveBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

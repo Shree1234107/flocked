@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useRef, useState } from "react";
 import {
   Dimensions,
@@ -17,22 +18,22 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SLIDES = [
   {
     icon: "leaf-circle-outline" as const,
-    iconColor: "#00B4A6",
-    iconBg: "#E0F7F5",
+    iconColor: colors.primary,
+    iconBg: colors.primaryTint,
     title: "Welcome to Flocked",
     subtitle: "Live community classes from real instructors who care about what they teach.",
   },
   {
     icon: "calendar-check-outline" as const,
-    iconColor: "#00B4A6",
-    iconBg: "#E0F7F5",
+    iconColor: colors.primary,
+    iconBg: colors.primaryTint,
     title: "Book in one tap",
     subtitle: "Browse yoga, dance, tutoring and more. Join any class instantly.",
   },
   {
     icon: "account-group-outline" as const,
-    iconColor: "#00B4A6",
-    iconBg: "#E0F7F5",
+    iconColor: colors.primary,
+    iconBg: colors.primaryTint,
     title: "Learn together",
     subtitle: "Small classes. Real instructors. Real time. A community that grows with you.",
   },
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
   slideTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.5,
     lineHeight: 34,
   },
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     width: 20,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
   },
   dotInactive: {
     width: 6,
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   nextBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     flexDirection: "row",

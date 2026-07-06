@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { Share, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -36,7 +37,7 @@ export default function ReferralScreen() {
       {/* Nav */}
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#2C2C2C" />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.navy} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>Invite Friends</Text>
         <View style={{ width: 36 }} />
@@ -45,7 +46,7 @@ export default function ReferralScreen() {
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="account-group-outline" size={44} color="#00B4A6" />
+          <MaterialCommunityIcons name="account-group-outline" size={44} color={colors.primary} />
         </View>
         <Text style={styles.heroTitle}>Give a class,{"\n"}get a class</Text>
         <Text style={styles.heroSub}>
@@ -63,7 +64,7 @@ export default function ReferralScreen() {
         >
           <Text style={styles.codeText}>{MOCK_CODE}</Text>
           <View style={styles.copyBadge}>
-            <MaterialCommunityIcons name="content-copy" size={14} color="#00B4A6" />
+            <MaterialCommunityIcons name="content-copy" size={14} color={colors.primary} />
             <Text style={styles.copyText}>Copy</Text>
           </View>
         </TouchableOpacity>
@@ -82,7 +83,7 @@ export default function ReferralScreen() {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: "#00B4A6" }]}>0</Text>
+          <Text style={[styles.statNum, { color: colors.primary }]}>0</Text>
           <Text style={styles.statLabel}>Months free</Text>
         </View>
       </View>
@@ -97,7 +98,7 @@ export default function ReferralScreen() {
                 <Text style={styles.perkStepNum}>{i + 1}</Text>
               </View>
               <View style={styles.perkIcon}>
-                <MaterialCommunityIcons name={p.icon as never} size={18} color="#00B4A6" />
+                <MaterialCommunityIcons name={p.icon as never} size={18} color={colors.primary} />
               </View>
               <Text style={styles.perkText}>{p.text}</Text>
             </View>
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   hero: {
     alignItems: "center",
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 2,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     textAlign: "center",
     letterSpacing: -0.5,
     lineHeight: 36,
@@ -206,14 +207,14 @@ const styles = StyleSheet.create({
   codeText: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: 1.5,
   },
   copyBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   copyText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   statsRow: {
     flexDirection: "row",
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
   statNum: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   statLabel: {
     fontSize: 11,
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -296,7 +297,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -304,14 +305,14 @@ const styles = StyleSheet.create({
   perkText: {
     flex: 1,
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   shareWrap: {
     paddingHorizontal: 20,
     paddingTop: 12,
   },
   shareBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     flexDirection: "row",

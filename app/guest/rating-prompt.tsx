@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   submitBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     width: "100%",

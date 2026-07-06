@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useState } from "react";
 import {
   Alert,
@@ -56,7 +57,7 @@ export default function NewsletterScreen() {
           // Success state
           <View style={styles.successBox}>
             <View style={styles.successIcon}>
-              <MaterialCommunityIcons name="check-circle-outline" size={48} color="#00B4A6" />
+              <MaterialCommunityIcons name="check-circle-outline" size={48} color={colors.primary} />
             </View>
             <Text style={styles.successTitle}>You're on the list! 🌿</Text>
             <Text style={styles.successBody}>
@@ -75,7 +76,7 @@ export default function NewsletterScreen() {
           // Form
           <>
             <View style={styles.brandRow}>
-              <MaterialCommunityIcons name="leaf-circle-outline" size={28} color="#00B4A6" />
+              <MaterialCommunityIcons name="leaf-circle-outline" size={28} color={colors.primary} />
               <Text style={styles.wordmark}>Flocked</Text>
             </View>
 
@@ -93,7 +94,7 @@ export default function NewsletterScreen() {
                 mode="outlined"
                 style={styles.input}
                 outlineColor="#E0E0E0"
-                activeOutlineColor="#00B4A6"
+                activeOutlineColor={colors.primary}
                 autoCapitalize="words"
                 left={<TextInput.Icon icon="account-outline" color="#AAA" />}
               />
@@ -104,7 +105,7 @@ export default function NewsletterScreen() {
                 mode="outlined"
                 style={styles.input}
                 outlineColor="#E0E0E0"
-                activeOutlineColor="#00B4A6"
+                activeOutlineColor={colors.primary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -150,16 +151,16 @@ const styles = StyleSheet.create({
   inner: { flex: 1, paddingHorizontal: 24, paddingTop: 8 },
 
   brandRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 28 },
-  wordmark: { fontSize: 20, fontWeight: "800", color: "#1A1A1A", letterSpacing: -0.5 },
+  wordmark: { fontSize: 20, fontWeight: "800", color: colors.navy, letterSpacing: -0.5 },
 
-  headline: { fontSize: 28, fontWeight: "800", color: "#1A1A1A", marginBottom: 10, lineHeight: 34 },
+  headline: { fontSize: 28, fontWeight: "800", color: colors.navy, marginBottom: 10, lineHeight: 34 },
   sub: { fontSize: 15, color: "#666", lineHeight: 22, marginBottom: 32 },
 
   form: { gap: 14 },
   input: { backgroundColor: "#fff" },
 
   submitBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -182,11 +183,11 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
   },
-  successTitle: { fontSize: 24, fontWeight: "800", color: "#1A1A1A", textAlign: "center" },
+  successTitle: { fontSize: 24, fontWeight: "800", color: colors.navy, textAlign: "center" },
   successBody: {
     fontSize: 15,
     color: "#666",
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   doneBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 32,

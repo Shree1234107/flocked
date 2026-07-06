@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text, ActivityIndicator } from "react-native-paper";
@@ -34,7 +35,7 @@ export default function InstructorPendingScreen() {
   if (loading) {
     return (
       <View style={s.centered}>
-        <ActivityIndicator color="#00B4A6" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -59,7 +60,7 @@ export default function InstructorPendingScreen() {
     >
       {/* Checkmark */}
       <View style={s.iconCircle}>
-        <MaterialCommunityIcons name="check-bold" size={40} color="#00B4A6" />
+        <MaterialCommunityIcons name="check-bold" size={40} color={colors.primary} />
       </View>
 
       <Text style={s.title}>Application received!</Text>
@@ -102,7 +103,7 @@ export default function InstructorPendingScreen() {
 
       {/* Contact */}
       <View style={s.contactCard}>
-        <MaterialCommunityIcons name="email-outline" size={18} color="#00B4A6" />
+        <MaterialCommunityIcons name="email-outline" size={18} color={colors.primary} />
         <Text style={s.contactText}>
           Questions?{" "}
           <Text style={s.contactEmail}>Email us at {ADMIN_EMAIL}</Text>
@@ -122,8 +123,8 @@ export default function InstructorPendingScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FDFBF7" },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#FDFBF7" },
+  root: { flex: 1, backgroundColor: colors.cream },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream },
   scroll: {
     maxWidth: 560,
     alignSelf: "center",
@@ -138,7 +139,7 @@ const s = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
@@ -147,7 +148,7 @@ const s = StyleSheet.create({
     fontSize: 30,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     textAlign: "center",
     letterSpacing: -0.4,
   },
@@ -187,11 +188,11 @@ const s = StyleSheet.create({
   summaryValue: {
     fontSize: 15,
     fontFamily: fonts.regular,
-    color: "#1A1A1A",
+    color: colors.navy,
   },
   pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   summaryPill: {
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 9999,
@@ -248,6 +249,6 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
 });

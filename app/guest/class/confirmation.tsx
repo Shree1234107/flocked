@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,8 +15,8 @@ const CONFIRMED_CLASS = {
   time: "9:00 AM",
   duration: 60,
   instructor: "Sarah Chen",
-  dot: "#00B4A6",
-  bg: "#E0F7F5",
+  dot: colors.primary,
+  bg: colors.primaryTint,
 };
 
 export default function ConfirmationScreen() {
@@ -29,7 +30,7 @@ export default function ConfirmationScreen() {
           {/* Success icon */}
           <View style={styles.heroSection}>
             <View style={styles.checkRing}>
-              <MaterialCommunityIcons name="check" size={40} color="#00B4A6" />
+              <MaterialCommunityIcons name="check" size={40} color={colors.primary} />
             </View>
             <Text style={styles.youreIn}>You're in!</Text>
             <Text style={styles.subtitle}>
@@ -125,9 +126,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   youreIn: {
     fontSize: 30,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.4,
   },
   subtitle: {
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
   classCardTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.2,
   },
   classCardMeta: {
@@ -207,11 +208,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 12,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
   },
   calendarBtnText: {
     fontSize: 14,
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   discoverBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

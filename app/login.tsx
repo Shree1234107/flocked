@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -123,7 +124,7 @@ export default function LoginScreen() {
   const sentPanel = (
     <View style={s.sentWrap}>
       <View style={s.sentIconCircle}>
-        <MaterialCommunityIcons name="email-outline" size={28} color="#00B4A6" />
+        <MaterialCommunityIcons name="email-outline" size={28} color={colors.primary} />
       </View>
       <Text style={s.sentTitle}>Check your inbox</Text>
       <Text style={s.sentBody}>
@@ -159,7 +160,7 @@ export default function LoginScreen() {
           border: errorMsg
             ? "1.5px solid #E5484D"
             : emailFocused
-            ? "1.5px solid #00B4A6"
+            ? `1.5px solid ${colors.primary}`
             : "1.5px solid #E8E8E8",
           borderRadius: 10,
           padding: "14px 16px",
@@ -255,7 +256,7 @@ export default function LoginScreen() {
         {/* Left panel */}
         {isDesktop && (
           <View
-            style={[s.leftPanel, { background: "linear-gradient(160deg, #00B4A6 0%, #009B8E 100%)" } as any]}
+            style={[s.leftPanel, { background: `linear-gradient(160deg, ${colors.primary} 0%, #076D7D 100%)` } as any]}
           >
             {/* Logo */}
             <View style={s.leftLogo}>
@@ -463,7 +464,7 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -483,7 +484,7 @@ const s = StyleSheet.create({
   // ── Left panel ───────────────────────────────────────────────────────────────
   leftPanel: {
     width: "50%",
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingHorizontal: 48,
     paddingTop: 40,
     paddingBottom: 40,
@@ -544,7 +545,7 @@ const s = StyleSheet.create({
     marginTop: 1,
   },
   previewCardSpots: {
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -602,7 +603,7 @@ const s = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -645,7 +646,7 @@ const s = StyleSheet.create({
     color: "#007A70",
     backgroundColor: "#FFFFFF",
   },
-  mobileInputFocused: { borderColor: "#00B4A6" },
+  mobileInputFocused: { borderColor: colors.primary },
   mobileInputError: { borderColor: "#E5484D" },
 
   // ── Shared form elements ──────────────────────────────────────────────────────
@@ -680,7 +681,7 @@ const s = StyleSheet.create({
     marginTop: -4,
   },
   primaryBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
@@ -724,7 +725,7 @@ const s = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -760,7 +761,7 @@ const s = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
@@ -797,7 +798,7 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
 
   // ── Dev bypass ────────────────────────────────────────────────────────────────

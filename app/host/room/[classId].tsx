@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useEffect, useState } from "react";
 import {
   Platform,
@@ -288,7 +289,7 @@ function ControlButton({
 function ConnectingView() {
   return (
     <View style={styles.fullCenter}>
-      <ActivityIndicator color="#00B4A6" size="large" />
+      <ActivityIndicator color={colors.primary} size="large" />
       <Text style={styles.connectingText}>Connecting to room…</Text>
     </View>
   );
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     backgroundColor: "#1A1A1A",
     aspectRatio: 16 / 9,
     width: "100%",
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
   tileInitials: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   tileNameBar: {
     position: "absolute",
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     backgroundColor: "#1A1A1A",
     position: "relative",
   },
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingTop: 10,
     paddingHorizontal: 12,
     gap: 4,
@@ -489,5 +490,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  backBtnText: { fontSize: 14, fontWeight: "600", color: "#00B4A6" },
+  backBtnText: { fontSize: 14, fontWeight: "600", color: colors.primary },
 });

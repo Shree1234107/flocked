@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -40,8 +41,8 @@ function formatClassTime(iso: string): string {
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  Yoga: { bg: "#E0F7F5", text: "#007A70", dot: "#00B4A6" },
-  Dance: { bg: "#FDF0F2", text: "#A04060", dot: "#E0F7F5" },
+  Yoga: { bg: colors.primaryTint, text: "#007A70", dot: colors.primary },
+  Dance: { bg: "#FDF0F2", text: "#A04060", dot: colors.primaryTint },
   Tutoring: { bg: "#EEF3F8", text: "#3A5F80", dot: "#94B4D2" },
 };
 
@@ -124,7 +125,7 @@ export default function GuestProfileTab() {
       <AuthGate>
         <RoleGuard requiredRole="guest">
           <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
-            <ActivityIndicator color="#00B4A6" />
+            <ActivityIndicator color={colors.primary} />
           </View>
         </RoleGuard>
       </AuthGate>
@@ -187,7 +188,7 @@ export default function GuestProfileTab() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Saved Instructors</Text>
-                <MaterialCommunityIcons name="heart" size={14} color="#E0F7F5" />
+                <MaterialCommunityIcons name="heart" size={14} color={colors.primaryTint} />
               </View>
               <View style={styles.classList}>
                 {savedInstructors.map((inst) => (
@@ -204,7 +205,7 @@ export default function GuestProfileTab() {
                       activeOpacity={0.7}
                       style={styles.heartBtn}
                     >
-                      <MaterialCommunityIcons name="heart" size={20} color="#E0F7F5" />
+                      <MaterialCommunityIcons name="heart" size={20} color={colors.primaryTint} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -224,17 +225,17 @@ export default function GuestProfileTab() {
             ) : (
               <View style={styles.classList}>
                 {enrolledClasses.map((cls) => {
-                  const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F9F9F9", text: "#888888", dot: "#C0C0C0" };
+                  const categoryColors = CATEGORY_COLORS[cls.category] ?? { bg: "#F9F9F9", text: "#888888", dot: "#C0C0C0" };
                   return (
                     <View key={cls.id} style={styles.classCard}>
-                      <View style={[styles.classCardAccent, { backgroundColor: colors.dot }]} />
+                      <View style={[styles.classCardAccent, { backgroundColor: categoryColors.dot }]} />
                       <View style={styles.classCardBody}>
                         <View style={styles.classCardTopRow}>
                           <Text style={styles.classDate}>
                             {formatClassDate(cls.scheduled_at)} · {formatClassTime(cls.scheduled_at)}
                           </Text>
-                          <View style={[styles.catBadge, { backgroundColor: colors.bg }]}>
-                            <Text style={[styles.catBadgeText, { color: colors.text }]}>{cls.category}</Text>
+                          <View style={[styles.catBadge, { backgroundColor: categoryColors.bg }]}>
+                            <Text style={[styles.catBadgeText, { color: categoryColors.text }]}>{cls.category}</Text>
                           </View>
                         </View>
                         <Text style={styles.classTitle} numberOfLines={1}>{cls.title}</Text>
@@ -243,7 +244,7 @@ export default function GuestProfileTab() {
                         </Text>
                       </View>
                       <View style={styles.checkWrap}>
-                        <MaterialCommunityIcons name="check-circle" size={18} color="#00B4A6" />
+                        <MaterialCommunityIcons name="check-circle" size={18} color={colors.primary} />
                       </View>
                     </View>
                   );
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   editBtn: {
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
   editBtnText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   heroSection: {
     alignItems: "center",
@@ -334,7 +335,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -348,12 +349,12 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   displayName: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.2,
   },
   emailText: {
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   statLabel: {
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   savedCard: {
     flexDirection: "row",
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -443,7 +444,7 @@ const styles = StyleSheet.create({
   savedInitials: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   savedInfo: {
     flex: 1,
@@ -452,7 +453,7 @@ const styles = StyleSheet.create({
   savedName: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   savedTeaches: {
     fontSize: 12,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginTop: 4,
   },
   emptySubtext: {
@@ -520,7 +521,7 @@ const styles = StyleSheet.create({
   classTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   classMeta: {
     fontSize: 12,
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
   menuRowLabel: {
     flex: 1,
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   menuDivider: {
     height: 1,

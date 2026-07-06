@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -10,8 +11,8 @@ import { RoleGuard } from "../../components/RoleGuard";
 import { getInstructorAnalytics, InstructorAnalytics } from "../../lib/api";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Yoga: "#00B4A6",
-  Dance: "#E0F7F5",
+  Yoga: colors.primary,
+  Dance: colors.primaryTint,
   Tutoring: "#94B4D2",
 };
 
@@ -23,7 +24,7 @@ function StarRating({ rating }: { rating: number }) {
           key={i}
           name={i <= Math.round(rating) ? "star" : "star-outline"}
           size={14}
-          color="#E0F7F5"
+          color={colors.primaryTint}
         />
       ))}
     </View>
@@ -34,7 +35,7 @@ function StatCard({
   icon,
   label,
   value,
-  color = "#00B4A6",
+  color = colors.primary,
 }: {
   icon: string;
   label: string;
@@ -129,14 +130,14 @@ export default function InstructorAnalyticsScreen() {
 
           {loading && (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#00B4A6" />
+              <ActivityIndicator color={colors.primary} />
               <Text style={styles.loadingText}>Loading your stats…</Text>
             </View>
           )}
 
           {error && !loading && (
             <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color={colors.primaryTint} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -150,13 +151,13 @@ export default function InstructorAnalyticsScreen() {
                   icon="school-outline"
                   label="Total Classes"
                   value={analytics.total_classes}
-                  color="#00B4A6"
+                  color={colors.primary}
                 />
                 <StatCard
                   icon="account-group-outline"
                   label="Total Students"
                   value={analytics.total_students}
-                  color="#E0F7F5"
+                  color={colors.primaryTint}
                 />
                 <StatCard
                   icon="check-circle-outline"
@@ -168,7 +169,7 @@ export default function InstructorAnalyticsScreen() {
                   icon="calendar-clock"
                   label="Upcoming"
                   value={analytics.upcoming_classes}
-                  color="#00B4A6"
+                  color={colors.primary}
                 />
               </View>
 
@@ -190,7 +191,7 @@ export default function InstructorAnalyticsScreen() {
                 </View>
                 <View style={[styles.highlightCard, { flex: 1 }]}>
                   <Text style={styles.highlightLabel}>Est. Revenue</Text>
-                  <Text style={[styles.highlightValue, { color: "#00B4A6" }]}>
+                  <Text style={[styles.highlightValue, { color: colors.primary }]}>
                     ${analytics.estimated_revenue}
                   </Text>
                   <Text style={styles.highlightSub}>Stripe coming soon</Text>
@@ -270,7 +271,7 @@ export default function InstructorAnalyticsScreen() {
                         <View
                           style={[
                             styles.rankBadge,
-                            { backgroundColor: i === 0 ? "#00B4A6" : "#F0F0F0" },
+                            { backgroundColor: i === 0 ? colors.primary : "#F0F0F0" },
                           ]}
                         >
                           <Text
@@ -339,11 +340,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: { fontSize: 18, fontWeight: "700", color: "#1A1A1A" },
+  title: { fontSize: 18, fontWeight: "700", color: colors.navy },
   sectionTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     marginBottom: 12,
     marginTop: 8,
   },
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  statValue: { fontSize: 22, fontWeight: "800", color: "#1A1A1A" },
+  statValue: { fontSize: 22, fontWeight: "800", color: colors.navy },
   statLabel: { fontSize: 12, color: "#888" },
 
   // Highlight row
@@ -389,7 +390,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   highlightLabel: { fontSize: 12, color: "#888", marginBottom: 2 },
-  highlightValue: { fontSize: 26, fontWeight: "800", color: "#1A1A1A" },
+  highlightValue: { fontSize: 26, fontWeight: "800", color: colors.navy },
   highlightSub: { fontSize: 11, color: "#AAA", marginTop: 2 },
 
   // Chart
@@ -420,7 +421,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     overflow: "hidden",
   },
-  barFill: { backgroundColor: "#00B4A6", borderRadius: 4, minHeight: 4 },
+  barFill: { backgroundColor: colors.primary, borderRadius: 4, minHeight: 4 },
   barLabel: { fontSize: 10, color: "#AAA" },
 
   // Generic card
@@ -462,9 +463,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   rankText: { fontSize: 11, fontWeight: "700" },
-  topClassName: { fontSize: 14, fontWeight: "600", color: "#1A1A1A" },
+  topClassName: { fontSize: 14, fontWeight: "600", color: colors.navy },
   topClassCat: { fontSize: 12, color: "#888" },
-  topClassCount: { fontSize: 13, color: "#00B4A6", fontWeight: "600" },
+  topClassCount: { fontSize: 13, color: colors.primary, fontWeight: "600" },
 
   // Reviews
   reviewCard: {

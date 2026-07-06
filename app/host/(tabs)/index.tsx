@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -22,13 +23,13 @@ import { supabase } from "../../../lib/supabase";
 import { fonts } from "../../../lib/fonts";
 
 const CATEGORY_COLORS: Record<string, { dot: string; bg: string; text: string }> = {
-  yoga:     { dot: "#0F7B6B", bg: "#D4EDE8", text: "#0F7B6B" },
+  yoga:     { dot: "#0F7B6B", bg: colors.primaryTint, text: "#0F7B6B" },
   dance:    { dot: "#B03050", bg: "#F9E0E4", text: "#B03050" },
   tutoring: { dot: "#806020", bg: "#F5F0D8", text: "#806020" },
   chess:    { dot: "#2060A0", bg: "#DDE8F5", text: "#2060A0" },
   piano:    { dot: "#7030A0", bg: "#EDE0F5", text: "#7030A0" },
   cooking:  { dot: "#A06020", bg: "#F5EBD8", text: "#A06020" },
-  Yoga:     { dot: "#0F7B6B", bg: "#D4EDE8", text: "#0F7B6B" },
+  Yoga:     { dot: "#0F7B6B", bg: colors.primaryTint, text: "#0F7B6B" },
   Dance:    { dot: "#B03050", bg: "#F9E0E4", text: "#B03050" },
   Tutoring: { dot: "#806020", bg: "#F5F0D8", text: "#806020" },
 };
@@ -490,7 +491,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
     borderTopWidth: 2,
-    borderTopColor: "#00B4A6",
+    borderTopColor: colors.primary,
   },
   statNum: {
     fontSize: 28,
@@ -624,7 +625,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   startBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 6,

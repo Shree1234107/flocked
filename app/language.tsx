@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -38,7 +39,7 @@ export default function LanguageScreen() {
       {/* Nav */}
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#2C2C2C" />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.navy} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>Language & Region</Text>
         <View style={{ width: 36 }} />
@@ -67,7 +68,7 @@ export default function LanguageScreen() {
                   <Text style={styles.rowSub}>{lang.region}</Text>
                 </View>
                 {selectedLang === lang.code && (
-                  <MaterialCommunityIcons name="check-circle" size={20} color="#00B4A6" />
+                  <MaterialCommunityIcons name="check-circle" size={20} color={colors.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -90,7 +91,7 @@ export default function LanguageScreen() {
               >
                 <Text style={styles.rowLabel}>{tz}</Text>
                 {selectedTz === tz && (
-                  <MaterialCommunityIcons name="check-circle" size={20} color="#00B4A6" />
+                  <MaterialCommunityIcons name="check-circle" size={20} color={colors.primary} />
                 )}
               </TouchableOpacity>
             ))}
@@ -99,7 +100,7 @@ export default function LanguageScreen() {
 
         {/* Region note */}
         <View style={styles.noteRow}>
-          <MaterialCommunityIcons name="information-outline" size={14} color="#00B4A6" />
+          <MaterialCommunityIcons name="information-outline" size={14} color={colors.primary} />
           <Text style={styles.noteText}>
             Class times are displayed in your selected time zone. Changes take effect immediately.
           </Text>
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   section: {
     paddingTop: 20,
@@ -173,7 +174,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontSize: 15,
-    color: "#2C2C2C",
+    color: colors.navy,
     fontWeight: "400",
   },
   rowSub: {
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 12,
     padding: 12,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#D4E8CC",

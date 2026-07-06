@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginBottom: 4,
     lineHeight: 22,
   },
@@ -147,14 +148,14 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarInitials: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   hostName: {
     fontSize: 12,
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tagPill: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,

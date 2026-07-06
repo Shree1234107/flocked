@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -44,7 +45,7 @@ export default function FAQScreen() {
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="help-circle-outline" size={30} color="#00B4A6" />
+          <MaterialCommunityIcons name="help-circle-outline" size={30} color={colors.primary} />
         </View>
         <Text style={styles.heroTitle}>FAQ & Help</Text>
         <Text style={styles.heroSubtitle}>
@@ -70,7 +71,7 @@ export default function FAQScreen() {
                 <MaterialCommunityIcons
                   name={isOpen ? "chevron-up" : "chevron-down"}
                   size={18}
-                  color={isOpen ? "#00B4A6" : "#C0C0C0"}
+                  color={isOpen ? colors.primary : "#C0C0C0"}
                 />
               </View>
               {isOpen && (
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   heroSubtitle: {
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   accordionItemOpen: {
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     backgroundColor: "#FAFCFA",
   },
   accordionHeader: {
@@ -169,11 +170,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     lineHeight: 20,
   },
   accordionQOpen: {
-    color: "#00B4A6",
+    color: colors.primary,
   },
   accordionA: {
     fontSize: 14,
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 13,
     paddingHorizontal: 28,

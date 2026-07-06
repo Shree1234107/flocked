@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useState } from "react";
 import {
   Alert,
@@ -693,7 +694,7 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, fontSize: 13, fontFamily: fonts.regular, color: "#E5484D", lineHeight: 18 },
 
   submitBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: "center",

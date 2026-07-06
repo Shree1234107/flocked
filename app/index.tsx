@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useEffect, useRef, useState } from "react";
 import {
   Platform,
@@ -40,7 +41,7 @@ export default function Index() {
   if (authLoading) {
     return (
       <Screen centered>
-        <ActivityIndicator color="#00B4A6" />
+        <ActivityIndicator color={colors.primary} />
       </Screen>
     );
   }
@@ -49,7 +50,7 @@ export default function Index() {
     if (roleLoading) {
       return (
         <Screen centered>
-          <ActivityIndicator color="#00B4A6" />
+          <ActivityIndicator color={colors.primary} />
         </Screen>
       );
     }
@@ -58,7 +59,7 @@ export default function Index() {
       if (appStatus === null || appStatus === "loading") {
         return (
           <Screen centered>
-            <ActivityIndicator color="#00B4A6" />
+            <ActivityIndicator color={colors.primary} />
           </Screen>
         );
       }
@@ -82,7 +83,7 @@ export default function Index() {
 const AVATAR_COLORS = ["#2C3E3A", "#8B6914", "#8B7355", "#2C2C3E"];
 
 const CATEGORY_PILLS = [
-  { label: "Yoga",     icon: "🧘", bg: "#E8F5F3", color: "#007A70" },
+  { label: "Yoga",     icon: "🧘", bg: colors.primaryTint, color: "#007A70" },
   { label: "Chess",    icon: "♟",  bg: "#EAF0FA", color: "#2060A0" },
   { label: "Piano",    icon: "🎹", bg: "#F3EEFA", color: "#7030A0" },
   { label: "Cooking",  icon: "🍳", bg: "#FCF3E8", color: "#A06020" },
@@ -93,11 +94,11 @@ const CATEGORY_PILLS = [
 const CLASS_CARDS = [
   {
     category: "Yoga",
-    catBg: "#E8F5F3",
+    catBg: colors.primaryTint,
     catBorder: "#B2DDD8",
     catIcon: "yoga",
     catIconColor: "#059669",
-    pillBg: "#E8F5F3",
+    pillBg: colors.primaryTint,
     pillText: "#007A70",
     avatarBg: "#2C5E55",
     title: "Sunrise Vinyasa Flow",
@@ -368,7 +369,7 @@ function LandingPage() {
               <View style={[s.heroCard, s.heroCard1]}>
                 <View style={s.heroCardBody}>
                   <View style={s.heroCardHeadRow}>
-                    <View style={[s.catPill, { backgroundColor: "#E8F5F3" }]}>
+                    <View style={[s.catPill, { backgroundColor: colors.primaryTint }]}>
                       <Text style={[s.catPillText, { color: "#007A70" }]}>Chess</Text>
                     </View>
                     <View style={s.spotsBadge}>
@@ -787,14 +788,14 @@ function LandingPage() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#FDFBF7" },
+  page: { flex: 1, backgroundColor: colors.cream },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
 
   // ── Nav ──────────────────────────────────────────────────────────────────────
   nav: {
     height: 64,
-    backgroundColor: "#FDFBF7",
+    backgroundColor: colors.cream,
     borderBottomWidth: 1,
     borderBottomColor: "#EDE9E3",
     justifyContent: "center",
@@ -817,7 +818,7 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -831,7 +832,7 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   navCenter: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -841,7 +842,7 @@ const s = StyleSheet.create({
   navSignIn: { paddingHorizontal: 12, paddingVertical: 8, cursor: "pointer" },
   navSignInText: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B" },
   navGetStarted: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 9999,
@@ -868,7 +869,7 @@ const s = StyleSheet.create({
     fontSize: 11,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     letterSpacing: 2,
     textTransform: "uppercase",
     textAlign: "center",
@@ -878,7 +879,7 @@ const s = StyleSheet.create({
     fontSize: 36,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     letterSpacing: -0.5,
     lineHeight: 42,
   },
@@ -890,7 +891,7 @@ const s = StyleSheet.create({
     paddingTop: 80,
     paddingBottom: 80,
     paddingHorizontal: 24,
-    backgroundColor: "#FDFBF7",
+    backgroundColor: colors.cream,
   },
   heroDesktop: {
     flexDirection: "row",
@@ -905,7 +906,7 @@ const s = StyleSheet.create({
   heroLeftDesktop: { maxWidth: 560 },
   heroPill: {
     alignSelf: "flex-start",
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 9999,
@@ -915,14 +916,14 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     letterSpacing: 0.2,
   },
   headline: {
     fontSize: 64,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     lineHeight: 68,
     letterSpacing: -2,
     marginBottom: 24,
@@ -940,7 +941,7 @@ const s = StyleSheet.create({
   heroBtns: { flexDirection: "row", gap: 12, marginBottom: 40, flexWrap: "wrap" },
   heroBtnsMobile: { gap: 10 },
   heroBtnPrimary: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 9999,
@@ -953,12 +954,12 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
   },
   heroBtnSecondary: {
-    backgroundColor: "#FDFBF7",
+    backgroundColor: colors.cream,
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 9999,
     borderWidth: 1.5,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     cursor: "pointer",
   },
   heroBtnSecondaryText: {
@@ -976,7 +977,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#FDFBF7",
+    borderColor: colors.cream,
   },
   avatarInitials: {
     fontSize: 10,
@@ -985,7 +986,7 @@ const s = StyleSheet.create({
     color: "#FFFFFF",
   },
   socialText: { fontSize: 14, fontFamily: fonts.regular },
-  socialBold: { fontFamily: fonts.bold, fontWeight: "700", color: "#1A1A1A" },
+  socialBold: { fontFamily: fonts.bold, fontWeight: "700", color: colors.navy },
   socialGray: { color: "#888888" },
 
   heroCards: { width: 460, height: 380, position: "relative" },
@@ -996,7 +997,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
     overflow: "hidden",
-    shadowColor: "#00B4A6",
+    shadowColor: colors.primary,
     shadowOpacity: 0.08,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 6 },
@@ -1034,7 +1035,7 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     lineHeight: 20,
     marginBottom: 12,
     marginTop: 2,
@@ -1057,7 +1058,7 @@ const s = StyleSheet.create({
     borderTopColor: "#EDE9E3",
     borderBottomWidth: 1,
     borderBottomColor: "#EDE9E3",
-    backgroundColor: "#FDFBF7",
+    backgroundColor: colors.cream,
     paddingVertical: 16,
   },
   categoryBrowseContent: {
@@ -1087,7 +1088,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 40,
     paddingHorizontal: 24,
-    backgroundColor: "#FDFBF7",
+    backgroundColor: colors.cream,
   },
   statsBarDesktop: { paddingVertical: 52 },
   statsBarItem: { flexDirection: "row", alignItems: "center" },
@@ -1102,7 +1103,7 @@ const s = StyleSheet.create({
     fontSize: 34,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     letterSpacing: -0.5,
   },
   statLabel: {
@@ -1140,7 +1141,7 @@ const s = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1.5,
     cursor: "pointer",
-    shadowColor: "#00B4A6",
+    shadowColor: colors.primary,
     shadowOpacity: 0.08,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 4 },
@@ -1178,7 +1179,7 @@ const s = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     lineHeight: 21,
   },
   classCardInstructorRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -1215,13 +1216,13 @@ const s = StyleSheet.create({
   progressLabel: { fontSize: 11, fontFamily: fonts.regular, color: "#888888" },
 
   // ── How It Works ──────────────────────────────────────────────────────────────
-  howSection: { backgroundColor: "#FDFBF7", paddingVertical: 100 },
+  howSection: { backgroundColor: colors.cream, paddingVertical: 100 },
   howInner: { alignItems: "center" },
   howTitle: {
     fontSize: 40,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     letterSpacing: -0.8,
     lineHeight: 48,
     textAlign: "center",
@@ -1245,7 +1246,7 @@ const s = StyleSheet.create({
     top: 56,
     bottom: 56,
     width: 2,
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
   },
   step: { flexDirection: "row", gap: 20, alignItems: "flex-start" },
   stepMobile: {},
@@ -1253,7 +1254,7 @@ const s = StyleSheet.create({
   stepIconBox: {
     width: 48,
     height: 48,
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -1265,7 +1266,7 @@ const s = StyleSheet.create({
     right: -6,
     width: 20,
     height: 20,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -1276,7 +1277,7 @@ const s = StyleSheet.create({
     fontSize: 10,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     letterSpacing: 1.5,
     textTransform: "uppercase",
     marginBottom: 4,
@@ -1285,14 +1286,14 @@ const s = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     lineHeight: 24,
     marginBottom: 8,
   },
   stepBody: { fontSize: 15, fontFamily: fonts.regular, color: "#666666", lineHeight: 24 },
 
   // ── For Instructors ───────────────────────────────────────────────────────────
-  teachSection: { backgroundColor: "#E8F5F3", paddingVertical: 100 },
+  teachSection: { backgroundColor: colors.primaryTint, paddingVertical: 100 },
   teachInner: { flexDirection: "row", gap: 80, alignItems: "center" },
   teachInnerMobile: { gap: 40 },
   teachPhotoWrap: { flex: 1, position: "relative", minWidth: 280 },
@@ -1313,7 +1314,7 @@ const s = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
-    shadowColor: "#00B4A6",
+    shadowColor: colors.primary,
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
@@ -1324,7 +1325,7 @@ const s = StyleSheet.create({
     fontSize: 26,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     lineHeight: 30,
   },
   teachPhotoBadgeSub: { fontSize: 12, fontFamily: fonts.regular, color: "#888888", marginTop: 2 },
@@ -1341,7 +1342,7 @@ const s = StyleSheet.create({
     fontSize: 44,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     lineHeight: 52,
     letterSpacing: -0.8,
   },
@@ -1352,7 +1353,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     gap: 16,
-    shadowColor: "#00B4A6",
+    shadowColor: colors.primary,
     shadowOpacity: 0.07,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
@@ -1360,7 +1361,7 @@ const s = StyleSheet.create({
   },
   calcLabel: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B", letterSpacing: 0.5 },
   calcRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  calcRowLabel: { fontSize: 14, fontFamily: fonts.regular, color: "#1A1A1A" },
+  calcRowLabel: { fontSize: 14, fontFamily: fonts.regular, color: colors.navy },
   stepper: {
     flexDirection: "row",
     alignItems: "center",
@@ -1378,14 +1379,14 @@ const s = StyleSheet.create({
     borderRadius: 6,
     cursor: "pointer",
   },
-  stepperBtnText: { fontSize: 18, fontFamily: fonts.regular, color: "#1A1A1A", lineHeight: 20 },
+  stepperBtnText: { fontSize: 18, fontFamily: fonts.regular, color: colors.navy, lineHeight: 20 },
   stepperVal: {
     width: 32,
     textAlign: "center",
     fontSize: 15,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
   },
   calcDivider: { height: 1, backgroundColor: "#E8E8E8" },
   calcPotentialLabel: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B" },
@@ -1393,12 +1394,12 @@ const s = StyleSheet.create({
     fontSize: 40,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     letterSpacing: -1,
   },
   applyBtn: {
     alignSelf: "flex-start",
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 9999,
@@ -1407,7 +1408,7 @@ const s = StyleSheet.create({
   applyBtnText: { fontSize: 15, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
 
   // ── Testimonials ──────────────────────────────────────────────────────────────
-  testimonialsSection: { backgroundColor: "#FDFBF7", paddingVertical: 100 },
+  testimonialsSection: { backgroundColor: colors.cream, paddingVertical: 100 },
   testimonialsInner: { alignItems: "center" },
   testimonialsTitleCentered: { textAlign: "center", marginTop: 12, marginBottom: 48 },
   testimonialsGrid: { flexDirection: "row", gap: 24, width: "100%" },
@@ -1420,7 +1421,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     padding: 28,
     gap: 16,
-    shadowColor: "#00B4A6",
+    shadowColor: colors.primary,
     shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
@@ -1444,14 +1445,14 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   testimonialAvatarText: { fontSize: 13, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
-  testimonialName: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: "#1A1A1A" },
+  testimonialName: { fontSize: 14, fontFamily: fonts.bold, fontWeight: "700", color: colors.navy },
   testimonialRole: { fontSize: 12, fontFamily: fonts.regular, color: "#888888" },
 
   // ── CTA ───────────────────────────────────────────────────────────────────────
-  ctaSection: { paddingHorizontal: 24, paddingVertical: 60, backgroundColor: "#FDFBF7" },
+  ctaSection: { paddingHorizontal: 24, paddingVertical: 60, backgroundColor: colors.cream },
   ctaSectionDesktop: { paddingHorizontal: 40 },
   ctaCard: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 24,
     padding: 48,
     alignItems: "center",
@@ -1497,7 +1498,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 14,
     fontFamily: fonts.regular,
-    color: "#1A1A1A",
+    color: colors.navy,
   },
   ctaSubBtn: {
     backgroundColor: "#007A70",
@@ -1534,7 +1535,7 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   footerTagline: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", lineHeight: 22 },

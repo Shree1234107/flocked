@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -73,13 +74,13 @@ export default function FollowersScreen() {
 
           {loading && (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#00B4A6" />
+              <ActivityIndicator color={colors.primary} />
             </View>
           )}
 
           {error && !loading && (
             <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color={colors.primaryTint} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -122,12 +123,12 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18, backgroundColor: "#F0F0F0",
     alignItems: "center", justifyContent: "center",
   },
-  title: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", textAlign: "center" },
+  title: { fontSize: 18, fontWeight: "700", color: colors.navy, textAlign: "center" },
   subtitle: { fontSize: 13, color: "#888", textAlign: "center" },
   centerBox: { alignItems: "center", paddingVertical: 60, gap: 12 },
   errorText: { color: "#888", fontSize: 14, textAlign: "center" },
   emptyBox: { alignItems: "center", paddingVertical: 60, gap: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#1A1A1A" },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: colors.navy },
   emptyBody: { fontSize: 14, color: "#888", textAlign: "center", maxWidth: 260 },
   row: {
     flexDirection: "row", alignItems: "center", gap: 12,
@@ -136,11 +137,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
   avatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: "#00B4A6",
+    width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary,
     alignItems: "center", justifyContent: "center",
   },
   avatarText: { fontSize: 16, fontWeight: "700", color: "#fff" },
   rowInfo: { flex: 1 },
-  rowName: { fontSize: 14, fontWeight: "700", color: "#1A1A1A" },
+  rowName: { fontSize: 14, fontWeight: "700", color: colors.navy },
   rowDate: { fontSize: 12, color: "#888", marginTop: 2 },
 });

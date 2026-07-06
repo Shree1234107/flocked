@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { Alert, Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,8 +36,8 @@ const MOCK_REVIEWS = [
 ];
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
-  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
+  Yoga: { bg: colors.primaryTint, dot: colors.primary, text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: colors.primaryTint, text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -81,7 +82,7 @@ export default function InstructorProfileTab() {
       <RoleGuard requiredRole="host">
         {profileLoading ? (
           <View style={[styles.container, styles.centered, { paddingTop: insets.top }]}>
-            <ActivityIndicator color="#00B4A6" />
+            <ActivityIndicator color={colors.primary} />
           </View>
         ) : null}
         <ScrollView
@@ -253,7 +254,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   editBtn: {
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
   editBtnText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   heroSection: {
     alignItems: "center",
@@ -279,9 +280,9 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -291,18 +292,18 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 42,
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     marginBottom: 4,
   },
   avatarInitials: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   displayName: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.2,
   },
   teachesRow: {
@@ -336,7 +337,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginLeft: 4,
   },
   ratingCount: {
@@ -361,7 +362,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.4,
   },
   statLabel: {
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   bioCard: {
     backgroundColor: "#F9F9F9",
@@ -425,7 +426,7 @@ const styles = StyleSheet.create({
   classTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   classMeta: {
     fontSize: 12,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -477,7 +478,7 @@ const styles = StyleSheet.create({
   reviewInitials: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   reviewMeta: {
     flex: 1,
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
   reviewAuthor: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   reviewStarsRow: {
     flexDirection: "row",
@@ -520,7 +521,7 @@ const styles = StyleSheet.create({
   menuRowLabel: {
     flex: 1,
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   menuDivider: {
     height: 1,

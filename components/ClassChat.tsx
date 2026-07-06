@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Platform,
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   instrBadge: {
-    backgroundColor: "#D4EDE8",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     gap: 2,
   },
-  bubbleMine: { backgroundColor: "#00B4A6" },
+  bubbleMine: { backgroundColor: colors.primary },
   bubbleOther: { backgroundColor: "#F5F5F5" },
   senderName: {
     fontSize: 11,
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,

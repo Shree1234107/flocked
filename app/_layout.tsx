@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import "react-native-gesture-handler";
 
 import { useEffect } from "react";
@@ -43,10 +44,10 @@ const theme = {
   },
   colors: {
     ...MD3LightTheme.colors,
-    primary: "#00B4A6",
-    primaryContainer: "#E0F7F5",
-    secondary: "#E0F7F5",
-    secondaryContainer: "#E0F7F5",
+    primary: colors.primary,
+    primaryContainer: colors.primaryTint,
+    secondary: colors.primaryTint,
+    secondaryContainer: colors.primaryTint,
     background: "#FFFFFF",
     surface: "#F9F9F9",
     surfaceVariant: "#F9F9F9",
@@ -81,13 +82,13 @@ export default function RootLayout() {
                     screenOptions={{
                       headerTitleAlign: "left",
                       headerStyle: { backgroundColor: "#FFFFFF" },
-                      headerTintColor: "#2C2C2C",
+                      headerTintColor: colors.navy,
                       headerShadowVisible: false,
                       headerTitleStyle: {
                         fontFamily: fonts.bold,
                         fontWeight: "600",
                         fontSize: 17,
-                        color: "#2C2C2C",
+                        color: colors.navy,
                       },
                       headerBackTitleVisible: false,
                     }}

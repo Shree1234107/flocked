@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -72,7 +73,7 @@ export function WebSidebar({ role }: { role: Role }) {
               <MaterialCommunityIcons
                 name={item.icon}
                 size={16}
-                color={isActive ? "#00B4A6" : "#6B6B6B"}
+                color={isActive ? colors.primary : "#6B6B6B"}
               />
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
                 {item.label}
@@ -145,9 +146,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   navItemActive: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderLeftWidth: 2,
-    borderLeftColor: "#00B4A6",
+    borderLeftColor: colors.primary,
     paddingLeft: 10,
   },
   navItemHovered: { backgroundColor: "#F5F5F5" },
@@ -157,7 +158,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   navLabelActive: {
-    color: "#00B4A6",
+    color: colors.primary,
     fontFamily: fonts.bold,
     fontWeight: "700",
   },

@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useRef, useState } from "react";
 import {
   Alert,
@@ -113,7 +114,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-        <MaterialCommunityIcons name="arrow-left" size={20} color="#2C2C2C" />
+        <MaterialCommunityIcons name="arrow-left" size={20} color={colors.navy} />
       </TouchableOpacity>
 
       <View style={styles.header}>
@@ -124,7 +125,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
       {sent ? (
         <View style={styles.sentCard}>
           <View style={styles.sentIconWrap}>
-            <MaterialCommunityIcons name="email-check-outline" size={28} color="#00B4A6" />
+            <MaterialCommunityIcons name="email-check-outline" size={28} color={colors.primary} />
           </View>
           <Text style={styles.sentTitle}>Check your inbox</Text>
           <Text style={styles.sentBody}>
@@ -172,8 +173,8 @@ export function LoginForm({ role, title, subtitle }: Props) {
             mode="outlined"
             style={styles.emailInput}
             outlineColor={errorMsg ? "#E05555" : "#EEEEEE"}
-            activeOutlineColor={errorMsg ? "#E05555" : "#00B4A6"}
-            textColor="#2C2C2C"
+            activeOutlineColor={errorMsg ? "#E05555" : colors.primary}
+            textColor={colors.navy}
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
           />
 
@@ -209,7 +210,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
                 disabled={sending}
                 activeOpacity={0.7}
               >
-                <MaterialCommunityIcons name="code-tags" size={13} color="#00B4A6" />
+                <MaterialCommunityIcons name="code-tags" size={13} color={colors.primary} />
                 <Text style={styles.devBtnText}>
                   {role === "host" ? "Enter as Instructor (Dev)" : "Enter as Student (Dev)"}
                 </Text>
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   header: { gap: 6 },
-  title: { fontSize: 26, fontWeight: "700", color: "#2C2C2C", letterSpacing: -0.3 },
+  title: { fontSize: 26, fontWeight: "700", color: colors.navy, letterSpacing: -0.3 },
   subtitle: { fontSize: 14, color: "#888888", lineHeight: 20 },
 
   formSection: { gap: 12 },
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
     borderColor: "#DDDDDD",
     paddingVertical: 14,
   },
-  googleBtnText: { fontSize: 15, fontWeight: "600", color: "#2C2C2C" },
+  googleBtnText: { fontSize: 15, fontWeight: "600", color: colors.navy },
 
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   dividerLine: { flex: 1, height: 1, backgroundColor: "#EEEEEE" },
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, fontSize: 13, color: "#E05555", lineHeight: 18 },
 
   primaryBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
@@ -299,17 +300,17 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  sentTitle: { fontSize: 20, fontWeight: "700", color: "#2C2C2C" },
+  sentTitle: { fontSize: 20, fontWeight: "700", color: colors.navy },
   sentBody: { fontSize: 14, color: "#888888", textAlign: "center", lineHeight: 22 },
-  sentEmail: { fontWeight: "600", color: "#2C2C2C" },
+  sentEmail: { fontWeight: "600", color: colors.navy },
   sentHint: { fontSize: 12, color: "#AAA", textAlign: "center", lineHeight: 18 },
   resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
-  resendText: { fontSize: 14, fontWeight: "500", color: "#00B4A6" },
+  resendText: { fontSize: 14, fontWeight: "500", color: colors.primary },
 
   devSection: { gap: 4 },
   devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 2 },
@@ -322,5 +323,5 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
   },
-  devBtnText: { fontSize: 12, color: "#00B4A6", fontWeight: "500" },
+  devBtnText: { fontSize: 12, color: colors.primary, fontWeight: "500" },
 });

@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -23,7 +24,7 @@ export function DesktopSidebar() {
     <View style={styles.sidebar}>
       {/* Logo */}
       <View style={styles.logoSection}>
-        <MaterialCommunityIcons name="leaf-circle-outline" size={26} color="#00B4A6" />
+        <MaterialCommunityIcons name="leaf-circle-outline" size={26} color={colors.primary} />
         <Text style={styles.logoText}>Flockd</Text>
       </View>
 
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   navSection: {
@@ -118,10 +119,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   navItemActive: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
   },
   navItemHovered: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
   },
   navLabel: {
     fontSize: 14,
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
   userInitials: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   userEmail: {
     flex: 1,

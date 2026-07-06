@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { ScrollView, StyleSheet, Switch, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -74,7 +75,7 @@ export default function SettingsScreen() {
             <Switch
               value={classReminders}
               onValueChange={setClassReminders}
-              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
+              trackColor={{ true: colors.primary, false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -87,7 +88,7 @@ export default function SettingsScreen() {
             <Switch
               value={newInstructorAlerts}
               onValueChange={setNewInstructorAlerts}
-              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
+              trackColor={{ true: colors.primary, false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -100,7 +101,7 @@ export default function SettingsScreen() {
             <Switch
               value={promotions}
               onValueChange={setPromotions}
-              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
+              trackColor={{ true: colors.primary, false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -117,7 +118,7 @@ export default function SettingsScreen() {
             <Switch
               value={darkMode}
               onValueChange={setDarkMode}
-              trackColor={{ true: "#00B4A6", false: "#EEEEEE" }}
+              trackColor={{ true: colors.primary, false: "#EEEEEE" }}
               thumbColor="#FFFFFF"
             />
           }
@@ -126,7 +127,7 @@ export default function SettingsScreen() {
           <>
             <View style={styles.rowDivider} />
             <View style={styles.darkModeNote}>
-              <MaterialCommunityIcons name="information-outline" size={14} color="#00B4A6" />
+              <MaterialCommunityIcons name="information-outline" size={14} color={colors.primary} />
               <Text style={styles.darkModeNoteText}>
                 Dark mode preference saved. Full theme support coming soon.
               </Text>
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: "400",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   menuRowDestructive: {
     color: "#EF4444",
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
   },
   darkModeNoteText: {
     flex: 1,

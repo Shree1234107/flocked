@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -45,7 +46,7 @@ export default function EarningsScreen() {
             <View style={styles.cardDivider} />
 
             <View style={styles.formulaRow}>
-              <MaterialCommunityIcons name="information-outline" size={13} color="#00B4A6" />
+              <MaterialCommunityIcons name="information-outline" size={13} color={colors.primary} />
               <Text style={styles.formulaText}>
                 avg. students × ${RATE_PER_STUDENT}/seat × {Math.round(PLATFORM_CUT * 100)}% = earnings per class
               </Text>
@@ -73,7 +74,7 @@ export default function EarningsScreen() {
           {/* Payout info */}
           <View style={styles.payoutCard}>
             <View style={styles.payoutRow}>
-              <MaterialCommunityIcons name="calendar-check-outline" size={20} color="#00B4A6" />
+              <MaterialCommunityIcons name="calendar-check-outline" size={20} color={colors.primary} />
               <View style={styles.payoutInfo}>
                 <Text style={styles.payoutTitle}>Next Payout</Text>
                 <Text style={styles.payoutDate}>{PAYOUT_DATE}</Text>
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
   projectedAmount: {
     fontSize: 48,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -1,
     marginVertical: 4,
   },
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.4,
   },
   statLabel: {
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   payoutCard: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#D4E8CC",
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
   payoutDate: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   payoutBanner: {
     backgroundColor: "rgba(255,255,255,0.6)",
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginTop: 4,
     marginBottom: -4,
   },
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
   },
   classDateBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
   classTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   classMeta: {
     fontSize: 12,
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   classEarn: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   disclaimer: {
     flexDirection: "row",

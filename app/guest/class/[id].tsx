@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,10 +25,10 @@ import { supabase } from "../../../lib/supabase";
 import { fonts } from "../../../lib/fonts";
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  yoga:     { bg: colors.primaryTint, text: "#0F7B6B" },
   dance:    { bg: "#F9E0E4", text: "#B03050" },
   tutoring: { bg: "#F5F0D8", text: "#806020" },
-  Yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  Yoga:     { bg: colors.primaryTint, text: "#0F7B6B" },
   Dance:    { bg: "#F9E0E4", text: "#B03050" },
   Tutoring: { bg: "#F5F0D8", text: "#806020" },
 };
@@ -702,7 +703,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#D4EDE8",
+    backgroundColor: colors.primaryTint,
     borderRadius: 8,
     padding: 12,
   },
@@ -765,7 +766,7 @@ const styles = StyleSheet.create({
   },
   seriesActionCol: { gap: 8 },
   primaryBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: "center",
@@ -812,7 +813,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     paddingVertical: 14,
-    backgroundColor: "#D4EDE8",
+    backgroundColor: colors.primaryTint,
     borderRadius: 6,
   },
   joinedConfirmedText: {

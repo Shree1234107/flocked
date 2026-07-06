@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,7 +15,7 @@ export default function WelcomeEmailScreen() {
       {/* Nav */}
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#2C2C2C" />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.navy} />
         </TouchableOpacity>
         <Text style={styles.navTitle}>Welcome Email Preview</Text>
         <View style={{ width: 36 }} />
@@ -30,9 +31,9 @@ export default function WelcomeEmailScreen() {
           {/* Email header bar */}
           <View style={styles.emailHeader}>
             <View style={styles.emailDots}>
-              <View style={[styles.dot, { backgroundColor: "#E0F7F5" }]} />
+              <View style={[styles.dot, { backgroundColor: colors.primaryTint }]} />
               <View style={[styles.dot, { backgroundColor: "#F0D080" }]} />
-              <View style={[styles.dot, { backgroundColor: "#00B4A6" }]} />
+              <View style={[styles.dot, { backgroundColor: colors.primary }]} />
             </View>
             <Text style={styles.emailSubjectLine}>Welcome to Flocked 🌿 — Your first class awaits</Text>
           </View>
@@ -54,7 +55,7 @@ export default function WelcomeEmailScreen() {
             {/* Logo */}
             <View style={styles.logoRow}>
               <View style={styles.logoMark}>
-                <MaterialCommunityIcons name="leaf" size={20} color="#00B4A6" />
+                <MaterialCommunityIcons name="leaf" size={20} color={colors.primary} />
               </View>
               <Text style={styles.logoText}>flocked</Text>
             </View>
@@ -92,7 +93,7 @@ export default function WelcomeEmailScreen() {
               ].map((f, i) => (
                 <View key={i} style={styles.featureBlock}>
                   <View style={styles.featureIconWrap}>
-                    <MaterialCommunityIcons name={f.icon as never} size={20} color="#00B4A6" />
+                    <MaterialCommunityIcons name={f.icon as never} size={20} color={colors.primary} />
                   </View>
                   <Text style={styles.featureTitle}>{f.title}</Text>
                   <Text style={styles.featureBody}>{f.body}</Text>
@@ -133,7 +134,7 @@ export default function WelcomeEmailScreen() {
 
         {/* Design note */}
         <View style={styles.designNote}>
-          <MaterialCommunityIcons name="information-outline" size={14} color="#00B4A6" />
+          <MaterialCommunityIcons name="information-outline" size={14} color={colors.primary} />
           <Text style={styles.designNoteText}>
             This is a design reference preview. The actual email is sent via your email service provider.
           </Text>
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   scroll: {
     flex: 1,
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   emailSubjectLine: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   metaRow: {
     flexDirection: "row",
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   },
   metaValue: {
     fontSize: 12,
-    color: "#2C2C2C",
+    color: colors.navy,
     fontWeight: "500",
   },
   emailDivider: {
@@ -239,14 +240,14 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
   },
   logoText: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   heroPlaceholder: {
@@ -267,12 +268,12 @@ const styles = StyleSheet.create({
   emailHeadline: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.5,
   },
   emailSubhead: {
     fontSize: 15,
-    color: "#00B4A6",
+    color: colors.primary,
     fontWeight: "600",
     marginTop: 2,
     marginBottom: 14,
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   ctaBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 32,
     paddingVertical: 13,
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginBottom: 2,
     flex: 1,
   },
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
     top: 28,
   },
   referralBox: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#D4E8CC",
@@ -349,7 +350,7 @@ const styles = StyleSheet.create({
   referralHeadline: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   referralCopy: {
     fontSize: 12,
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
   referralCodeText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
     letterSpacing: 1.5,
   },
   emailFooter: {
@@ -397,7 +398,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 11,
-    color: "#00B4A6",
+    color: colors.primary,
     textAlign: "center",
   },
   designNote: {
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 8,
     padding: 12,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#D4E8CC",

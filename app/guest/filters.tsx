@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -194,13 +195,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.2,
   },
   clearText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   scroll: {
     flex: 1,
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.4,
@@ -233,8 +234,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayChipActive: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   dayChipText: {
     fontSize: 13,
@@ -259,8 +260,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   timeRowActive: {
-    borderColor: "#00B4A6",
-    backgroundColor: "#E0F7F5",
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryTint,
   },
   checkBox: {
     width: 20,
@@ -273,8 +274,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   checkBoxActive: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   timeInfo: {
     flex: 1,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
   timeLabel: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   timeLabelActive: {
     fontWeight: "600",
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   priceTrack: {
     height: 5,
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
   },
   priceFill: {
     height: "100%",
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 3,
   },
   priceSteps: {
@@ -331,8 +332,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   priceStepActive: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   priceStepText: {
     fontSize: 12,
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#EEEEEE",
   },
   applyBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

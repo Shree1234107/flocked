@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { Alert, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   heroSubtitle: {
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     borderColor: "#EEEEEE",
     padding: 14,
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
     minHeight: 100,
   },
   charCount: {
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   submitBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

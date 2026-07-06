@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useEffect, useState } from "react";
 import {
   Pressable,
@@ -289,7 +290,7 @@ function ControlButton({
 function ConnectingView() {
   return (
     <View style={styles.fullCenter}>
-      <ActivityIndicator color="#00B4A6" size="large" />
+      <ActivityIndicator color={colors.primary} size="large" />
       <Text style={styles.connectingText}>Connecting to room…</Text>
     </View>
   );
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     backgroundColor: "#1A1A1A",
     aspectRatio: 16 / 9,
     width: "100%",
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
   tileAvatar: {
     flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#252525",
   },
-  tileInitials: { fontSize: 28, fontWeight: "700", color: "#00B4A6" },
+  tileInitials: { fontSize: 28, fontWeight: "700", color: colors.primary },
   tileNameBar: {
     position: "absolute", bottom: 0, left: 0, right: 0,
     paddingHorizontal: 10, paddingVertical: 6,
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
   selfPreview: { position: "absolute", right: 16, alignItems: "center", gap: 4 },
   selfVideoWrap: {
     width: 120, height: 160, borderRadius: 10, overflow: "hidden",
-    borderWidth: 2, borderColor: "#00B4A6", backgroundColor: "#1A1A1A", position: "relative",
+    borderWidth: 2, borderColor: colors.primary, backgroundColor: "#1A1A1A", position: "relative",
   },
   selfCamOff: {
     flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#252525",
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     paddingTop: 10,
     paddingHorizontal: 12,
     gap: 4,
@@ -427,5 +428,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A", borderRadius: 10,
     paddingHorizontal: 20, paddingVertical: 12,
   },
-  backBtnText: { fontSize: 14, fontWeight: "600", color: "#00B4A6" },
+  backBtnText: { fontSize: 14, fontWeight: "600", color: colors.primary },
 });

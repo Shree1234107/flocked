@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -111,11 +112,11 @@ export default function SupportChatScreen() {
       {/* Nav */}
       <View style={styles.nav}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#2C2C2C" />
+          <MaterialCommunityIcons name="arrow-left" size={22} color={colors.navy} />
         </TouchableOpacity>
         <View style={styles.navCenter}>
           <View style={styles.avatarSmall}>
-            <MaterialCommunityIcons name="headset" size={16} color="#00B4A6" />
+            <MaterialCommunityIcons name="headset" size={16} color={colors.primary} />
           </View>
           <View>
             <Text style={styles.navTitle}>Flocked Support</Text>
@@ -149,7 +150,7 @@ export default function SupportChatScreen() {
             <View style={[styles.msgRow, isUser && styles.msgRowUser]}>
               {!isUser && (
                 <View style={[styles.supportAvatar, { opacity: showAvatar ? 1 : 0 }]}>
-                  <MaterialCommunityIcons name="headset" size={14} color="#00B4A6" />
+                  <MaterialCommunityIcons name="headset" size={14} color={colors.primary} />
                 </View>
               )}
               <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleSupport]}>
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 1.5,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   navTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   onlineRow: {
     flexDirection: "row",
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
   },
   onlineText: {
     fontSize: 11,
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 1,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -319,12 +320,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   bubbleUser: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderBottomRightRadius: 4,
   },
   bubbleText: {
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
     lineHeight: 20,
   },
   bubbleTextUser: {
@@ -349,7 +350,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quickChip: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -382,13 +383,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   sendBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,

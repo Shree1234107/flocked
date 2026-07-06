@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -10,8 +11,8 @@ import { RoleGuard } from "../../components/RoleGuard";
 import { getStudentAnalytics, getStreak, StudentAnalytics, StreakData } from "../../lib/api";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
-  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
+  Yoga: { bg: colors.primaryTint, dot: colors.primary, text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: colors.primaryTint, text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -27,7 +28,7 @@ function StatCard({
   icon,
   label,
   value,
-  color = "#00B4A6",
+  color = colors.primary,
 }: {
   icon: string;
   label: string;
@@ -102,14 +103,14 @@ export default function StudentAnalyticsScreen() {
 
           {loading && (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#00B4A6" />
+              <ActivityIndicator color={colors.primary} />
               <Text style={styles.loadingText}>Loading your activity…</Text>
             </View>
           )}
 
           {error && !loading && (
             <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
+              <MaterialCommunityIcons name="alert-circle-outline" size={36} color={colors.primaryTint} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -133,13 +134,13 @@ export default function StudentAnalyticsScreen() {
                   icon="calendar-check-outline"
                   label="Classes Attended"
                   value={analytics.total_attended}
-                  color="#00B4A6"
+                  color={colors.primary}
                 />
                 <StatCard
                   icon="bookmark-outline"
                   label="Enrolled"
                   value={analytics.total_enrolled}
-                  color="#E0F7F5"
+                  color={colors.primaryTint}
                 />
                 <StatCard
                   icon="account-heart-outline"
@@ -151,7 +152,7 @@ export default function StudentAnalyticsScreen() {
                   icon="star-outline"
                   label="Reviews Given"
                   value={analytics.total_reviews_given}
-                  color="#00B4A6"
+                  color={colors.primary}
                 />
               </View>
 
@@ -264,11 +265,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  title: { fontSize: 18, fontWeight: "700", color: "#1A1A1A" },
+  title: { fontSize: 18, fontWeight: "700", color: colors.navy },
   sectionTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     marginBottom: 12,
     marginTop: 8,
   },
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   errorText: { color: "#888", fontSize: 14, textAlign: "center" },
 
   streakCard: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 24,
     alignItems: "center",
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  statValue: { fontSize: 22, fontWeight: "800", color: "#1A1A1A" },
+  statValue: { fontSize: 22, fontWeight: "800", color: colors.navy },
   statLabel: { fontSize: 12, color: "#888" },
 
   emptyCard: {
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  emptyTitle: { fontSize: 16, fontWeight: "700", color: "#1A1A1A" },
+  emptyTitle: { fontSize: 16, fontWeight: "700", color: colors.navy },
   emptyBody: { fontSize: 13, color: "#888", textAlign: "center" },
 
   card: {
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
   },
   classCatDot: { width: 5, height: 5, borderRadius: 3 },
   classCatText: { fontSize: 11, fontWeight: "600" },
-  classTitle: { fontSize: 14, fontWeight: "700", color: "#1A1A1A" },
+  classTitle: { fontSize: 14, fontWeight: "700", color: colors.navy },
   classMeta: { flexDirection: "row", alignItems: "center", gap: 4, flexWrap: "wrap" },
   classMetaText: { fontSize: 12, color: "#888", marginRight: 6 },
 });

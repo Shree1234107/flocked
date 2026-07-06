@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { Stack, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -79,7 +80,7 @@ export default function HostLayout() {
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: "#FFFFFF" },
-          headerTintColor: "#2C2C2C",
+          headerTintColor: colors.navy,
           headerTitleAlign: "center",
           headerTitleStyle: { fontWeight: "700" as const },
           headerShadowVisible: false,
@@ -97,7 +98,7 @@ export default function HostLayout() {
   if (appState === "loading") {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color="#00B4A6" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -126,7 +127,7 @@ export default function HostLayout() {
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: "#FFFFFF" },
-        headerTintColor: "#2C2C2C",
+        headerTintColor: colors.navy,
         headerTitleAlign: "center",
         headerTitleStyle: { fontWeight: "700" as const },
         headerShadowVisible: false,
@@ -188,7 +189,7 @@ function ApplicationQuestionnaire({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formIconWrap}>
-          <MaterialCommunityIcons name="clipboard-text-outline" size={32} color="#00B4A6" />
+          <MaterialCommunityIcons name="clipboard-text-outline" size={32} color={colors.primary} />
         </View>
         <Text style={styles.formTitle}>Instructor Application</Text>
         <Text style={styles.formSubtitle}>
@@ -206,8 +207,8 @@ function ApplicationQuestionnaire({
             placeholder="e.g. Beginner yoga, beginner piano, GCSE math tutoring…"
             style={styles.textInput}
             outlineColor="#EEEEEE"
-            activeOutlineColor="#00B4A6"
-            textColor="#2C2C2C"
+            activeOutlineColor={colors.primary}
+            textColor={colors.navy}
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
             maxLength={500}
           />
@@ -224,8 +225,8 @@ function ApplicationQuestionnaire({
             placeholder="Share your passion and motivation…"
             style={styles.textInput}
             outlineColor="#EEEEEE"
-            activeOutlineColor="#00B4A6"
-            textColor="#2C2C2C"
+            activeOutlineColor={colors.primary}
+            textColor={colors.navy}
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
             maxLength={500}
           />
@@ -242,8 +243,8 @@ function ApplicationQuestionnaire({
             placeholder="Certifications, years of experience, training…"
             style={styles.textInput}
             outlineColor="#EEEEEE"
-            activeOutlineColor="#00B4A6"
-            textColor="#2C2C2C"
+            activeOutlineColor={colors.primary}
+            textColor={colors.navy}
             theme={{ colors: { onSurfaceVariant: "#888888", background: "#F9F9F9" } }}
             maxLength={500}
           />
@@ -284,7 +285,7 @@ function PendingApproval({
   return (
     <View style={[styles.pendingContainer, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.pendingIconWrap}>
-        <MaterialCommunityIcons name="check-circle-outline" size={40} color="#00B4A6" />
+        <MaterialCommunityIcons name="check-circle-outline" size={40} color={colors.primary} />
       </View>
       <Text style={styles.pendingTitle}>Application Received!</Text>
       <Text style={styles.pendingBody}>
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
@@ -353,7 +354,7 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     textAlign: "center",
     letterSpacing: -0.3,
     marginBottom: 4,
@@ -372,13 +373,13 @@ const styles = StyleSheet.create({
   questionLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   textInput: {
     backgroundColor: "#F9F9F9",
   },
   submitBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
@@ -414,9 +415,9 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -424,7 +425,7 @@ const styles = StyleSheet.create({
   pendingTitle: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     textAlign: "center",
     letterSpacing: -0.3,
   },
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   pendingEmailBox: {
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -453,7 +454,7 @@ const styles = StyleSheet.create({
   pendingEmailValue: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   pendingSteps: {
     width: "100%",
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -481,7 +482,7 @@ const styles = StyleSheet.create({
   },
   pendingStepText: {
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
     flex: 1,
   },
 });

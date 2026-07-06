@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,8 +12,8 @@ const STEPS = [
     title: "Apply",
     description:
       "Submit a short application to join as an instructor. We review every submission personally to keep the quality of classes high.",
-    color: "#00B4A6",
-    bg: "#E0F7F5",
+    color: colors.primary,
+    bg: colors.primaryTint,
   },
   {
     number: "2",
@@ -29,8 +30,8 @@ const STEPS = [
     title: "Go Live",
     description:
       "At class time, start your session and teach. Students join in real time and interact with you live.",
-    color: "#00B4A6",
-    bg: "#E0F7F5",
+    color: colors.primary,
+    bg: colors.primaryTint,
   },
   {
     number: "4",
@@ -56,7 +57,7 @@ export default function HowItWorksScreen() {
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="school-outline" size={30} color="#00B4A6" />
+          <MaterialCommunityIcons name="school-outline" size={30} color={colors.primary} />
         </View>
         <Text style={styles.heroTitle}>How It Works</Text>
         <Text style={styles.heroSubtitle}>
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   heroSubtitle: {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.1,
   },
   stepTitleMuted: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 13,
     paddingHorizontal: 24,

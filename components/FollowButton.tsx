@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -53,7 +54,7 @@ export function FollowButton({
         activeOpacity={0.7}
       >
         {loading ? (
-          <ActivityIndicator size={10} color={following ? "#00B4A6" : "#fff"} />
+          <ActivityIndicator size={10} color={following ? colors.primary : "#fff"} />
         ) : (
           <Text style={[styles.smText, following && styles.smTextFollowing]}>
             {following ? "Following" : "Follow"}
@@ -70,7 +71,7 @@ export function FollowButton({
       activeOpacity={0.85}
     >
       {loading ? (
-        <ActivityIndicator size={16} color={following ? "#00B4A6" : "#fff"} />
+        <ActivityIndicator size={16} color={following ? colors.primary : "#fff"} />
       ) : (
         <Text style={[styles.mdText, following && styles.mdTextFollowing]}>
           {following ? "Following" : "Follow"}
@@ -82,7 +83,7 @@ export function FollowButton({
 
 const styles = StyleSheet.create({
   mdBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
   mdBtnFollowing: {
     backgroundColor: "#fff",
     borderWidth: 1.5,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
   },
   mdText: {
     fontSize: 15,
@@ -99,10 +100,10 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   mdTextFollowing: {
-    color: "#00B4A6",
+    color: colors.primary,
   },
   smBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   smBtnFollowing: {
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
   },
   smText: {
     fontSize: 12,
@@ -120,6 +121,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   smTextFollowing: {
-    color: "#00B4A6",
+    color: colors.primary,
   },
 });

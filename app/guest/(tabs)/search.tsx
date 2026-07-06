@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useRef, useState } from "react";
 import {
   ScrollView,
@@ -33,8 +34,8 @@ const MOCK_INSTRUCTORS = [
 ];
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
-  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
+  Yoga: { bg: colors.primaryTint, dot: colors.primary, text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: colors.primaryTint, text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -270,7 +271,7 @@ function InstructorCard({
         <MaterialCommunityIcons
           name={isFav ? "heart" : "heart-outline"}
           size={20}
-          color={isFav ? "#E0F7F5" : "#C0C0C0"}
+          color={isFav ? colors.primaryTint : "#C0C0C0"}
         />
       </TouchableOpacity>
     </View>
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   searchBarWrapper: {
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: "#2C2C2C",
+    color: colors.navy,
     padding: 0,
   },
   chipsRow: {
@@ -327,8 +328,8 @@ const styles = StyleSheet.create({
     borderColor: "#EEEEEE",
   },
   chipActive: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   chipText: {
     fontSize: 13,
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginBottom: 10,
   },
   recentSection: {
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   recentTerm: {
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
     fontWeight: "500",
   },
   resultsSection: {
@@ -431,7 +432,7 @@ const styles = StyleSheet.create({
   classTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   classMeta: {
     flexDirection: "row",
@@ -468,7 +469,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
   instInitials: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   instInfo: {
     flex: 1,
@@ -485,7 +486,7 @@ const styles = StyleSheet.create({
   instName: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   instTeaches: {
     fontSize: 12,
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
   noResultsTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
     marginTop: 4,
   },
   noResultsSub: {

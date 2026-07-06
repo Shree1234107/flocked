@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -17,8 +18,8 @@ import {
 import type { ScheduledClass, ClassReview } from "../../../lib/types";
 
 const CATEGORY_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
-  Yoga: { bg: "#E0F7F5", dot: "#00B4A6", text: "#007A70" },
-  Dance: { bg: "#FDF0F2", dot: "#E0F7F5", text: "#A04060" },
+  Yoga: { bg: colors.primaryTint, dot: colors.primary, text: "#007A70" },
+  Dance: { bg: "#FDF0F2", dot: colors.primaryTint, text: "#A04060" },
   Tutoring: { bg: "#EEF3F8", dot: "#94B4D2", text: "#3A5F80" },
 };
 
@@ -125,13 +126,13 @@ export default function InstructorProfileScreen() {
 
         {loading && (
           <View style={styles.centerBox}>
-            <ActivityIndicator color="#00B4A6" />
+            <ActivityIndicator color={colors.primary} />
           </View>
         )}
 
         {error && !loading && (
           <View style={styles.centerBox}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#E0F7F5" />
+            <MaterialCommunityIcons name="alert-circle-outline" size={36} color={colors.primaryTint} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -290,12 +291,12 @@ const styles = StyleSheet.create({
 
   hero: { alignItems: "center", gap: 10, marginBottom: 28 },
   avatar: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: "#00B4A6",
+    width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary,
     alignItems: "center", justifyContent: "center",
   },
   avatarImg: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#DDD" },
   avatarInitials: { fontSize: 28, fontWeight: "700", color: "#fff" },
-  name: { fontSize: 22, fontWeight: "800", color: "#1A1A1A", textAlign: "center" },
+  name: { fontSize: 22, fontWeight: "800", color: colors.navy, textAlign: "center" },
 
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "center" },
   tagPill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 12, fontWeight: "600" },
 
   bio: { fontSize: 14, color: "#666", lineHeight: 20, textAlign: "center" },
-  readMore: { fontSize: 13, color: "#00B4A6", fontWeight: "600", textAlign: "center", marginTop: 4 },
+  readMore: { fontSize: 13, color: colors.primary, fontWeight: "600", textAlign: "center", marginTop: 4 },
 
   statsRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" },
   stat: { fontSize: 13, color: "#555", fontWeight: "500" },
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
 
   followWrap: { width: "100%", marginTop: 4 },
 
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: "#1A1A1A", marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: "700", color: colors.navy, marginBottom: 12 },
 
   emptyCard: {
     backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center",
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
   classTime: { fontSize: 12, fontWeight: "600", color: "#888" },
   catBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   catBadgeText: { fontSize: 10, fontWeight: "600" },
-  classTitle: { fontSize: 14, fontWeight: "700", color: "#1A1A1A" },
+  classTitle: { fontSize: 14, fontWeight: "700", color: colors.navy },
   classMeta: { fontSize: 12, color: "#888" },
 
   reviewCard: {
@@ -341,5 +342,5 @@ const styles = StyleSheet.create({
   reviewDate: { fontSize: 12, color: "#AAA" },
   reviewText: { fontSize: 13, color: "#555", lineHeight: 19 },
   seeAllBtn: { alignItems: "center", paddingVertical: 12 },
-  seeAllText: { fontSize: 13, color: "#00B4A6", fontWeight: "600" },
+  seeAllText: { fontSize: 13, color: colors.primary, fontWeight: "600" },
 });

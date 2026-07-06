@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -124,7 +125,7 @@ export default function AdminApplicationsScreen() {
   if (authLoading || loading) {
     return (
       <View style={s.centered}>
-        <ActivityIndicator color="#00B4A6" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -162,7 +163,7 @@ export default function AdminApplicationsScreen() {
           </Text>
         </View>
         <TouchableOpacity style={s.refreshBtn as any} onPress={load} activeOpacity={0.7}>
-          <MaterialCommunityIcons name="refresh" size={16} color="#00B4A6" />
+          <MaterialCommunityIcons name="refresh" size={16} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -298,19 +299,19 @@ export default function AdminApplicationsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FDFBF7" },
+  root: { flex: 1, backgroundColor: colors.cream },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    backgroundColor: "#FDFBF7",
+    backgroundColor: colors.cream,
   },
   accessDeniedTitle: {
     fontSize: 20,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     marginTop: 8,
   },
   accessDeniedBody: {
@@ -339,7 +340,7 @@ const s = StyleSheet.create({
     fontSize: 28,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     letterSpacing: -0.4,
   },
   subtitle: {
@@ -352,7 +353,7 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
@@ -366,7 +367,7 @@ const s = StyleSheet.create({
     backgroundColor: "#F0EDE8",
     cursor: "pointer",
   },
-  filterTabActive: { backgroundColor: "#00B4A6" },
+  filterTabActive: { backgroundColor: colors.primary },
   filterTabText: {
     fontSize: 13,
     fontFamily: fonts.bold,
@@ -406,7 +407,7 @@ const s = StyleSheet.create({
     fontSize: 17,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
   },
   applicantEmail: {
     fontSize: 13,
@@ -442,7 +443,7 @@ const s = StyleSheet.create({
   },
   pillRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 2 },
   pill: {
-    backgroundColor: "#E8F5F3",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 9999,
@@ -483,7 +484,7 @@ const s = StyleSheet.create({
     flex: 2,
     paddingVertical: 11,
     borderRadius: 10,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",

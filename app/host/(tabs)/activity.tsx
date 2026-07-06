@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
@@ -50,7 +51,7 @@ export default function HostActivityTab() {
 
           {loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color="#00B4A6" />
+              <ActivityIndicator color={colors.primary} />
             </View>
           ) : error ? (
             <View style={styles.centered}>
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   listContent: {
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   emptySubtext: {
     fontSize: 13,
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   cardMeta: {
     flexDirection: "row",

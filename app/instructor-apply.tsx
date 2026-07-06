@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -97,7 +98,7 @@ export default function InstructorApplyScreen() {
   if (checking) {
     return (
       <View style={s.centered}>
-        <ActivityIndicator color="#00B4A6" />
+        <ActivityIndicator color={colors.primary} />
       </View>
     );
   }
@@ -251,8 +252,8 @@ export default function InstructorApplyScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FDFBF7" },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#FDFBF7" },
+  root: { flex: 1, backgroundColor: colors.cream },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream },
   scroll: {
     maxWidth: 600,
     alignSelf: "center",
@@ -267,7 +268,7 @@ const s = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -297,7 +298,7 @@ const s = StyleSheet.create({
     fontSize: 28,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
     letterSpacing: -0.4,
     lineHeight: 34,
   },
@@ -313,7 +314,7 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     fontWeight: "700",
-    color: "#1A1A1A",
+    color: colors.navy,
   },
   fieldHint: {
     fontSize: 12,
@@ -330,7 +331,7 @@ const s = StyleSheet.create({
     paddingVertical: 13,
     fontSize: 15,
     fontFamily: fonts.regular,
-    color: "#1A1A1A",
+    color: colors.navy,
   },
   textarea: {
     minHeight: 110,
@@ -348,8 +349,8 @@ const s = StyleSheet.create({
     cursor: "pointer",
   },
   categoryPillSelected: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryPillText: {
     fontSize: 13,
@@ -360,7 +361,7 @@ const s = StyleSheet.create({
   categoryPillTextSelected: { color: "#FFFFFF" },
 
   submitBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: "center",

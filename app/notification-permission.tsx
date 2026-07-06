@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,7 +30,7 @@ export default function NotificationPermissionScreen() {
     <View style={[styles.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 32 }]}>
       {/* Icon */}
       <View style={styles.iconWrap}>
-        <MaterialCommunityIcons name="bell-ring-outline" size={48} color="#00B4A6" />
+        <MaterialCommunityIcons name="bell-ring-outline" size={48} color={colors.primary} />
       </View>
 
       {/* Copy */}
@@ -45,7 +46,7 @@ export default function NotificationPermissionScreen() {
         {PERKS.map((p, i) => (
           <View key={i} style={styles.perkRow}>
             <View style={styles.perkIconWrap}>
-              <MaterialCommunityIcons name={p.icon as never} size={18} color="#00B4A6" />
+              <MaterialCommunityIcons name={p.icon as never} size={18} color={colors.primary} />
             </View>
             <Text style={styles.perkText}>{p.text}</Text>
           </View>
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     borderWidth: 2,
     borderColor: "#D4E8CC",
     alignItems: "center",
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.4,
     textAlign: "center",
   },
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   perkText: {
     flex: 1,
     fontSize: 14,
-    color: "#2C2C2C",
+    color: colors.navy,
     lineHeight: 20,
   },
   actions: {
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   enableBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     flexDirection: "row",

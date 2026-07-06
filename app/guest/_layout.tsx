@@ -1,3 +1,4 @@
+import { colors } from "../../lib/colors";
 import { Stack } from "expo-router";
 
 export default function GuestLayout() {
@@ -5,7 +6,7 @@ export default function GuestLayout() {
     <Stack
       screenOptions={{
         headerStyle: { backgroundColor: "#FFFFFF" },
-        headerTintColor: "#2C2C2C",
+        headerTintColor: colors.navy,
         headerTitleAlign: "center",
         headerTitleStyle: { fontWeight: "700" as const },
       }}

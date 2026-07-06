@@ -1,3 +1,4 @@
+import { colors } from "../lib/colors";
 import { useState } from "react";
 import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -21,8 +22,8 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
     time: "2 hours ago",
     read: false,
     icon: "clock-alert-outline",
-    iconColor: "#00B4A6",
-    iconBg: "#E0F7F5",
+    iconColor: colors.primary,
+    iconBg: colors.primaryTint,
   },
   {
     id: "2",
@@ -157,11 +158,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2C2C2C",
+    color: colors.navy,
     letterSpacing: -0.3,
   },
   unreadBadge: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 999,
     minWidth: 20,
     height: 20,
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   clearAllText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#00B4A6",
+    color: colors.primary,
   },
   notifList: {
     gap: 0,
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   notifText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#2C2C2C",
+    color: colors.navy,
     lineHeight: 20,
   },
   notifTextRead: {
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     flexShrink: 0,
   },
   emptyState: {
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2C2C2C",
+    color: colors.navy,
   },
   emptySub: {
     fontSize: 13,

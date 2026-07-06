@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -22,8 +23,8 @@ import { INTEREST_TAGS } from "../../../lib/config";
 import { supabase } from "../../../lib/supabase";
 
 const TAG_COLORS: Record<string, { bg: string; selectedBg: string; text: string; border: string }> = {
-  Yoga:     { bg: "#E0F7F5", selectedBg: "#00B4A6", text: "#007A70", border: "#C8DFC0" },
-  Dance:    { bg: "#FDF0F2", selectedBg: "#E0F7F5", text: "#A04060", border: "#E0F7F5" },
+  Yoga:     { bg: colors.primaryTint, selectedBg: colors.primary, text: "#007A70", border: "#C8DFC0" },
+  Dance:    { bg: "#FDF0F2", selectedBg: colors.primaryTint, text: "#A04060", border: colors.primaryTint },
   Tutoring: { bg: "#EEF3F8", selectedBg: "#94B4D2", text: "#3A5F80", border: "#94B4D2" },
 };
 
@@ -136,7 +137,7 @@ export default function TeacherEditProfile() {
           >
             {loading ? (
               <View style={styles.centered}>
-                <ActivityIndicator color="#00B4A6" />
+                <ActivityIndicator color={colors.primary} />
               </View>
             ) : (
               <>
@@ -178,8 +179,8 @@ export default function TeacherEditProfile() {
                       maxLength={50}
                       style={styles.input}
                       outlineColor="#EEEEEE"
-                      activeOutlineColor="#00B4A6"
-                      textColor="#2C2C2C"
+                      activeOutlineColor={colors.primary}
+                      textColor={colors.navy}
                       theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
                     />
                   </View>
@@ -196,8 +197,8 @@ export default function TeacherEditProfile() {
                       maxLength={500}
                       style={styles.inputMultiline}
                       outlineColor="#EEEEEE"
-                      activeOutlineColor="#00B4A6"
-                      textColor="#2C2C2C"
+                      activeOutlineColor={colors.primary}
+                      textColor={colors.navy}
                       theme={{ colors: { onSurfaceVariant: "#888888", background: "#FFFFFF" } }}
                     />
                     <Text style={styles.charCount}>{bio.length}/500</Text>
@@ -275,13 +276,13 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#E0F7F5",
+    backgroundColor: colors.primaryTint,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#00B4A6",
+    borderColor: colors.primary,
   },
-  avatarInitials: { fontSize: 30, fontWeight: "700", color: "#00B4A6" },
+  avatarInitials: { fontSize: 30, fontWeight: "700", color: colors.primary },
   cameraOverlay: {
     position: "absolute",
     bottom: 0,
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   photoHint: { fontSize: 12, color: "#888888" },
   fields: { gap: 20 },
   fieldBlock: { gap: 6 },
-  fieldLabel: { fontSize: 13, fontWeight: "600", color: "#2C2C2C" },
+  fieldLabel: { fontSize: 13, fontWeight: "600", color: colors.navy },
   fieldHint: { fontSize: 11, color: "#888888", marginTop: -2 },
   input: { backgroundColor: "#FFFFFF" },
   inputMultiline: { backgroundColor: "#FFFFFF", minHeight: 100 },
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
   },
   tagChipText: { fontSize: 13, fontWeight: "600" },
   saveBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",

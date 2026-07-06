@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -28,9 +29,9 @@ type TimeFilter = "Today" | "Tomorrow" | "This Week" | "All";
 type FeedTab = "For You" | "Following";
 
 const CATEGORY_TOP_COLORS: Record<string, string> = {
-  yoga: "#00B4A6", dance: "#F4B8C1", chess: "#94B4D2",
+  yoga: colors.primary, dance: "#F4B8C1", chess: "#94B4D2",
   piano: "#C9A8E2", tutoring: "#FFD66B", cooking: "#F6C28B",
-  Yoga: "#00B4A6", Dance: "#F4B8C1", Chess: "#94B4D2",
+  Yoga: colors.primary, Dance: "#F4B8C1", Chess: "#94B4D2",
   Piano: "#C9A8E2", Tutoring: "#FFD66B", Cooking: "#F6C28B",
 };
 
@@ -44,13 +45,13 @@ function getAvatarColor(name: string): string {
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  yoga:     { bg: colors.primaryTint, text: "#0F7B6B" },
   dance:    { bg: "#F9E0E4", text: "#B03050" },
   chess:    { bg: "#DDE8F5", text: "#2060A0" },
   piano:    { bg: "#EDE0F5", text: "#7030A0" },
   cooking:  { bg: "#F5EBD8", text: "#A06020" },
   tutoring: { bg: "#F5F0D8", text: "#806020" },
-  Yoga:     { bg: "#D4EDE8", text: "#0F7B6B" },
+  Yoga:     { bg: colors.primaryTint, text: "#0F7B6B" },
   Dance:    { bg: "#F9E0E4", text: "#B03050" },
   Chess:    { bg: "#DDE8F5", text: "#2060A0" },
   Piano:    { bg: "#EDE0F5", text: "#7030A0" },
@@ -269,7 +270,7 @@ export default function GuestDiscoverTab() {
   const TIME_FILTERS: TimeFilter[] = ["Today", "Tomorrow", "This Week", "All"];
 
   const renderCard = (cls: ScheduledClass) => {
-    const colors = CATEGORY_COLORS[cls.category] ?? { bg: "#F5F5F5", text: "#6B6B6B" };
+    const categoryColors = CATEGORY_COLORS[cls.category] ?? { bg: "#F5F5F5", text: "#6B6B6B" };
     const spotsLeft = cls.max_students - cls.current_students;
     const full = spotsLeft <= 0;
     const urgent = spotsLeft <= 3 && !full;
@@ -287,12 +288,12 @@ export default function GuestDiscoverTab() {
           styles.classCard,
           isDesktop && styles.classCardDesktop,
           state.hovered && styles.classCardHovered,
-          { borderTopColor: CATEGORY_TOP_COLORS[cls.category] ?? "#00B4A6", borderTopWidth: 2 },
+          { borderTopColor: CATEGORY_TOP_COLORS[cls.category] ?? colors.primary, borderTopWidth: 2 },
         ]}
         onPress={() => router.push(`/guest/class/${cls.id}`)}
       >
         <View style={styles.cardTopRow}>
-          <Text style={[styles.classCardCategory, { color: colors.text }]}>
+          <Text style={[styles.classCardCategory, { color: categoryColors.text }]}>
             {cls.category.toUpperCase()}
           </Text>
           <View style={styles.badgeRow}>
@@ -653,7 +654,7 @@ const styles = StyleSheet.create({
   streakCount: { fontSize: 13, fontFamily: fonts.regular, color: "#0F0F0F" },
   streakBold: { fontFamily: fonts.bold, fontWeight: "700" },
   streakPillGreen: {
-    backgroundColor: "#D4EDE8",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -731,7 +732,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   timeFilterTextActive: {
-    color: "#00B4A6",
+    color: colors.primary,
     fontFamily: fonts.bold,
     fontWeight: "700",
   },
@@ -741,7 +742,7 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 2,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
   },
   filterRow: { paddingHorizontal: 24, paddingBottom: 12, gap: 6 },
   filterRowInline: { gap: 6 },
@@ -753,7 +754,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
   },
-  filterChipActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
+  filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filterChipText: {
     fontSize: 12,
     fontFamily: fonts.medium,
@@ -875,7 +876,7 @@ const styles = StyleSheet.create({
   },
   dropinBadgeText: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#2060A0" },
   enrolledBadge: {
-    backgroundColor: "#D4EDE8",
+    backgroundColor: colors.primaryTint,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -947,7 +948,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: fonts.medium,
     fontWeight: "500",
-    color: "#00B4A6",
+    color: colors.primary,
   },
 
   // ── Featured instructors (desktop) ──────────────────────────────────────────
