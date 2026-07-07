@@ -83,12 +83,12 @@ export default function Index() {
 const AVATAR_COLORS = ["#2C3E3A", "#8B6914", "#8B7355", "#2C2C3E"];
 
 const CATEGORY_PILLS = [
-  { label: "Yoga",     icon: "🧘", bg: colors.primaryTint, color: "#007A70" },
-  { label: "Chess",    icon: "♟",  bg: "#EAF0FA", color: "#2060A0" },
-  { label: "Piano",    icon: "🎹", bg: "#F3EEFA", color: "#7030A0" },
-  { label: "Cooking",  icon: "🍳", bg: "#FCF3E8", color: "#A06020" },
-  { label: "Dance",    icon: "💃", bg: "#FCEEF0", color: "#B03050" },
-  { label: "Tutoring", icon: "📚", bg: "#FBF9E8", color: "#806020" },
+  { label: "Yoga",     icon: "yoga",                 bg: colors.primaryTint, color: "#007A70" },
+  { label: "Chess",    icon: "chess-queen",           bg: "#EAF0FA", color: "#2060A0" },
+  { label: "Piano",    icon: "piano",                 bg: "#F3EEFA", color: "#7030A0" },
+  { label: "Cooking",  icon: "chef-hat",               bg: "#FCF3E8", color: "#A06020" },
+  { label: "Dance",    icon: "dance-ballroom",         bg: "#FCEEF0", color: "#B03050" },
+  { label: "Tutoring", icon: "book-open-page-variant", bg: "#FBF9E8", color: "#806020" },
 ];
 
 const CLASS_CARDS = [
@@ -164,25 +164,25 @@ const CLASS_CARDS = [
 
 const HOW_STEPS = [
   {
-    icon: "🔍",
+    icon: "magnify",
     eyebrow: "BROWSE & BOOK",
     title: "The Invitation",
     body: "Discover classes by category, skill level, or instructor. Each session seats just 5–15 students — book your spot before it fills up.",
   },
   {
-    icon: "💬",
+    icon: "chat-outline",
     eyebrow: "MEET YOUR GROUP",
     title: "The Gathering",
     body: "Before class starts, connect with your instructor and classmates in a pre-session chat. No strangers — just fellow learners.",
   },
   {
-    icon: "📹",
+    icon: "video-outline",
     eyebrow: "LEARN LIVE TOGETHER",
     title: "The Practice",
     body: "Join a live, interactive session. Ask questions in real-time, get personal feedback, and learn at a pace that feels human.",
   },
   {
-    icon: "⭐",
+    icon: "star-outline",
     eyebrow: "GROW TOGETHER",
     title: "The Ritual",
     body: "Rate your session, track your streak, and keep coming back. Your Tuesday crew is waiting.",
@@ -248,6 +248,20 @@ function LandingPage() {
 
   const scrollTo = (yRef: React.MutableRefObject<number>) => {
     scrollRef.current?.scrollTo({ y: Math.max(0, yRef.current - 68), animated: true });
+  };
+
+  // Classes carousel scroll affordance (arrows + fade)
+  const classesScrollRef = useRef<ScrollView>(null);
+  const [classesScrollX, setClassesScrollX] = useState(0);
+  const [classesContentWidth, setClassesContentWidth] = useState(0);
+  const [classesContainerWidth, setClassesContainerWidth] = useState(0);
+  const canScrollClassesLeft = classesScrollX > 4;
+  const canScrollClassesRight =
+    classesContentWidth - classesContainerWidth - classesScrollX > 4;
+  const scrollClasses = (direction: 1 | -1) => {
+    const maxScroll = Math.max(0, classesContentWidth - classesContainerWidth);
+    const next = Math.max(0, Math.min(classesScrollX + direction * 320, maxScroll));
+    classesScrollRef.current?.scrollTo({ x: next, animated: true });
   };
 
   const [students, setStudents] = useState(10);
@@ -442,7 +456,7 @@ function LandingPage() {
                 onPress={goLogin}
                 activeOpacity={0.8}
               >
-                <Text style={s.categoryPillIcon}>{cat.icon}</Text>
+                <MaterialCommunityIcons name={cat.icon as any} size={17} color={cat.color} />
                 <Text style={[s.categoryPillLabel, { color: cat.color }]}>{cat.label}</Text>
               </TouchableOpacity>
             ))}
@@ -486,10 +500,16 @@ function LandingPage() {
               </TouchableOpacity>
             </View>
 
+            <View style={s.carouselWrap}>
             <ScrollView
+              ref={classesScrollRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={s.classCardsScroll}
+              onScroll={(e) => setClassesScrollX(e.nativeEvent.contentOffset.x)}
+              scrollEventThrottle={16}
+              onContentSizeChange={(w) => setClassesContentWidth(w)}
+              onLayout={(e) => setClassesContainerWidth(e.nativeEvent.layout.width)}
             >
               {CLASS_CARDS.map((card) => (
                 <TouchableOpacity
@@ -501,12 +521,9 @@ function LandingPage() {
                   <View style={[s.classCardHeader, { backgroundColor: card.catBg }]}>
                     <MaterialCommunityIcons
                       name={card.catIcon as any}
-                      size={42}
+                      size={48}
                       color={card.catIconColor}
                     />
-                    <Text style={[s.classCardHeaderText, { color: card.catIconColor }]}>
-                      {card.category}
-                    </Text>
                     <View style={[s.priceTag, { backgroundColor: card.catIconColor }]}>
                       <Text style={s.priceTagText}>${card.price}</Text>
                     </View>
@@ -548,6 +565,35 @@ function LandingPage() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+
+            {/* Fade masks signal there's more to scroll */}
+            {canScrollClassesLeft && (
+              <View pointerEvents="none" style={[s.carouselFade, s.carouselFadeLeft]} />
+            )}
+            {canScrollClassesRight && (
+              <View pointerEvents="none" style={[s.carouselFade, s.carouselFadeRight]} />
+            )}
+
+            {/* Arrow buttons — desktop only; mobile keeps native swipe */}
+            {isDesktop && canScrollClassesLeft && (
+              <TouchableOpacity
+                style={[s.carouselArrow, s.carouselArrowLeft] as any}
+                onPress={() => scrollClasses(-1)}
+                activeOpacity={0.85}
+              >
+                <MaterialCommunityIcons name="chevron-left" size={24} color={colors.navy} />
+              </TouchableOpacity>
+            )}
+            {isDesktop && canScrollClassesRight && (
+              <TouchableOpacity
+                style={[s.carouselArrow, s.carouselArrowRight] as any}
+                onPress={() => scrollClasses(1)}
+                activeOpacity={0.85}
+              >
+                <MaterialCommunityIcons name="chevron-right" size={24} color={colors.navy} />
+              </TouchableOpacity>
+            )}
+            </View>
           </View>
         </View>
 
@@ -571,7 +617,7 @@ function LandingPage() {
                 <View key={step.title} style={[s.step, !isMid && s.stepMobile]}>
                   <View style={s.stepIconWrap}>
                     <View style={s.stepIconBox}>
-                      <Text style={s.stepIconEmoji}>{step.icon}</Text>
+                      <MaterialCommunityIcons name={step.icon as any} size={22} color={colors.primary} />
                     </View>
                     <View style={s.stepNumBadge}>
                       <Text style={s.stepNumText}>{i + 1}</Text>
@@ -595,8 +641,44 @@ function LandingPage() {
         >
           <View style={[s.innerWrap, isDesktop && s.innerWrapDesktop, isDesktop ? s.teachInner : s.teachInnerMobile]}>
             <View style={[s.teachPhotoWrap, !isDesktop && s.teachPhotoWrapMobile]}>
-              <View style={s.teachPhotoGrad}>
-                <Text style={s.teachPhotoEmoji}>👋</Text>
+              <View style={s.teachMockCard}>
+                <View style={s.teachMockTopBar}>
+                  <View style={s.teachMockLiveBadge}>
+                    <View style={s.teachMockLiveDot} />
+                    <Text style={s.teachMockLiveText}>LIVE</Text>
+                  </View>
+                  <View style={s.teachMockViewers}>
+                    <MaterialCommunityIcons name="eye-outline" size={12} color="rgba(255,255,255,0.75)" />
+                    <Text style={s.teachMockViewersText}>24 watching</Text>
+                  </View>
+                </View>
+
+                <View style={s.teachMockStage}>
+                  <View style={s.teachMockAvatarRing}>
+                    <View style={s.teachMockAvatar}>
+                      <MaterialCommunityIcons name="account" size={36} color="#FFFFFF" />
+                    </View>
+                  </View>
+                  <Text style={s.teachMockStageName}>You, teaching live</Text>
+                  <Text style={s.teachMockStageSub}>Sunrise Vinyasa Flow</Text>
+                </View>
+
+                <View style={s.teachMockThumbRow}>
+                  {["AC", "MR", "ZW", "JK"].map((initials, i) => (
+                    <View
+                      key={initials}
+                      style={[
+                        s.teachMockThumb,
+                        { backgroundColor: AVATAR_COLORS[i], marginLeft: i === 0 ? 0 : -10 },
+                      ]}
+                    >
+                      <Text style={s.teachMockThumbText}>{initials}</Text>
+                    </View>
+                  ))}
+                  <View style={[s.teachMockThumb, s.teachMockThumbMore]}>
+                    <Text style={s.teachMockThumbText}>+8</Text>
+                  </View>
+                </View>
               </View>
               <View style={s.teachPhotoBadge}>
                 <Text style={s.teachPhotoBadgeLabel}>Active Instructors</Text>
@@ -701,8 +783,8 @@ function LandingPage() {
         {/* ── CTA ───────────────────────────────────────────────────────────── */}
         <View style={[s.ctaSection, isDesktop && s.ctaSectionDesktop]}>
           <View style={[s.ctaCard, isDesktop && s.ctaCardDesktop]}>
-            <Text style={[s.ctaTitle, !isDesktop && s.ctaTitleMobile]}>Ready when you are.</Text>
-            <Text style={s.ctaSub}>Your first class is one click away.</Text>
+            <Text style={[s.ctaTitle, !isDesktop && s.ctaTitleMobile]}>Don't miss what's next.</Text>
+            <Text style={s.ctaSub}>New instructors, fresh classes, and product updates — straight to your inbox.</Text>
             {subscribed ? (
               <Text style={s.subscribedText}>🎉 You're in! Watch your inbox.</Text>
             ) : (
@@ -1074,7 +1156,6 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 9999,
   },
-  categoryPillIcon: { fontSize: 16 },
   categoryPillLabel: {
     fontSize: 14,
     fontFamily: fonts.bold,
@@ -1134,6 +1215,42 @@ const s = StyleSheet.create({
     textDecorationLine: "underline",
   },
   classCardsScroll: { gap: 16, paddingBottom: 4, paddingTop: 4 },
+  carouselWrap: { position: "relative" },
+  carouselFade: {
+    position: "absolute",
+    top: 0,
+    bottom: 4,
+    width: 64,
+    zIndex: 2,
+  },
+  carouselFadeLeft: {
+    left: 0,
+    backgroundImage: "linear-gradient(90deg, #F5F0EB 0%, rgba(245,240,235,0) 100%)",
+  } as any,
+  carouselFadeRight: {
+    right: 0,
+    backgroundImage: "linear-gradient(270deg, #F5F0EB 0%, rgba(245,240,235,0) 100%)",
+  } as any,
+  carouselArrow: {
+    position: "absolute",
+    top: "50%",
+    marginTop: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    zIndex: 3,
+    cursor: "pointer",
+  },
+  carouselArrowLeft: { left: 4 },
+  carouselArrowRight: { right: 4 },
   classCard: {
     width: 290,
     backgroundColor: "#FFFFFF",
@@ -1153,12 +1270,6 @@ const s = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     position: "relative",
-  },
-  classCardHeaderText: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    letterSpacing: 0.2,
   },
   priceTag: {
     position: "absolute",
@@ -1259,7 +1370,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  stepIconEmoji: { fontSize: 22 },
   stepNumBadge: {
     position: "absolute",
     top: -6,
@@ -1298,15 +1408,59 @@ const s = StyleSheet.create({
   teachInnerMobile: { gap: 40 },
   teachPhotoWrap: { flex: 1, position: "relative", minWidth: 280 },
   teachPhotoWrapMobile: { flex: 0, width: "100%", height: 260 },
-  teachPhotoGrad: {
+  teachMockCard: {
     flex: 1,
-    backgroundColor: "#C8EAE6",
+    backgroundColor: colors.navy,
+    borderRadius: 16,
+    minHeight: 360,
+    padding: 20,
+  },
+  teachMockTopBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  teachMockLiveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(220,38,38,0.18)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  teachMockLiveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#F87171" },
+  teachMockLiveText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", color: "#FCA5A5", letterSpacing: 0.5 },
+  teachMockViewers: { flexDirection: "row", alignItems: "center", gap: 5 },
+  teachMockViewersText: { fontSize: 12, fontFamily: fonts.regular, color: "rgba(255,255,255,0.75)" },
+  teachMockStage: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4 },
+  teachMockAvatarRing: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  teachMockAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  teachMockStageName: { fontSize: 15, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
+  teachMockStageSub: { fontSize: 12, fontFamily: fonts.regular, color: "rgba(255,255,255,0.6)" },
+  teachMockThumbRow: { flexDirection: "row", alignItems: "center", alignSelf: "flex-end" },
+  teachMockThumb: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 360,
+    borderWidth: 2,
+    borderColor: colors.navy,
   },
-  teachPhotoEmoji: { fontSize: 80 },
+  teachMockThumbMore: { backgroundColor: "rgba(255,255,255,0.15)" },
+  teachMockThumbText: { fontSize: 10, fontFamily: fonts.bold, fontWeight: "700", color: "#FFFFFF" },
   teachPhotoBadge: {
     position: "absolute",
     bottom: 20,
@@ -1365,21 +1519,26 @@ const s = StyleSheet.create({
   stepper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     backgroundColor: "#F0EDE8",
-    borderRadius: 8,
-    padding: 2,
+    borderRadius: 12,
+    padding: 4,
   },
   stepperBtn: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E4E0DA",
-    borderRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 9,
     cursor: "pointer",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
-  stepperBtnText: { fontSize: 18, fontFamily: fonts.regular, color: colors.navy, lineHeight: 20 },
+  stepperBtnText: { fontSize: 20, fontFamily: fonts.bold, fontWeight: "700", color: colors.primary, lineHeight: 22 },
   stepperVal: {
     width: 32,
     textAlign: "center",

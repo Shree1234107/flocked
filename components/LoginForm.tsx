@@ -113,6 +113,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
       style={[styles.root, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 24 }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <View style={styles.content}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
         <MaterialCommunityIcons name="arrow-left" size={20} color={colors.navy} />
       </TouchableOpacity>
@@ -219,6 +220,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
           )}
         </View>
       )}
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -228,6 +230,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cream,
     paddingHorizontal: 24,
+  },
+  content: {
+    width: "100%",
+    maxWidth: 440,
+    alignSelf: "center",
     gap: 24,
   },
   backBtn: {
