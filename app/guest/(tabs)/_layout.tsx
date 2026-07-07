@@ -12,7 +12,7 @@ export default function GuestTabsLayout() {
 
   if (isDesktop) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+      <View style={{ flex: 1, backgroundColor: "#FDFBF7" }}>
         <View
           style={{
             maxWidth: 1200,
@@ -22,8 +22,8 @@ export default function GuestTabsLayout() {
             flexDirection: "row",
             borderLeftWidth: 1,
             borderRightWidth: 1,
-            borderColor: "#E8E8E8",
-            backgroundColor: "#FFFFFF",
+            borderColor: "#F0EDE5",
+            backgroundColor: "#FDFBF7",
           }}
         >
           <WebSidebar role="guest" />
@@ -40,13 +40,13 @@ export default function GuestTabsLayout() {
       tabBar={Platform.OS === "web" ? () => null : undefined}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#0F0F0F",
+        tabBarActiveTintColor: "#00B4A6",
         tabBarInactiveTintColor: "#C0C0C0",
         tabBarStyle: Platform.OS === "web"
           ? { display: "none" }
           : {
-              backgroundColor: "#FFFFFF",
-              borderTopColor: "#E8E8E8",
+              backgroundColor: "#FDFBF7",
+              borderTopColor: "#F0EDE5",
               borderTopWidth: 1,
               height: 60 + insets.bottom,
               paddingBottom: insets.bottom + 4,

@@ -615,7 +615,7 @@ export default function GuestDiscoverTab() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1, backgroundColor: "#FDFBF7" },
 
   // ── Header ──────────────────────────────────────────────────────────────────
   header: {
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#EFF9F8",
     borderRadius: 20,
     flexWrap: "wrap",
   },
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderColor: "#F0EDE5",
     paddingHorizontal: 12,
     height: 40,
   },
@@ -702,11 +702,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderColor: "#F0EDE5",
     alignItems: "center",
     justifyContent: "center",
   },
-  filterBtnActive: { backgroundColor: "#0F0F0F", borderColor: "#0F0F0F" },
+  filterBtnActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
 
   // ── Filters ─────────────────────────────────────────────────────────────────
   desktopFiltersRow: {
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     gap: 8,
   },
-  desktopFilterDivider: { width: 1, height: 16, backgroundColor: "#E8E8E8", marginHorizontal: 4 },
+  desktopFilterDivider: { width: 1, height: 16, backgroundColor: "#F0EDE5", marginHorizontal: 4 },
   timeFilterRow: { paddingHorizontal: 24, paddingBottom: 8, gap: 0 },
   timeFilterRowInline: { gap: 0 },
   timeFilterBtn: {
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderColor: "#F0EDE5",
   },
   filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   filterChipText: {
@@ -769,7 +769,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#E8E8E8",
+    borderBottomColor: "#F0EDE5",
     gap: 24,
   },
   feedTabRowDesktop: { paddingHorizontal: 32 },
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
     marginBottom: -1,
   },
-  feedTabActive: { borderBottomColor: "#0F0F0F" },
+  feedTabActive: { borderBottomColor: "#00B4A6" },
   feedTabText: {
     fontSize: 14,
     fontFamily: fonts.medium,
@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   feedTabTextActive: {
-    color: "#0F0F0F",
+    color: "#00B4A6",
     fontFamily: fonts.bold,
     fontWeight: "700",
   },
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", textAlign: "center" },
   retryBtn: {
     borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderColor: "#F0EDE5",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
@@ -845,15 +845,15 @@ const styles = StyleSheet.create({
   // ── Class card ──────────────────────────────────────────────────────────────
   classCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderColor: "#F0EDE5",
     padding: 20,
     gap: 4,
     cursor: "pointer",
   } as any,
   classCardDesktop: {},
-  classCardHovered: { backgroundColor: "#FAFAFA" },
+  classCardHovered: { backgroundColor: "#F5F2EC" },
   cardTopRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -919,7 +919,7 @@ const styles = StyleSheet.create({
     color: "#E5484D",
   },
   spotsBadge: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F0EDE5",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -965,20 +965,20 @@ const styles = StyleSheet.create({
   featuredCard: {
     width: 140,
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E8E8E8",
+    borderColor: "#F0EDE5",
     padding: 16,
     alignItems: "center",
     gap: 6,
     cursor: "pointer",
   } as any,
-  featuredCardHovered: { backgroundColor: "#F5F5F5" },
+  featuredCardHovered: { backgroundColor: "#F5F2EC" },
   featuredAvatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F0EDE5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -997,7 +997,7 @@ const styles = StyleSheet.create({
   },
   featuredRating: { fontSize: 11, color: "#A08020", fontFamily: fonts.medium },
   featuredFollowBtn: {
-    backgroundColor: "#0F0F0F",
+    backgroundColor: "#00B4A6",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 4,

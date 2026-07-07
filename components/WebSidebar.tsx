@@ -102,9 +102,9 @@ export function WebSidebar({ role }: { role: Role }) {
 const styles = StyleSheet.create({
   sidebar: {
     width: 200,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FDFBF7",
     borderRightWidth: 1,
-    borderRightColor: "#E8E8E8",
+    borderRightColor: "#F0EDE5",
     paddingVertical: 24,
     flexDirection: "column",
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.primary,
     paddingLeft: 10,
   },
-  navItemHovered: { backgroundColor: "#F5F5F5" },
+  navItemHovered: { backgroundColor: "#F0EDE5" },
   navLabel: {
     fontSize: 14,
     fontFamily: fonts.regular,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
 
   bottom: {
     borderTopWidth: 1,
-    borderTopColor: "#E8E8E8",
+    borderTopColor: "#F0EDE5",
     paddingTop: 16,
     paddingHorizontal: 16,
     gap: 8,
