@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   content: {
     width: "100%",
-    maxWidth: 440,
+    maxWidth: 520,
     alignSelf: "center",
     gap: 24,
   },
