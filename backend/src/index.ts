@@ -1491,7 +1491,7 @@ app.delete("/api/classes/:id", requireAuth, requireUserRole(["host"]), async (re
   return ok(res, { id, cancelled: true });
 });
 
-app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async (req, res) => {
+app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest", "host"]), async (req, res) => {
   const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
   const userEmail = (req as AuthedRequest).userEmail;
