@@ -1496,15 +1496,18 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
   const userId = (req as AuthedRequest).userId;
   const userEmail = (req as AuthedRequest).userEmail;
 
+  // No PostgREST join — scheduled_classes has no registered FK to host_profiles.
+  // Fetch class and host profile separately (same pattern as GET /api/classes/:id).
   const { data: cls, error: fetchError } = await supabase
     .from("scheduled_classes")
-    .select(
-      `id, status, max_students, current_students, title, host_id, host:host_profiles(display_name), scheduled_at, duration_minutes`
-    )
+    .select("id, status, max_students, current_students, title, host_id, scheduled_at, duration_minutes")
     .eq("id", id)
     .single();
 
-  if (fetchError || !cls) return fail(res, "Class not found.", 404);
+  if (fetchError || !cls) {
+    console.error("[POST /api/classes/:id/join] class fetch:", fetchError?.message ?? "not found", "id:", id);
+    return fail(res, "Class not found.", 404);
+  }
   if (cls.status !== "upcoming" && cls.status !== "live") return fail(res, "This class is no longer available.");
   if (cls.current_students >= cls.max_students) return fail(res, "This class is full.");
 
@@ -1517,12 +1520,11 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
 
   if (existing) return fail(res, "You're already enrolled in this class.");
 
-  // Get student display name
-  const { data: studentProfile } = await supabase
-    .from("user_profiles")
-    .select("display_name")
-    .eq("user_id", userId)
-    .maybeSingle();
+  // Fetch host + student profiles in parallel
+  const [{ data: hostProfile }, { data: studentProfile }] = await Promise.all([
+    supabase.from("host_profiles").select("display_name").eq("user_id", cls.host_id).maybeSingle(),
+    supabase.from("user_profiles").select("display_name").eq("user_id", userId).maybeSingle(),
+  ]);
 
   const { error: enrollError } = await supabase
     .from("class_enrollments")
@@ -1551,7 +1553,7 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
   );
 
   // Send confirmation email (best-effort)
-  const instructorName = (cls.host as any)?.display_name ?? "Your instructor";
+  const instructorName = hostProfile?.display_name ?? "Your instructor";
   sendClassConfirmationEmail({
     to: userEmail,
     studentName: studentProfile?.display_name ?? "",
