@@ -781,6 +781,21 @@ app.post("/api/livekit/token", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
   const identity = `user-${userId}`;
 
+  // If the requester is the host of this scheduled class, mark it live.
+  const { data: cls } = await supabase
+    .from("scheduled_classes")
+    .select("id, host_id, status")
+    .eq("id", roomId)
+    .maybeSingle();
+
+  if (cls && cls.host_id === userId && cls.status !== "live" && cls.status !== "completed" && cls.status !== "cancelled") {
+    const { error: statusErr } = await supabase
+      .from("scheduled_classes")
+      .update({ status: "live" })
+      .eq("id", roomId);
+    if (statusErr) console.error("[POST /api/livekit/token] set live failed:", statusErr.message);
+  }
+
   const token = new AccessToken(livekitApiKey, livekitApiSecret, { identity });
   token.addGrant({ room: roomId, roomJoin: true, canPublish: true, canSubscribe: true });
 
@@ -1489,6 +1504,39 @@ app.delete("/api/classes/:id", requireAuth, requireUserRole(["host"]), async (re
   }
 
   return ok(res, { id, cancelled: true });
+});
+
+app.patch("/api/classes/:id/end", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const { data: cls, error: fetchError } = await supabase
+    .from("scheduled_classes")
+    .select("id, host_id, status")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !cls) return fail(res, "Class not found.", 404);
+  if (cls.host_id !== userId) return fail(res, "You can only end your own classes.", 403);
+  if (cls.status === "completed") return fail(res, "Class is already ended.");
+
+  const { error } = await supabase
+    .from("scheduled_classes")
+    .update({ status: "completed" })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[PATCH /api/classes/:id/end]", error.message);
+    return fail(res, "Failed to end class.", 500);
+  }
+
+  try {
+    await roomService.deleteRoom(id);
+  } catch (err) {
+    console.error("[PATCH /api/classes/:id/end] LiveKit deleteRoom failed:", err);
+  }
+
+  return ok(res, { id, ended: true });
 });
 
 app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest", "host"]), async (req, res) => {

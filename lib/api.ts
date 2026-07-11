@@ -257,6 +257,13 @@ export async function cancelClass(id: string): Promise<void> {
   );
 }
 
+export async function endClass(id: string): Promise<void> {
+  await apiFetch<{ id: string; ended: boolean }>(
+    `/api/classes/${encodeURIComponent(id)}/end`,
+    { method: "PATCH" }
+  );
+}
+
 export async function joinClass(id: string): Promise<ScheduledClass> {
   return apiFetch<ScheduledClass>(`/api/classes/${encodeURIComponent(id)}/join`, {
     method: "POST",

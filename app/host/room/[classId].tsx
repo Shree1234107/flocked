@@ -15,7 +15,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
-import { getLiveKitToken, endRoom as endRoomApi, listMyClasses } from "../../../lib/api";
+import { getLiveKitToken, endClass, listMyClasses } from "../../../lib/api";
 import {
   LiveKitRoom,
   VideoTrack,
@@ -66,7 +66,7 @@ export default function HostRoomScreen() {
 
   const handleEnd = useCallback(async () => {
     try {
-      await endRoomApi(classId);
+      await endClass(classId);
     } catch {
       // best-effort
     }
