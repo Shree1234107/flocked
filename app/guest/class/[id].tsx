@@ -1,8 +1,9 @@
 import { colors } from "../../../lib/colors";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -86,12 +87,24 @@ export default function ClassDetailScreen() {
   const [seriesEnrolled, setSeriesEnrolled] = useState(false);
   const [waitlistJoined, setWaitlistJoined] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUserId(session?.user?.id ?? null);
     });
   }, []);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.25, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -117,7 +130,21 @@ export default function ClassDetailScreen() {
     }
   }, [id]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  useFocusEffect(useCallback(() => {
+    loadData();
+    const poll = setInterval(async () => {
+      if (!id) return;
+      try {
+        const fresh = await getClass(id);
+        setCls(fresh);
+        setJoined(fresh.is_enrolled ?? false);
+        setSeriesEnrolled(fresh.is_series_enrolled ?? false);
+      } catch {
+        // silent — don't disrupt UX on poll failure
+      }
+    }, 15000);
+    return () => clearInterval(poll);
+  }, [loadData, id]));
 
   const handleJoinClass = async () => {
     if (!cls) return;
@@ -436,12 +463,43 @@ export default function ClassDetailScreen() {
 
           {/* Bottom action bar */}
           <View style={[styles.actionBar, { paddingBottom: insets.bottom + 16 }]}>
-            {joined && !isSeries ? (
-              <View style={styles.joinedConfirmed}>
-                <MaterialCommunityIcons name="check-circle" size={18} color="#0F7B6B" />
-                <Text style={styles.joinedConfirmedText}>You've joined this class</Text>
+            {/* ── Class is live and student is enrolled ── */}
+            {cls.status === "live" && (joined || seriesEnrolled) ? (
+              <TouchableOpacity
+                style={styles.joinLiveBtn}
+                onPress={() => router.push(`/guest/room/${cls.id}` as never)}
+                activeOpacity={0.88}
+              >
+                <MaterialCommunityIcons name="video-outline" size={20} color="#FFFFFF" />
+                <View style={styles.livePillBadge}>
+                  <Animated.View style={[styles.livePulseDot, { opacity: pulseAnim }]} />
+                  <Text style={styles.livePillText}>LIVE</Text>
+                </View>
+                <Text style={styles.joinLiveBtnText}>Join Live Class</Text>
+                <MaterialCommunityIcons name="arrow-right" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : (cls.status === "completed" || cls.status === "cancelled") ? (
+              /* ── Class has ended or was cancelled ── */
+              <View style={styles.classEndedState}>
+                <MaterialCommunityIcons name="flag-checkered" size={18} color="#B0B0B0" />
+                <Text style={styles.classEndedText}>This class has ended</Text>
+              </View>
+            ) : joined && !isSeries ? (
+              /* ── Enrolled, class upcoming ── */
+              <View style={styles.enrolledUpcomingWrap}>
+                <View style={styles.joinedConfirmed}>
+                  <MaterialCommunityIcons name="check-circle" size={18} color="#0F7B6B" />
+                  <Text style={styles.joinedConfirmedText}>
+                    You're enrolled — {formatSmartDate(cls.scheduled_at)}
+                  </Text>
+                </View>
+                <View style={styles.joinWhenLiveBtn}>
+                  <MaterialCommunityIcons name="video-outline" size={15} color="#B0B0B0" />
+                  <Text style={styles.joinWhenLiveBtnText}>Join when live</Text>
+                </View>
               </View>
             ) : isSeries && !seriesEnrolled ? (
+              /* ── Series enrollment ── */
               <View style={styles.seriesActionCol}>
                 {seriesPriceDollars && (
                   <TouchableOpacity
@@ -487,6 +545,7 @@ export default function ClassDetailScreen() {
                 )}
               </View>
             ) : isFull && !joined ? (
+              /* ── Class full ── */
               waitlistJoined ? (
                 <View style={styles.joinedConfirmed}>
                   <MaterialCommunityIcons name="check-circle" size={18} color="#0F7B6B" />
@@ -507,6 +566,7 @@ export default function ClassDetailScreen() {
                 </TouchableOpacity>
               )
             ) : !joined ? (
+              /* ── Not yet joined ── */
               <TouchableOpacity
                 style={[styles.primaryBtn, actionLoading && styles.btnDisabled]}
                 onPress={handleJoinClass}
@@ -824,4 +884,86 @@ const styles = StyleSheet.create({
   },
   btnDisabled: { opacity: 0.4 },
   chatSection: { gap: 8 },
+
+  // ── Join Live Class button ────────────────────────────────────────────────────
+  joinLiveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#00B4A6",
+    borderRadius: 10,
+    paddingVertical: 17,
+    gap: 10,
+    shadowColor: "#00B4A6",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  joinLiveBtnText: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: -0.2,
+  },
+  livePillBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  livePulseDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#FF3B30",
+  },
+  livePillText: {
+    fontSize: 10,
+    fontFamily: fonts.bold,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.8,
+  },
+
+  // ── Enrolled upcoming state ───────────────────────────────────────────────────
+  enrolledUpcomingWrap: { gap: 8 },
+  joinWhenLiveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 8,
+    paddingVertical: 12,
+    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+  },
+  joinWhenLiveBtnText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#B0B0B0",
+  },
+
+  // ── Class ended state ─────────────────────────────────────────────────────────
+  classEndedState: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
+  },
+  classEndedText: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    fontWeight: "500",
+    color: "#B0B0B0",
+  },
 });
