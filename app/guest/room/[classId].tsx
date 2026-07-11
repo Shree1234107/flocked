@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
-import { RoleGuard } from "../../../components/RoleGuard";
 import { getLiveKitToken, getClass } from "../../../lib/api";
 import {
   LiveKitRoom,
@@ -82,32 +81,29 @@ export default function GuestRoomScreen() {
 
   return (
     <AuthGate>
-      <RoleGuard requiredRole="guest">
-        {loading ? (
-          <ConnectingView />
-        ) : error || !token ? (
-          <ErrorView error={error} onBack={() => router.replace("/guest/(tabs)/index" as never)} />
-
-        ) : (
-          <View style={{ flex: 1 }}>
-            <LiveKitRoom
-              serverUrl={LIVEKIT_URL}
-              token={token}
-              connect={true}
-              video={true}
-              audio={true}
-              onDisconnected={handleLeave}
-            >
-              <RoomAudioRenderer />
-              <RoomUI
-                classTitle={classTitle}
-                instructorId={instructorId}
-                onLeave={handleLeave}
-              />
-            </LiveKitRoom>
-          </View>
-        )}
-      </RoleGuard>
+      {loading ? (
+        <ConnectingView />
+      ) : error || !token ? (
+        <ErrorView error={error} onBack={() => router.replace("/guest/(tabs)/index" as never)} />
+      ) : (
+        <View style={{ flex: 1 }}>
+          <LiveKitRoom
+            serverUrl={LIVEKIT_URL}
+            token={token}
+            connect={true}
+            video={true}
+            audio={true}
+            onDisconnected={handleLeave}
+          >
+            <RoomAudioRenderer />
+            <RoomUI
+              classTitle={classTitle}
+              instructorId={instructorId}
+              onLeave={handleLeave}
+            />
+          </LiveKitRoom>
+        </View>
+      )}
     </AuthGate>
   );
 }
