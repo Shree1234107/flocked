@@ -81,17 +81,19 @@ export default function HostRoomScreen() {
         ) : error || !token ? (
           <ErrorView error={error} onBack={() => router.replace("/host/(tabs)/index" as never)} />
         ) : (
-          <LiveKitRoom
-            serverUrl={LIVEKIT_URL}
-            token={token}
-            connect={true}
-            video={true}
-            audio={true}
-            onDisconnected={handleEnd}
-          >
-            <RoomAudioRenderer />
-            <RoomUI classTitle={classTitle} classId={classId} onEnd={handleEnd} />
-          </LiveKitRoom>
+          <View style={{ flex: 1 }}>
+            <LiveKitRoom
+              serverUrl={LIVEKIT_URL}
+              token={token}
+              connect={true}
+              video={true}
+              audio={true}
+              onDisconnected={handleEnd}
+            >
+              <RoomAudioRenderer />
+              <RoomUI classTitle={classTitle} classId={classId} onEnd={handleEnd} />
+            </LiveKitRoom>
+          </View>
         )}
       </RoleGuard>
     </AuthGate>
