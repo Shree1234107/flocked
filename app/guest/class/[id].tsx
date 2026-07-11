@@ -112,6 +112,7 @@ export default function ClassDetailScreen() {
     setError(null);
     try {
       const classData = await getClass(id);
+      console.log("[ClassDetail] loadData — status:", classData.status, "is_enrolled:", classData.is_enrolled, "is_series_enrolled:", classData.is_series_enrolled);
       setCls(classData);
       setJoined(classData.is_enrolled ?? false);
       setSeriesEnrolled(classData.is_series_enrolled ?? false);
@@ -136,11 +137,12 @@ export default function ClassDetailScreen() {
       if (!id) return;
       try {
         const fresh = await getClass(id);
+        console.log("[ClassDetail] poll — status:", fresh.status, "is_enrolled:", fresh.is_enrolled, "is_series_enrolled:", fresh.is_series_enrolled);
         setCls(fresh);
         setJoined(fresh.is_enrolled ?? false);
         setSeriesEnrolled(fresh.is_series_enrolled ?? false);
-      } catch {
-        // silent — don't disrupt UX on poll failure
+      } catch (err) {
+        console.warn("[ClassDetail] poll failed:", err instanceof Error ? err.message : err);
       }
     }, 15000);
     return () => clearInterval(poll);
