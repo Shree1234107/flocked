@@ -1505,7 +1505,7 @@ app.post("/api/classes/:id/join", requireAuth, requireUserRole(["guest"]), async
     .single();
 
   if (fetchError || !cls) return fail(res, "Class not found.", 404);
-  if (cls.status !== "upcoming") return fail(res, "This class is no longer available.");
+  if (cls.status !== "upcoming" && cls.status !== "live") return fail(res, "This class is no longer available.");
   if (cls.current_students >= cls.max_students) return fail(res, "This class is full.");
 
   const { data: existing } = await supabase
