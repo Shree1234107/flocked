@@ -788,9 +788,20 @@ app.post("/api/livekit/token", requireAuth, async (req, res) => {
     .eq("id", roomId)
     .maybeSingle();
 
-  const isHost = !!(cls && cls.host_id === userId);
+  let isHost = !!(cls && cls.host_id === userId);
 
-  if (isHost && cls!.status !== "live" && cls!.status !== "cancelled") {
+  // Fallback: if the requester is a host by role (e.g. dev bypass account or a host
+  // testing a class they didn't create), still stamp role:"host" on the token.
+  if (!isHost) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (profile?.role === "host") isHost = true;
+  }
+
+  if (isHost && cls && cls.status !== "live" && cls.status !== "cancelled") {
     const { error: statusErr } = await supabase
       .from("scheduled_classes")
       .update({ status: "live" })

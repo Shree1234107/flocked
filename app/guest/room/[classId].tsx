@@ -150,12 +150,15 @@ function RoomUI({
     ? (cameraTracks.find((t: any) => t.participant?.identity === instructorParticipant.identity) ?? null)
     : null;
 
-  // Other remote participants (not the instructor)
+  // Other remote participants (not the instructor).
+  // Guard against null: when instructorParticipant is null, no one is excluded —
+  // the strip stays empty and "Waiting for instructor…" shows in the focus tile.
   const otherParticipants = remoteParticipants.filter(
-    (p: any) => p.identity !== instructorParticipant?.identity
+    (p: any) => !instructorParticipant || p.identity !== instructorParticipant.identity
   );
   const otherTracks = cameraTracks.filter(
-    (t: any) => !t.participant?.isLocal && t.participant?.identity !== instructorParticipant?.identity
+    (t: any) => !t.participant?.isLocal &&
+      (!instructorParticipant || t.participant?.identity !== instructorParticipant.identity)
   );
 
   const totalInRoom = remoteParticipants.length + 1;
