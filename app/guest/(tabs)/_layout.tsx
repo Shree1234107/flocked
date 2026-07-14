@@ -1,3 +1,4 @@
+import { colors } from "../../../lib/colors";
 import { Slot, Tabs } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,7 +13,7 @@ export default function GuestTabsLayout() {
 
   if (isDesktop) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#FDFBF7" }}>
+      <View style={{ flex: 1, backgroundColor: colors.cream }}>
         <View
           style={{
             maxWidth: 1200,
@@ -22,8 +23,8 @@ export default function GuestTabsLayout() {
             flexDirection: "row",
             borderLeftWidth: 1,
             borderRightWidth: 1,
-            borderColor: "#F0EDE5",
-            backgroundColor: "#FDFBF7",
+            borderColor: "#EDE9E3",
+            backgroundColor: colors.cream,
           }}
         >
           <WebSidebar role="guest" />
@@ -40,13 +41,13 @@ export default function GuestTabsLayout() {
       tabBar={Platform.OS === "web" ? () => null : undefined}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#00B4A6",
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: "#C0C0C0",
         tabBarStyle: Platform.OS === "web"
           ? { display: "none" }
           : {
-              backgroundColor: "#FDFBF7",
-              borderTopColor: "#F0EDE5",
+              backgroundColor: colors.cream,
+              borderTopColor: "#EDE9E3",
               borderTopWidth: 1,
               height: 60 + insets.bottom,
               paddingBottom: insets.bottom + 4,

@@ -2,6 +2,7 @@ import { View, StyleSheet } from "react-native";
 import { Text } from "react-native-paper";
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
+import { colors } from "../../../lib/colors";
 
 export default function HostEditFee() {
   return (
@@ -16,6 +17,6 @@ export default function HostEditFee() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#FFFFFF" },
-  text: { color: "#2D2D2D" },
+  container: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream },
+  text: { color: colors.navy },
 });

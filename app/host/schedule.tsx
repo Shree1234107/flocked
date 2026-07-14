@@ -301,9 +301,9 @@ export default function ScheduleClassScreen() {
             style={{
               padding: "10px 14px",
               borderRadius: 6,
-              border: "1px solid #F0EDE5",
+              border: "1px solid #EDE9E3",
               fontSize: 14,
-              color: "#1A1A1A",
+              color: colors.navy,
               backgroundColor: "#FFFFFF",
               width: "100%",
               boxSizing: "border-box",
@@ -550,7 +550,7 @@ export default function ScheduleClassScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#FDFBF7" },
+  flex: { flex: 1, backgroundColor: colors.cream },
   webContainer: {
     flex: 1,
     maxWidth: 560,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   titleDivider: {
     height: 1,
-    backgroundColor: "#F0EDE5",
+    backgroundColor: "#EDE9E3",
     marginTop: -8,
   },
 
@@ -591,11 +591,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     alignItems: "center",
   },
-  typeBtnActive: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  typeBtnHovered: { backgroundColor: "#F0EDE5" },
+  typeBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  typeBtnHovered: { backgroundColor: "#EDE9E3" },
   typeBtnText: {
     fontSize: 13,
     fontFamily: fonts.medium,
@@ -618,10 +618,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
   },
-  chipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
-  chipHovered: { backgroundColor: "#F0EDE5" },
+  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipHovered: { backgroundColor: "#EDE9E3" },
   chipText: { fontSize: 13, fontFamily: fonts.medium, fontWeight: "500", color: "#6B6B6B" },
   chipTextSelected: { color: "#FFFFFF", fontFamily: fonts.bold, fontWeight: "700" },
 
@@ -633,11 +633,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     alignItems: "center",
     gap: 2,
   },
-  dateChipSelected: { backgroundColor: "#00B4A6", borderColor: "#00B4A6" },
+  dateChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   dateChipTop: { fontSize: 10, fontFamily: fonts.medium, fontWeight: "500", color: "#6B6B6B" },
   dateChipTopSelected: { color: "#FFFFFF" },
   dateChipNum: { fontSize: 18, fontFamily: fonts.bold, fontWeight: "700", color: "#0F0F0F", lineHeight: 24 },
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: "row", gap: 12 },
 
   previewBox: {
-    backgroundColor: "#F0EDE5",
+    backgroundColor: "#EDE9E3",
     borderRadius: 6,
     padding: 14,
     gap: 4,
@@ -667,11 +667,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     alignItems: "center",
     justifyContent: "center",
   },
-  counterBtnHovered: { backgroundColor: "#F0EDE5" },
+  counterBtnHovered: { backgroundColor: "#EDE9E3" },
   counterBtnText: { fontSize: 18, fontFamily: fonts.medium, fontWeight: "500", color: "#0F0F0F", lineHeight: 24 },
   counterValue: {
     fontSize: 22,

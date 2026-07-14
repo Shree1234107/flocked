@@ -450,7 +450,7 @@ export default function InstructorHomeTab() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FDFBF7" },
+  root: { flex: 1, backgroundColor: colors.cream },
 
   // ── Header ──────────────────────────────────────────────────────────────────
   header: {
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     borderTopWidth: 2,
     borderTopColor: colors.primary,
   },
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   tabRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#F0EDE5",
+    borderBottomColor: "#EDE9E3",
     paddingHorizontal: 24,
     marginBottom: 4,
   },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
     marginBottom: -1,
   },
-  tabBtnActive: { borderBottomColor: "#00B4A6" },
+  tabBtnActive: { borderBottomColor: colors.primary },
   tabBtnText: {
     fontSize: 14,
     fontFamily: fonts.medium,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     color: "#6B6B6B",
   },
   tabBtnTextActive: {
-    color: "#00B4A6",
+    color: colors.primary,
     fontFamily: fonts.bold,
     fontWeight: "700",
   },
@@ -549,13 +549,13 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 6,
     marginTop: 4,
   },
-  retryText: { fontSize: 13, fontFamily: fonts.medium, color: "#1A1A1A" },
+  retryText: { fontSize: 13, fontFamily: fonts.medium, color: colors.navy },
   emptyTitle: {
     fontSize: 15,
     fontFamily: fonts.medium,
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   emptySubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
   emptyPastSubtext: { fontSize: 13, fontFamily: fonts.regular, color: "#B0B0B0" },
   emptyScheduleBtn: {
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 6,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   classRow: {
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0EDE5",
+    borderBottomColor: "#EDE9E3",
     gap: 8,
   },
   classRowLeft: {
@@ -644,12 +644,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     backgroundColor: "#FFFFFF",
   },
   chatBtnActive: {
-    backgroundColor: "#00B4A6",
-    borderColor: "#00B4A6",
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   chatBtnText: {
     fontSize: 12,
@@ -663,13 +663,13 @@ const styles = StyleSheet.create({
   progressRow: { paddingLeft: 20 },
   progressBg: {
     height: 3,
-    backgroundColor: "#F0EDE5",
+    backgroundColor: "#EDE9E3",
     borderRadius: 2,
     overflow: "hidden",
   },
   progressFill: {
     height: 3,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     borderRadius: 2,
   },
   progressFillFull: { backgroundColor: "#E5484D" },
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
   },
   confirmKeepText: {
     fontSize: 12,
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
   // ── Series block ─────────────────────────────────────────────────────────────
   seriesBlock: {
     borderWidth: 1,
-    borderColor: "#F0EDE5",
+    borderColor: "#EDE9E3",
     borderRadius: 16,
     padding: 16,
     marginBottom: 8,
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#F0EDE5",
+    borderTopColor: "#EDE9E3",
     marginTop: 4,
   },
   seriesWeekNum: {
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 6,
-    backgroundColor: "#00B4A6",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
