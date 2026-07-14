@@ -19,4 +19,4 @@ export function RoomAudioRenderer() {
   return null;
 }
 
-export { ConnectionState, Track } from "livekit-client";
+export { ConnectionState, Track, VideoPresets } from "livekit-client";

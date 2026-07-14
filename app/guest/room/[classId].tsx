@@ -23,6 +23,7 @@ import {
   useLocalParticipant,
   useTracks,
   Track,
+  VideoPresets,
   AudioSession,
 } from "../../../lib/livekit";
 
@@ -105,6 +106,11 @@ export default function GuestRoomScreen() {
               videoCaptureDefaults: {
                 resolution: { width: 1280, height: 720, frameRate: 30 },
                 facingMode: "user",
+              },
+              publishDefaults: {
+                videoSimulcastLayers: [VideoPresets.h720, VideoPresets.h540, VideoPresets.h216],
+                videoCodec: "h264",
+                simulcast: true,
               },
             } as any}
             onError={(err: any) => console.error("[GuestRoom] LiveKit error:", err?.message ?? err)}

@@ -15,4 +15,4 @@ export {
   RoomAudioRenderer,
 } from "@livekit/components-react";
 
-export { Track, ConnectionState } from "livekit-client";
+export { Track, ConnectionState, VideoPresets } from "livekit-client";

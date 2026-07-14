@@ -24,6 +24,7 @@ import {
   useLocalParticipant,
   useTracks,
   Track,
+  VideoPresets,
   AudioSession,
 } from "../../../lib/livekit";
 
@@ -94,6 +95,14 @@ export default function HostRoomScreen() {
                 videoCaptureDefaults: {
                   resolution: { width: 1280, height: 720, frameRate: 30 },
                   facingMode: "user",
+                },
+                // Explicit simulcast layers ensure the server always has a 720p tier
+                // for the large focus tile even when strip subscribers pull a lower layer.
+                // Without this, LiveKit v2 defaults to a single-layer publish.
+                publishDefaults: {
+                  videoSimulcastLayers: [VideoPresets.h720, VideoPresets.h540, VideoPresets.h216],
+                  videoCodec: "h264",
+                  simulcast: true,
                 },
               } as any}
               onError={(err: any) => console.error("[HostRoom] LiveKit error:", err?.message ?? err)}
