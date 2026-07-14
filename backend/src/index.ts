@@ -790,15 +790,16 @@ app.post("/api/livekit/token", requireAuth, async (req, res) => {
 
   let isHost = !!(cls && cls.host_id === userId);
 
-  // Fallback: if the requester is a host by role (e.g. dev bypass account or a host
-  // testing a class they didn't create), still stamp role:"host" on the token.
+  // Fallback: if the requester is a host by role but not the class creator (e.g. dev bypass
+  // account, or a host testing a class they didn't create), still stamp role:"host" on the token.
+  // Check both user_profiles.role and host_profiles.is_approved in parallel — dev bypass accounts
+  // are seeded with host_profiles records but may not have user_profiles rows.
   if (!isHost) {
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (profile?.role === "host") isHost = true;
+    const [{ data: profile }, { data: hostProfile }] = await Promise.all([
+      supabase.from("user_profiles").select("role").eq("user_id", userId).maybeSingle(),
+      supabase.from("host_profiles").select("is_approved").eq("user_id", userId).maybeSingle(),
+    ]);
+    if (profile?.role === "host" || hostProfile?.is_approved === true) isHost = true;
   }
 
   if (isHost && cls && cls.status !== "live" && cls.status !== "cancelled") {

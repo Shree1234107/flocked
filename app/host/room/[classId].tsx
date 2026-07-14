@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -119,13 +120,17 @@ function RoomUI({
   onEnd: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
   const participants = useParticipants();
   const cameraTracks = useTracks([Track.Source.Camera]);
 
-  const localCameraTrack = cameraTracks.find((t: any) => t.participant?.isLocal);
-  const remoteParticipants = participants.filter((p: any) => !p.isLocal);
-  const remoteCameraTracks = cameraTracks.filter((t: any) => !t.participant?.isLocal);
+  // Match by identity — avoids relying on isLocal which can be undefined on
+  // track reference objects returned by useTracks in some LiveKit builds.
+  const localId = localParticipant?.identity;
+  const localCameraTrack = cameraTracks.find((t: any) => t.participant?.identity === localId);
+  const remoteParticipants = participants.filter((p: any) => p.identity !== localId);
+  const remoteCameraTracks = cameraTracks.filter((t: any) => t.participant?.identity !== localId);
 
   const toggleMic = useCallback(async () => {
     await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled);
@@ -135,8 +140,13 @@ function RoomUI({
     await localParticipant?.setCameraEnabled(!isCameraEnabled);
   }, [localParticipant, isCameraEnabled]);
 
+  // On web, LiveKitRoom renders a plain <div> with no height or flex context,
+  // so flex:1 on child Views has nothing to fill against → white space below bar.
+  // Explicit pixel height bypasses that entirely; on native flex:1 works fine.
+  const heightStyle = Platform.OS === "web" ? { height: windowHeight } as any : {};
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
+    <View style={[styles.root, { paddingTop: insets.top }, heightStyle]}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <View style={styles.topBarInfo}>

@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -136,17 +137,27 @@ function RoomUI({
   onLeave: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
   const cameraTracks = useTracks([Track.Source.Camera]);
 
-  const remoteParticipants = participants.filter((p) => !(p as any).isLocal);
-  const localCameraTrack = cameraTracks.find((t: any) => t.participant?.isLocal);
+  // Match by identity — avoids isLocal property unreliability on track references.
+  const localId = localParticipant?.identity;
+  const remoteParticipants = participants.filter((p: any) => p.identity !== localId);
+  const localCameraTrack = cameraTracks.find((t: any) => t.participant?.identity === localId);
 
-  // Identify instructor by metadata.role = "host" — reliable regardless of getClass() success.
-  const instructorParticipant = remoteParticipants.find((p: any) => {
+  // Primary: metadata.role === "host" stamped at token issuance.
+  const instructorByMetadata = remoteParticipants.find((p: any) => {
     try { return JSON.parse(p.metadata ?? "{}").role === "host"; } catch { return false; }
   }) ?? null;
+
+  // Secondary: identity match using host_id from getClass() (works when metadata is absent/delayed).
+  const instructorByIdentity = instructorId
+    ? remoteParticipants.find((p: any) => p.identity === `user-${instructorId}`) ?? null
+    : null;
+
+  const instructorParticipant = instructorByMetadata ?? instructorByIdentity ?? null;
 
   const instructorTrack = instructorParticipant
     ? (cameraTracks.find((t: any) => t.participant?.identity === instructorParticipant.identity) ?? null)
@@ -158,7 +169,7 @@ function RoomUI({
     (p: any) => !instructorParticipant || p.identity !== instructorParticipant.identity
   );
   const otherTracks = cameraTracks.filter(
-    (t: any) => !t.participant?.isLocal &&
+    (t: any) => t.participant?.identity !== localId &&
       (!instructorParticipant || t.participant?.identity !== instructorParticipant.identity)
   );
 
@@ -179,8 +190,13 @@ function RoomUI({
   const totalInRoom = remoteParticipants.length + 1;
 
   useEffect(() => {
-    console.log("[GuestRoomUI] remote participants:", remoteParticipants.map((p: any) => ({ identity: p.identity, metadata: p.metadata })));
+    console.log("[GuestRoomUI] remote participants:", remoteParticipants.map((p: any) => ({
+      identity: p.identity, metadata: p.metadata,
+      parsedRole: (() => { try { return JSON.parse(p.metadata ?? "{}").role; } catch { return "parse-error"; } })(),
+    })));
     console.log("[GuestRoomUI] cam track identities:", cameraTracks.map((t: any) => t.participant?.identity));
+    console.log("[GuestRoomUI] instructorByMetadata:", instructorByMetadata ? `FOUND (${instructorByMetadata.identity})` : "NOT FOUND");
+    console.log("[GuestRoomUI] instructorByIdentity:", instructorByIdentity ? `FOUND (${instructorByIdentity.identity})` : `NOT FOUND (instructorId=${instructorId})`);
     console.log("[GuestRoomUI] instructorParticipant:", instructorParticipant ? `FOUND (${instructorParticipant.identity})` : "NOT FOUND");
     console.log("[GuestRoomUI] instructorTrack:", instructorTrack ? "FOUND" : "NOT FOUND");
   }, [participants.length, cameraTracks.length, instructorParticipant?.identity, !!instructorTrack]);
@@ -193,8 +209,11 @@ function RoomUI({
     try { await localParticipant?.setCameraEnabled(!isCameraEnabled); } catch { /* ignore */ }
   }, [localParticipant, isCameraEnabled]);
 
+  // Same explicit height fix as host room — LiveKitRoom div has no height context on web.
+  const heightStyle = Platform.OS === "web" ? { height: windowHeight } as any : {};
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
+    <View style={[styles.root, { paddingTop: insets.top }, heightStyle]}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <View style={styles.topBarInfo}>
