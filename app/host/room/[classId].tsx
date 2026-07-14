@@ -223,8 +223,8 @@ function RoomUI({
         </View>
       </View>
 
-      {/* Controls — sibling of videoSection, never clipped */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      {/* Controls — fixed-height last child of root, never pushed off screen */}
+      <View style={[styles.controlRow, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <ControlButton
           icon={isMicrophoneEnabled ? "microphone" : "microphone-off"}
           label={isMicrophoneEnabled ? "Mute" : "Unmute"}
@@ -237,14 +237,10 @@ function RoomUI({
           onPress={toggleCamera}
           active={isCameraEnabled}
         />
-        <Pressable style={styles.hangupBtn} onPress={onEnd}>
+        <Pressable style={styles.endBtn} onPress={onEnd}>
           <MaterialCommunityIcons name="phone-hangup" size={22} color="#FFFFFF" />
-          <Text style={styles.hangupText}>End Class</Text>
+          <Text style={styles.endBtnText}>End Class</Text>
         </Pressable>
-        <View style={styles.participantBadge}>
-          <MaterialCommunityIcons name="account-group-outline" size={14} color="#CCCCCC" />
-          <Text style={styles.participantCount}>{remoteParticipants.length}</Text>
-        </View>
       </View>
     </View>
   );
@@ -403,30 +399,27 @@ const styles = StyleSheet.create({
   },
   smallTileName: { fontSize: 10, fontWeight: "600", color: "#FFFFFF", textAlign: "center" },
 
-  // Controls
-  bottomBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-around",
-    backgroundColor: "#111111", paddingTop: 10, paddingHorizontal: 12, gap: 4,
+  // Controls — single consolidated row
+  controlRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 12, padding: 16,
+    backgroundColor: "#111111",
     borderTopWidth: 1, borderTopColor: "#1A1A1A",
   },
   controlBtn: {
     alignItems: "center", gap: 4,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 10, backgroundColor: "#2C2C2E", minWidth: 64,
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderRadius: 12, backgroundColor: "#2C2C2E", minWidth: 72,
   },
   controlBtnOff: { backgroundColor: "#3D1515" },
   controlBtnPressed: { opacity: 0.7 },
   controlLabel: { fontSize: 11, fontWeight: "500", color: "#FFFFFF" },
   controlLabelOff: { color: "#888888" },
-  hangupBtn: {
+  endBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#EF4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: "#EF4444", paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12,
   },
-  hangupText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
-  participantBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 8,
-  },
-  participantCount: { fontSize: 13, fontWeight: "600", color: "#CCCCCC" },
+  endBtnText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
 
   // Loading / error
   fullCenter: {
