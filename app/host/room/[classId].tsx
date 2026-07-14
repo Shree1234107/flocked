@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -129,7 +128,6 @@ function RoomUI({
   onEnd: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
   const participants = useParticipants();
   const cameraTracks = useTracks([Track.Source.Camera]);
@@ -149,13 +147,8 @@ function RoomUI({
     await localParticipant?.setCameraEnabled(!isCameraEnabled);
   }, [localParticipant, isCameraEnabled]);
 
-  // On web, LiveKitRoom renders a plain <div> with no height or flex context,
-  // so flex:1 on child Views has nothing to fill against → white space below bar.
-  // Explicit pixel height bypasses that entirely; on native flex:1 works fine.
-  const heightStyle = Platform.OS === "web" ? { height: windowHeight } as any : {};
-
   return (
-    <View style={[styles.root, { paddingTop: insets.top }, heightStyle]}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <View style={styles.topBarInfo}>
@@ -409,9 +402,9 @@ const styles = StyleSheet.create({
   controlBtn: {
     alignItems: "center", gap: 4,
     paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 10, backgroundColor: "rgba(255,255,255,0.08)", minWidth: 64,
+    borderRadius: 10, backgroundColor: "#2C2C2E", minWidth: 64,
   },
-  controlBtnOff: { backgroundColor: "rgba(0,0,0,0.25)" },
+  controlBtnOff: { backgroundColor: "#3D1515" },
   controlBtnPressed: { opacity: 0.7 },
   controlLabel: { fontSize: 11, fontWeight: "500", color: "#FFFFFF" },
   controlLabelOff: { color: "#888888" },

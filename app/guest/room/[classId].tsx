@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -143,7 +142,6 @@ function RoomUI({
   onLeave: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
   const cameraTracks = useTracks([Track.Source.Camera]);
@@ -215,11 +213,8 @@ function RoomUI({
     try { await localParticipant?.setCameraEnabled(!isCameraEnabled); } catch { /* ignore */ }
   }, [localParticipant, isCameraEnabled]);
 
-  // Same explicit height fix as host room — LiveKitRoom div has no height context on web.
-  const heightStyle = Platform.OS === "web" ? { height: windowHeight } as any : {};
-
   return (
-    <View style={[styles.root, { paddingTop: insets.top }, heightStyle]}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <View style={styles.topBarInfo}>
@@ -468,9 +463,9 @@ const styles = StyleSheet.create({
   controlBtn: {
     alignItems: "center", gap: 4,
     paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 10, backgroundColor: "rgba(255,255,255,0.08)", minWidth: 64,
+    borderRadius: 10, backgroundColor: "#2C2C2E", minWidth: 64,
   },
-  controlBtnOff: { backgroundColor: "rgba(0,0,0,0.25)" },
+  controlBtnOff: { backgroundColor: "#3D1515" },
   controlBtnPressed: { opacity: 0.7 },
   controlLabel: { fontSize: 11, fontWeight: "500", color: "#FFFFFF" },
   controlLabelOff: { color: "#888888" },
