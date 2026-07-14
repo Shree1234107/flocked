@@ -148,75 +148,82 @@ function RoomUI({
   }, [localParticipant, isCameraEnabled]);
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <View style={styles.topBarInfo}>
-          <Text style={styles.topTitle} numberOfLines={1}>{classTitle}</Text>
-          <Text style={styles.topSub}>
-            {remoteParticipants.length} student{remoteParticipants.length !== 1 ? "s" : ""}
-          </Text>
+    <View style={styles.root}>
+      {/*
+        videoSection takes all available space and clips its contents.
+        bottomBar is a SIBLING below it — never inside the clipped region —
+        so overflow:hidden on videoSection can never hide the controls.
+      */}
+      <View style={[styles.videoSection, { paddingTop: insets.top }]}>
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <View style={styles.topBarInfo}>
+            <Text style={styles.topTitle} numberOfLines={1}>{classTitle}</Text>
+            <Text style={styles.topSub}>
+              {remoteParticipants.length} student{remoteParticipants.length !== 1 ? "s" : ""}
+            </Text>
+          </View>
+          <Pressable style={styles.endBtnTop} onPress={onEnd}>
+            <Text style={styles.endBtnTopText}>End Class</Text>
+          </Pressable>
         </View>
-        <Pressable style={styles.endBtnTop} onPress={onEnd}>
-          <Text style={styles.endBtnTopText}>End Class</Text>
-        </Pressable>
-      </View>
 
-      {/* Large self-view — instructor sees themselves in the focus tile */}
-      <View style={styles.focusTile}>
-        {isCameraEnabled && localCameraTrack ? (
-          <VideoTrack
-            trackRef={localCameraTrack as any}
-            style={
-              Platform.OS === "web"
-                ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
-                : StyleSheet.absoluteFill
-            }
-          />
-        ) : (
-          <View style={styles.focusPlaceholder}>
-            <MaterialCommunityIcons name="video-off-outline" size={48} color="#444444" />
-            <Text style={styles.focusPlaceholderText}>Camera Off</Text>
+        {/* Large self-view — instructor sees themselves in the focus tile */}
+        <View style={styles.focusTile}>
+          {isCameraEnabled && localCameraTrack ? (
+            <VideoTrack
+              trackRef={localCameraTrack as any}
+              style={
+                Platform.OS === "web"
+                  ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
+                  : StyleSheet.absoluteFill
+              }
+            />
+          ) : (
+            <View style={styles.focusPlaceholder}>
+              <MaterialCommunityIcons name="video-off-outline" size={48} color="#444444" />
+              <Text style={styles.focusPlaceholderText}>Camera Off</Text>
+            </View>
+          )}
+          <View style={styles.focusNameBar}>
+            <Text style={styles.focusName} numberOfLines={1}>You (Instructor)</Text>
+            <View style={styles.liveBadge}>
+              <Text style={styles.liveBadgeText}>LIVE</Text>
+            </View>
           </View>
-        )}
-        <View style={styles.focusNameBar}>
-          <Text style={styles.focusName} numberOfLines={1}>You (Instructor)</Text>
-          <View style={styles.liveBadge}>
-            <Text style={styles.liveBadgeText}>LIVE</Text>
-          </View>
+        </View>
+
+        {/* Student strip — fixed 140px, horizontally scrollable */}
+        <View style={styles.strip}>
+          {remoteParticipants.length === 0 ? (
+            <View style={styles.stripEmpty}>
+              <MaterialCommunityIcons name="account-clock-outline" size={22} color="#444444" />
+              <Text style={styles.stripEmptyText}>Waiting for students…</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.stripContent}
+            >
+              {remoteParticipants.map((p: any) => {
+                const trackRef = remoteCameraTracks.find(
+                  (t: any) => t.participant?.identity === p.identity
+                ) ?? null;
+                return (
+                  <SmallTile
+                    key={p.identity}
+                    trackRef={trackRef}
+                    label={p.name ?? p.identity ?? "Student"}
+                  />
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
       </View>
 
-      {/* Student strip — fixed 140px, horizontally scrollable */}
-      <View style={styles.strip}>
-        {remoteParticipants.length === 0 ? (
-          <View style={styles.stripEmpty}>
-            <MaterialCommunityIcons name="account-clock-outline" size={22} color="#444444" />
-            <Text style={styles.stripEmptyText}>Waiting for students…</Text>
-          </View>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.stripContent}
-          >
-            {remoteParticipants.map((p: any) => {
-              const trackRef = remoteCameraTracks.find(
-                (t: any) => t.participant?.identity === p.identity
-              ) ?? null;
-              return (
-                <SmallTile
-                  key={p.identity}
-                  trackRef={trackRef}
-                  label={p.name ?? p.identity ?? "Student"}
-                />
-              );
-            })}
-          </ScrollView>
-        )}
-      </View>
-
-      {/* Controls */}
+      {/* Controls — sibling of videoSection, never clipped */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
         <ControlButton
           icon={isMicrophoneEnabled ? "microphone" : "microphone-off"}
@@ -326,7 +333,10 @@ function getInitials(name: string): string {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0A0A0A", overflow: "hidden" },
+  // root has no overflow:hidden — bottomBar must never be clipped
+  root: { flex: 1, flexDirection: "column", backgroundColor: "#0A0A0A" },
+  // videoSection takes all space above controls and clips its own contents
+  videoSection: { flex: 1, overflow: "hidden" },
 
   // Top bar
   topBar: {

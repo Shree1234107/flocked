@@ -214,69 +214,76 @@ function RoomUI({
   }, [localParticipant, isCameraEnabled]);
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <View style={styles.topBarInfo}>
-          <Text style={styles.topTitle} numberOfLines={1}>{classTitle}</Text>
-          <Text style={styles.topSub}>{totalInRoom} in room</Text>
+    <View style={styles.root}>
+      {/*
+        videoSection takes all space and clips its contents.
+        bottomBar is a SIBLING below it — never inside the clipped region —
+        so overflow:hidden on videoSection can never hide the controls.
+      */}
+      <View style={[styles.videoSection, { paddingTop: insets.top }]}>
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <View style={styles.topBarInfo}>
+            <Text style={styles.topTitle} numberOfLines={1}>{classTitle}</Text>
+            <Text style={styles.topSub}>{totalInRoom} in room</Text>
+          </View>
+          <Pressable style={styles.leaveBtnTop} onPress={onLeave}>
+            <Text style={styles.leaveBtnTopText}>Leave</Text>
+          </Pressable>
         </View>
-        <Pressable style={styles.leaveBtnTop} onPress={onLeave}>
-          <Text style={styles.leaveBtnTopText}>Leave</Text>
-        </Pressable>
-      </View>
 
-      {/* Instructor focus tile — fills remaining space */}
-      <View style={styles.focusTile}>
-        {instructorParticipant ? (
-          instructorTrack ? (
-            <VideoTrack
-              trackRef={instructorTrack as any}
-              style={
-                Platform.OS === "web"
-                  ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
-                  : StyleSheet.absoluteFill
-              }
-            />
+        {/* Instructor focus tile — fills remaining space */}
+        <View style={styles.focusTile}>
+          {instructorParticipant ? (
+            instructorTrack ? (
+              <VideoTrack
+                trackRef={instructorTrack as any}
+                style={
+                  Platform.OS === "web"
+                    ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
+                    : StyleSheet.absoluteFill
+                }
+              />
+            ) : (
+              <View style={styles.focusAvatar}>
+                <Text style={styles.focusInitials}>
+                  {getInitials(instructorParticipant.name ?? "Instructor")}
+                </Text>
+                <Text style={styles.focusAvatarSub}>Camera off</Text>
+              </View>
+            )
           ) : (
-            <View style={styles.focusAvatar}>
-              <Text style={styles.focusInitials}>
-                {getInitials(instructorParticipant.name ?? "Instructor")}
+            <View style={styles.focusWaiting}>
+              <MaterialCommunityIcons name="account-clock-outline" size={52} color="#444444" />
+              <Text style={styles.focusWaitingText}>Waiting for instructor…</Text>
+            </View>
+          )}
+          {instructorParticipant && (
+            <View style={styles.focusNameBar}>
+              <Text style={styles.focusName} numberOfLines={1}>
+                {instructorParticipant.name ?? "Instructor"}
               </Text>
-              <Text style={styles.focusAvatarSub}>Camera off</Text>
+              <View style={styles.hostBadge}>
+                <Text style={styles.hostBadgeText}>Host</Text>
+              </View>
             </View>
-          )
-        ) : (
-          <View style={styles.focusWaiting}>
-            <MaterialCommunityIcons name="account-clock-outline" size={52} color="#444444" />
-            <Text style={styles.focusWaitingText}>Waiting for instructor…</Text>
-          </View>
-        )}
-        {instructorParticipant && (
-          <View style={styles.focusNameBar}>
-            <Text style={styles.focusName} numberOfLines={1}>
-              {instructorParticipant.name ?? "Instructor"}
-            </Text>
-            <View style={styles.hostBadge}>
-              <Text style={styles.hostBadgeText}>Host</Text>
-            </View>
-          </View>
-        )}
+          )}
+        </View>
+
+        {/* Participant strip — fixed 140px, horizontally scrollable */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.strip}
+          contentContainerStyle={styles.stripContent}
+        >
+          {stripItems.map(({ key, trackRef, label }) => (
+            <SmallTile key={key} trackRef={trackRef} label={label} />
+          ))}
+        </ScrollView>
       </View>
 
-      {/* Participant strip — fixed 140px, horizontally scrollable */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.strip}
-        contentContainerStyle={styles.stripContent}
-      >
-        {stripItems.map(({ key, trackRef, label }) => (
-          <SmallTile key={key} trackRef={trackRef} label={label} />
-        ))}
-      </ScrollView>
-
-      {/* Controls */}
+      {/* Controls — sibling of videoSection, never clipped */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
         <ControlButton
           icon={isMicrophoneEnabled ? "microphone" : "microphone-off"}
@@ -386,7 +393,10 @@ function getInitials(name: string): string {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0A0A0A", overflow: "hidden" },
+  // root has no overflow:hidden — bottomBar must never be clipped
+  root: { flex: 1, flexDirection: "column", backgroundColor: "#0A0A0A" },
+  // videoSection takes all space above controls and clips its own contents
+  videoSection: { flex: 1, overflow: "hidden" },
 
   // Top bar
   topBar: {
