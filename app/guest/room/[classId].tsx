@@ -47,7 +47,13 @@ export default function GuestRoomScreen() {
         const [tok, cls] = await Promise.all([
           getLiveKitToken(classId),
           getClass(classId).catch((err) => {
-            console.error("[GuestRoom] getClass failed:", err?.message ?? err);
+            // Log the full error so we can see whether this is auth, 404, timeout, etc.
+            console.error(
+              "[GuestRoom] getClass failed —",
+              "message:", err?.message ?? err,
+              "| name:", err?.name,
+              "| classId:", classId,
+            );
             return null;
           }),
         ]);
@@ -132,40 +138,35 @@ function RoomUI({
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
   const cameraTracks = useTracks([Track.Source.Camera]);
 
-  // LiveKit identity is "user-<uuid>" — match instructor by host_id
-  const instructorIdentity = instructorId ? `user-${instructorId}` : null;
-
   const remoteParticipants = participants.filter((p) => !(p as any).isLocal);
   const localCameraTrack = cameraTracks.find((t: any) => t.participant?.isLocal);
 
-  const instructorParticipant = remoteParticipants.find(
-    (p: any) => p.identity === instructorIdentity
-  ) ?? null;
-  const instructorTrack = cameraTracks.find(
-    (t: any) => t.participant?.identity === instructorIdentity
-  ) ?? null;
+  // Identify the instructor by metadata.role = "host" stamped on their LiveKit token.
+  // This is reliable regardless of whether getClass() succeeded for this student.
+  const instructorParticipant = remoteParticipants.find((p: any) => {
+    try { return JSON.parse(p.metadata ?? "{}").role === "host"; } catch { return false; }
+  }) ?? null;
+  const instructorTrack = instructorParticipant
+    ? (cameraTracks.find((t: any) => t.participant?.identity === instructorParticipant.identity) ?? null)
+    : null;
 
   // Other remote participants (not the instructor)
   const otherParticipants = remoteParticipants.filter(
-    (p: any) => p.identity !== instructorIdentity
+    (p: any) => p.identity !== instructorParticipant?.identity
   );
   const otherTracks = cameraTracks.filter(
-    (t: any) => !t.participant?.isLocal && t.participant?.identity !== instructorIdentity
+    (t: any) => !t.participant?.isLocal && t.participant?.identity !== instructorParticipant?.identity
   );
 
   const totalInRoom = remoteParticipants.length + 1;
 
   useEffect(() => {
-    console.log(
-      "[GuestRoomUI] track state —",
-      "participants:", participants.length,
-      "| camTracks:", cameraTracks.length,
-      "| isCamOn:", isCameraEnabled,
-      "| isMicOn:", isMicrophoneEnabled,
-      "| hasLocalCam:", !!localCameraTrack,
-      "| hasInstructorTrack:", !!instructorTrack,
-    );
-  }, [participants.length, cameraTracks.length, isCameraEnabled, isMicrophoneEnabled]);
+    console.log("[GuestRoomUI] instructorId prop:", instructorId, "| expected identity:", instructorId ? `user-${instructorId}` : "null (getClass may have failed)");
+    console.log("[GuestRoomUI] remote participants:", remoteParticipants.map((p: any) => ({ identity: p.identity, metadata: p.metadata })));
+    console.log("[GuestRoomUI] cam track identities:", cameraTracks.map((t: any) => t.participant?.identity));
+    console.log("[GuestRoomUI] instructorParticipant:", instructorParticipant ? `FOUND (${instructorParticipant.identity})` : "NOT FOUND");
+    console.log("[GuestRoomUI] instructorTrack:", instructorTrack ? "FOUND" : "NOT FOUND");
+  }, [participants.length, cameraTracks.length, isCameraEnabled, isMicrophoneEnabled, instructorParticipant?.identity, !!instructorTrack]);
 
   const toggleMic = useCallback(async () => {
     try {

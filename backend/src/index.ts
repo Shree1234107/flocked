@@ -788,7 +788,9 @@ app.post("/api/livekit/token", requireAuth, async (req, res) => {
     .eq("id", roomId)
     .maybeSingle();
 
-  if (cls && cls.host_id === userId && cls.status !== "live" && cls.status !== "cancelled") {
+  const isHost = !!(cls && cls.host_id === userId);
+
+  if (isHost && cls!.status !== "live" && cls!.status !== "cancelled") {
     const { error: statusErr } = await supabase
       .from("scheduled_classes")
       .update({ status: "live" })
@@ -796,7 +798,12 @@ app.post("/api/livekit/token", requireAuth, async (req, res) => {
     if (statusErr) console.error("[POST /api/livekit/token] set live failed:", statusErr.message);
   }
 
-  const token = new AccessToken(livekitApiKey, livekitApiSecret, { identity });
+  // Stamp role onto participant metadata so clients can identify the instructor
+  // without relying on a secondary getClass() API call that can fail.
+  const token = new AccessToken(livekitApiKey, livekitApiSecret, {
+    identity,
+    metadata: JSON.stringify({ role: isHost ? "host" : "guest" }),
+  });
   token.addGrant({ room: roomId, roomJoin: true, canPublish: true, canSubscribe: true });
 
   const jwt = await token.toJwt();
