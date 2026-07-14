@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -42,9 +41,7 @@ export default function HostRoomScreen() {
   useEffect(() => {
     const setup = async () => {
       try {
-        // Start native audio session (no-op on web)
         await AudioSession.startAudioSession();
-        // Get LiveKit token + class title in parallel
         const [tok, classes] = await Promise.all([
           getLiveKitToken(classId),
           listMyClasses().catch(() => []),
@@ -59,24 +56,23 @@ export default function HostRoomScreen() {
       }
     };
     setup();
-    return () => {
-      AudioSession.stopAudioSession();
-    };
+    return () => { AudioSession.stopAudioSession(); };
   }, [classId]);
 
   const handleEnd = useCallback(async () => {
-    try {
-      await endClass(classId);
-    } catch {
-      // best-effort
-    }
+    try { await endClass(classId); } catch { /* best-effort */ }
     router.replace("/host/(tabs)/index" as never);
   }, [classId, router]);
 
-  // Navigate back without marking class completed — used for unintentional disconnects
   const handleDisconnected = useCallback(() => {
     router.replace("/host/(tabs)/index" as never);
   }, [router]);
+
+  // On web, flex:1 may not fill 100vh through LiveKitRoom's div wrapper.
+  // Use an explicit height to guarantee no white space below the controls.
+  const outerStyle = Platform.OS === "web"
+    ? ({ height: "100vh", overflow: "hidden" } as any)
+    : { flex: 1 };
 
   return (
     <AuthGate>
@@ -86,7 +82,7 @@ export default function HostRoomScreen() {
         ) : error || !token ? (
           <ErrorView error={error} onBack={() => router.replace("/host/(tabs)/index" as never)} />
         ) : (
-          <View style={{ flex: 1 }}>
+          <View style={outerStyle}>
             <LiveKitRoom
               serverUrl={LIVEKIT_URL}
               token={token}
@@ -103,7 +99,7 @@ export default function HostRoomScreen() {
               onDisconnected={handleDisconnected}
             >
               <RoomAudioRenderer />
-              <RoomUI classTitle={classTitle} classId={classId} onEnd={handleEnd} />
+              <RoomUI classTitle={classTitle} onEnd={handleEnd} />
             </LiveKitRoom>
           </View>
         )}
@@ -112,29 +108,24 @@ export default function HostRoomScreen() {
   );
 }
 
-// ─── Inner room UI ────────────────────────────────────────────────────────────
-// Must be a child of LiveKitRoom so hooks have context
+// ─── Inner room UI ─────────────────────────────────────────────────────────────
+// Layout: top bar / large self-view focus tile / 140px student strip / controls
 
 function RoomUI({
   classTitle,
-  classId,
   onEnd,
 }: {
   classTitle: string;
-  classId: string;
   onEnd: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
-
-  const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled } = useLocalParticipant();
+  const participants = useParticipants();
   const cameraTracks = useTracks([Track.Source.Camera]);
 
-  const remoteParticipants = participants.filter((p) => !(p as any).isLocal);
-  const remoteCameraTracks = cameraTracks.filter((t: any) => !t.participant?.isLocal);
   const localCameraTrack = cameraTracks.find((t: any) => t.participant?.isLocal);
+  const remoteParticipants = participants.filter((p: any) => !p.isLocal);
+  const remoteCameraTracks = cameraTracks.filter((t: any) => !t.participant?.isLocal);
 
   const toggleMic = useCallback(async () => {
     await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled);
@@ -150,7 +141,7 @@ function RoomUI({
       <View style={styles.topBar}>
         <View style={styles.topBarInfo}>
           <Text style={styles.topTitle} numberOfLines={1}>{classTitle}</Text>
-          <Text style={styles.topStudentCount}>
+          <Text style={styles.topSub}>
             {remoteParticipants.length} student{remoteParticipants.length !== 1 ? "s" : ""}
           </Text>
         </View>
@@ -159,61 +150,62 @@ function RoomUI({
         </Pressable>
       </View>
 
-      {/* Student grid */}
-      <ScrollView
-        style={styles.gridScroll}
-        contentContainerStyle={[
-          styles.gridContent,
-          { paddingBottom: insets.bottom + 90 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Large self-view — instructor sees themselves in the focus tile */}
+      <View style={styles.focusTile}>
+        {isCameraEnabled && localCameraTrack ? (
+          <VideoTrack
+            trackRef={localCameraTrack as any}
+            style={
+              Platform.OS === "web"
+                ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
+                : StyleSheet.absoluteFill
+            }
+          />
+        ) : (
+          <View style={styles.focusPlaceholder}>
+            <MaterialCommunityIcons name="video-off-outline" size={48} color="#444444" />
+            <Text style={styles.focusPlaceholderText}>Camera Off</Text>
+          </View>
+        )}
+        <View style={styles.focusNameBar}>
+          <Text style={styles.focusName} numberOfLines={1}>You (Instructor)</Text>
+          <View style={styles.liveBadge}>
+            <Text style={styles.liveBadgeText}>LIVE</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Student strip — fixed 140px, horizontally scrollable */}
+      <View style={styles.strip}>
         {remoteParticipants.length === 0 ? (
-          <View style={styles.waitingState}>
-            <MaterialCommunityIcons name="account-clock-outline" size={48} color="#444444" />
-            <Text style={styles.waitingText}>Waiting for students to join…</Text>
+          <View style={styles.stripEmpty}>
+            <MaterialCommunityIcons name="account-clock-outline" size={22} color="#444444" />
+            <Text style={styles.stripEmptyText}>Waiting for students…</Text>
           </View>
         ) : (
-          <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
-            {remoteParticipants.map((participant: any) => {
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.stripContent}
+          >
+            {remoteParticipants.map((p: any) => {
               const trackRef = remoteCameraTracks.find(
-                (t: any) => t.participant?.identity === participant.identity
-              );
+                (t: any) => t.participant?.identity === p.identity
+              ) ?? null;
               return (
-                <ParticipantTile
-                  key={participant.identity}
-                  participant={participant}
+                <SmallTile
+                  key={p.identity}
                   trackRef={trackRef}
-                  isDesktop={isDesktop}
+                  label={p.name ?? p.identity ?? "Student"}
                 />
               );
             })}
-          </View>
+          </ScrollView>
         )}
-      </ScrollView>
-
-      {/* Self-preview — bottom right corner */}
-      <View style={[styles.selfPreview, { bottom: insets.bottom + 72 }]}>
-        <View style={styles.selfVideoWrap}>
-          {isCameraEnabled && localCameraTrack ? (
-            <VideoTrack
-              trackRef={localCameraTrack as any}
-              style={Platform.OS === "web"
-                ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
-                : StyleSheet.absoluteFill
-              }
-            />
-          ) : (
-            <View style={styles.selfCamOff}>
-              <MaterialCommunityIcons name="video-off-outline" size={18} color="#666666" />
-            </View>
-          )}
-        </View>
-        <Text style={styles.selfLabel}>You</Text>
       </View>
 
-      {/* Bottom controls */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
+      {/* Controls */}
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
         <ControlButton
           icon={isMicrophoneEnabled ? "microphone" : "microphone-off"}
           label={isMicrophoneEnabled ? "Mute" : "Unmute"}
@@ -239,40 +231,28 @@ function RoomUI({
   );
 }
 
-// ─── Participant tile ─────────────────────────────────────────────────────────
+// ─── Small tile ───────────────────────────────────────────────────────────────
 
-function ParticipantTile({
-  participant,
-  trackRef,
-  isDesktop,
-}: {
-  participant: any;
-  trackRef: any;
-  isDesktop: boolean;
-}) {
-  const initials = getInitials(participant.name ?? participant.identity ?? "?");
-
+function SmallTile({ trackRef, label }: { trackRef: any; label: string }) {
+  const initials = getInitials(label);
   return (
-    <View style={[styles.tile, isDesktop && styles.tileDesktop]}>
-      <View style={styles.tileInner}>
-        {trackRef ? (
-          <VideoTrack
-            trackRef={trackRef}
-            style={Platform.OS === "web"
+    <View style={styles.smallTile}>
+      {trackRef ? (
+        <VideoTrack
+          trackRef={trackRef}
+          style={
+            Platform.OS === "web"
               ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
               : StyleSheet.absoluteFill
-            }
-          />
-        ) : (
-          <View style={styles.tileAvatar}>
-            <Text style={styles.tileInitials}>{initials}</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.tileNameBar}>
-        <Text style={styles.tileName} numberOfLines={1}>
-          {participant.name ?? participant.identity ?? "Student"}
-        </Text>
+          }
+        />
+      ) : (
+        <View style={styles.smallTileAvatar}>
+          <Text style={styles.smallTileInitials}>{initials}</Text>
+        </View>
+      )}
+      <View style={styles.smallTileNameBar}>
+        <Text style={styles.smallTileName} numberOfLines={1}>{label}</Text>
       </View>
     </View>
   );
@@ -281,15 +261,9 @@ function ParticipantTile({
 // ─── Control button ───────────────────────────────────────────────────────────
 
 function ControlButton({
-  icon,
-  label,
-  onPress,
-  active,
+  icon, label, onPress, active,
 }: {
-  icon: string;
-  label: string;
-  onPress: () => void;
-  active: boolean;
+  icon: string; label: string; onPress: () => void; active: boolean;
 }) {
   return (
     <Pressable
@@ -300,11 +274,7 @@ function ControlButton({
       ]}
       onPress={onPress}
     >
-      <MaterialCommunityIcons
-        name={icon as never}
-        size={22}
-        color={active ? "#FFFFFF" : "#888888"}
-      />
+      <MaterialCommunityIcons name={icon as never} size={22} color={active ? "#FFFFFF" : "#888888"} />
       <Text style={[styles.controlLabel, !active && styles.controlLabelOff]}>{label}</Text>
     </Pressable>
   );
@@ -344,177 +314,107 @@ function getInitials(name: string): string {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#0A0A0A",
-  },
+  root: { flex: 1, backgroundColor: "#0A0A0A", overflow: "hidden" },
 
   // Top bar
   topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A1A1A",
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: "#1A1A1A",
   },
   topBarInfo: { flex: 1, gap: 2, marginRight: 12 },
   topTitle: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
-  topStudentCount: { fontSize: 12, color: "#888888" },
+  topSub: { fontSize: 12, color: "#888888" },
   endBtnTop: {
-    backgroundColor: "#EF4444",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: "#EF4444", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
   },
   endBtnTopText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
 
-  // Grid
-  gridScroll: { flex: 1 },
-  gridContent: { padding: 12, gap: 10 },
-  grid: { gap: 10 },
-  gridDesktop: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
+  // Focus tile — fills remaining space between top bar and strip
+  focusTile: {
+    flex: 1, minHeight: 0,
+    backgroundColor: "#111111", overflow: "hidden", position: "relative",
   },
-
-  // Waiting state
-  waitingState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 80,
-    gap: 16,
+  focusPlaceholder: {
+    flex: 1, alignItems: "center", justifyContent: "center", gap: 12,
   },
-  waitingText: { fontSize: 15, color: "#555555", textAlign: "center" },
-
-  // Tile
-  tile: {
-    borderRadius: 12,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: "#1A1A1A",
-    aspectRatio: 16 / 9,
-    width: "100%",
-  },
-  tileDesktop: {
-    width: "48%",
-  },
-  tileInner: {
-    flex: 1,
-    backgroundColor: "#1A1A1A",
-    position: "relative",
-  },
-  tileAvatar: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#252525",
-  },
-  tileInitials: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: colors.primary,
-  },
-  tileNameBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+  focusPlaceholderText: { fontSize: 14, color: "#555555" },
+  focusNameBar: {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 14, paddingVertical: 10,
     backgroundColor: "rgba(0,0,0,0.55)",
   },
-  tileName: { fontSize: 12, fontWeight: "600", color: "#FFFFFF" },
-
-  // Self preview
-  selfPreview: {
-    position: "absolute",
-    right: 16,
-    alignItems: "center",
-    gap: 4,
+  focusName: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", flex: 1 },
+  liveBadge: {
+    backgroundColor: "#EF4444", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4,
   },
-  selfVideoWrap: {
-    width: 120,
-    height: 160,
-    borderRadius: 10,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: "#1A1A1A",
+  liveBadgeText: { fontSize: 10, fontWeight: "700", color: "#FFFFFF" },
+
+  // Student strip
+  strip: {
+    height: 140, backgroundColor: "#0D0D0D",
+    borderTopWidth: 1, borderTopColor: "#1A1A1A",
+  },
+  stripContent: {
+    paddingHorizontal: 8, paddingVertical: 12, gap: 8, alignItems: "center",
+  },
+  stripEmpty: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+  },
+  stripEmptyText: { fontSize: 13, color: "#555555" },
+
+  // Small tile (112×112 square)
+  smallTile: {
+    width: 112, height: 112,
+    borderRadius: 8, overflow: "hidden",
+    backgroundColor: "#252525",
+    borderWidth: 1.5, borderColor: "#333333",
     position: "relative",
   },
-  selfCamOff: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#252525",
+  smallTileAvatar: { flex: 1, alignItems: "center", justifyContent: "center" },
+  smallTileInitials: { fontSize: 22, fontWeight: "700", color: colors.primary },
+  smallTileNameBar: {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 6, paddingVertical: 4,
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
-  selfLabel: { fontSize: 11, color: "#AAAAAA", fontWeight: "500" },
+  smallTileName: { fontSize: 10, fontWeight: "600", color: "#FFFFFF", textAlign: "center" },
 
-  // Bottom bar
+  // Controls
   bottomBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: colors.primary,
-    paddingTop: 10,
-    paddingHorizontal: 12,
-    gap: 4,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-around",
+    backgroundColor: "#111111", paddingTop: 10, paddingHorizontal: 12, gap: 4,
+    borderTopWidth: 1, borderTopColor: "#1A1A1A",
   },
   controlBtn: {
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    minWidth: 64,
+    alignItems: "center", gap: 4,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 10, backgroundColor: "rgba(255,255,255,0.08)", minWidth: 64,
   },
-  controlBtnOff: {
-    backgroundColor: "rgba(0,0,0,0.25)",
-  },
+  controlBtnOff: { backgroundColor: "rgba(0,0,0,0.25)" },
   controlBtnPressed: { opacity: 0.7 },
   controlLabel: { fontSize: 11, fontWeight: "500", color: "#FFFFFF" },
   controlLabelOff: { color: "#888888" },
   hangupBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#EF4444",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#EF4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
   },
   hangupText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
   participantBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 8,
   },
   participantCount: { fontSize: 13, fontWeight: "600", color: "#CCCCCC" },
 
   // Loading / error
   fullCenter: {
-    flex: 1,
-    backgroundColor: "#0A0A0A",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    padding: 32,
+    flex: 1, backgroundColor: "#0A0A0A",
+    alignItems: "center", justifyContent: "center", gap: 16, padding: 32,
   },
   connectingText: { fontSize: 15, color: "#888888" },
   errorText: { fontSize: 14, color: "#888888", textAlign: "center" },
   backBtn: {
-    backgroundColor: "#1A1A1A",
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    backgroundColor: "#1A1A1A", borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12,
   },
   backBtnText: { fontSize: 14, fontWeight: "600", color: colors.primary },
 });

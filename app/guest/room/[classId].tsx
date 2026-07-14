@@ -43,11 +43,9 @@ export default function GuestRoomScreen() {
     const setup = async () => {
       try {
         await AudioSession.startAudioSession();
-        console.log("[GuestRoom] classId:", classId);
         const [tok, cls] = await Promise.all([
           getLiveKitToken(classId),
           getClass(classId).catch((err) => {
-            // Log the full error so we can see whether this is auth, 404, timeout, etc.
             console.error(
               "[GuestRoom] getClass failed —",
               "message:", err?.message ?? err,
@@ -57,7 +55,6 @@ export default function GuestRoomScreen() {
             return null;
           }),
         ]);
-        console.log("[GuestRoom] class found:", cls?.title ?? "NOT FOUND", "status:", cls?.status);
         if (cls) {
           setClassTitle(cls.title);
           setInstructorId(cls.host_id);
@@ -71,9 +68,7 @@ export default function GuestRoomScreen() {
       }
     };
     setup();
-    return () => {
-      AudioSession.stopAudioSession();
-    };
+    return () => { AudioSession.stopAudioSession(); };
   }, [classId]);
 
   const handleLeave = useCallback(() => {
@@ -86,6 +81,11 @@ export default function GuestRoomScreen() {
     }
   }, [router, classId, classTitle, instructorId, instructorName]);
 
+  // On web, flex:1 may not fill 100vh through LiveKitRoom's div wrapper.
+  const outerStyle = Platform.OS === "web"
+    ? ({ height: "100vh", overflow: "hidden" } as any)
+    : { flex: 1 };
+
   return (
     <AuthGate>
       {loading ? (
@@ -93,7 +93,7 @@ export default function GuestRoomScreen() {
       ) : error || !token ? (
         <ErrorView error={error} onBack={() => router.replace("/guest/(tabs)/index" as never)} />
       ) : (
-        <View style={{ flex: 1 }}>
+        <View style={outerStyle}>
           <LiveKitRoom
             serverUrl={LIVEKIT_URL}
             token={token}
@@ -122,7 +122,9 @@ export default function GuestRoomScreen() {
   );
 }
 
-// ─── Inner room UI ────────────────────────────────────────────────────────────
+// ─── Inner room UI ─────────────────────────────────────────────────────────────
+// Layout: top bar / large instructor focus tile / 140px participant strip / controls
+// Instructor identified by metadata.role === "host" stamped at token issuance.
 
 function RoomUI({
   classTitle,
@@ -141,18 +143,17 @@ function RoomUI({
   const remoteParticipants = participants.filter((p) => !(p as any).isLocal);
   const localCameraTrack = cameraTracks.find((t: any) => t.participant?.isLocal);
 
-  // Identify the instructor by metadata.role = "host" stamped on their LiveKit token.
-  // This is reliable regardless of whether getClass() succeeded for this student.
+  // Identify instructor by metadata.role = "host" — reliable regardless of getClass() success.
   const instructorParticipant = remoteParticipants.find((p: any) => {
     try { return JSON.parse(p.metadata ?? "{}").role === "host"; } catch { return false; }
   }) ?? null;
+
   const instructorTrack = instructorParticipant
     ? (cameraTracks.find((t: any) => t.participant?.identity === instructorParticipant.identity) ?? null)
     : null;
 
-  // Other remote participants (not the instructor).
-  // Guard against null: when instructorParticipant is null, no one is excluded —
-  // the strip stays empty and "Waiting for instructor…" shows in the focus tile.
+  // Other remote participants (not instructor). When instructorParticipant is null
+  // nothing is excluded — all remotes appear in the strip alongside self.
   const otherParticipants = remoteParticipants.filter(
     (p: any) => !instructorParticipant || p.identity !== instructorParticipant.identity
   );
@@ -161,44 +162,36 @@ function RoomUI({
       (!instructorParticipant || t.participant?.identity !== instructorParticipant.identity)
   );
 
+  // Strip always includes self so the student can always see their own tile.
+  const stripItems = [
+    ...otherParticipants.map((p: any) => ({
+      key: p.identity as string,
+      trackRef: otherTracks.find((t: any) => t.participant?.identity === p.identity) ?? null,
+      label: (p.name ?? p.identity ?? "Student") as string,
+    })),
+    {
+      key: "local",
+      trackRef: localCameraTrack ?? null,
+      label: "You",
+    },
+  ];
+
   const totalInRoom = remoteParticipants.length + 1;
 
   useEffect(() => {
-    console.log("[GuestRoomUI] instructorId prop:", instructorId, "| expected identity:", instructorId ? `user-${instructorId}` : "null (getClass may have failed)");
     console.log("[GuestRoomUI] remote participants:", remoteParticipants.map((p: any) => ({ identity: p.identity, metadata: p.metadata })));
     console.log("[GuestRoomUI] cam track identities:", cameraTracks.map((t: any) => t.participant?.identity));
     console.log("[GuestRoomUI] instructorParticipant:", instructorParticipant ? `FOUND (${instructorParticipant.identity})` : "NOT FOUND");
     console.log("[GuestRoomUI] instructorTrack:", instructorTrack ? "FOUND" : "NOT FOUND");
-  }, [participants.length, cameraTracks.length, isCameraEnabled, isMicrophoneEnabled, instructorParticipant?.identity, !!instructorTrack]);
+  }, [participants.length, cameraTracks.length, instructorParticipant?.identity, !!instructorTrack]);
 
   const toggleMic = useCallback(async () => {
-    try {
-      await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled);
-    } catch (err: any) {
-      console.error("[GuestRoomUI] setMicrophoneEnabled failed:", err?.message ?? err);
-    }
+    try { await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled); } catch { /* ignore */ }
   }, [localParticipant, isMicrophoneEnabled]);
 
   const toggleCamera = useCallback(async () => {
-    try {
-      await localParticipant?.setCameraEnabled(!isCameraEnabled);
-    } catch (err: any) {
-      console.error("[GuestRoomUI] setCameraEnabled failed:", err?.message ?? err);
-    }
+    try { await localParticipant?.setCameraEnabled(!isCameraEnabled); } catch { /* ignore */ }
   }, [localParticipant, isCameraEnabled]);
-
-  // Show strip when there are other students or self to display alongside instructor
-  const stripItems = [
-    ...otherParticipants.map((p: any) => ({
-      key: p.identity,
-      participant: p,
-      trackRef: otherTracks.find((t: any) => t.participant?.identity === p.identity) ?? null,
-      isSelf: false,
-    })),
-    ...(localCameraTrack
-      ? [{ key: "local", participant: { name: "You", identity: "local" }, trackRef: localCameraTrack, isSelf: true }]
-      : []),
-  ];
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -206,74 +199,65 @@ function RoomUI({
       <View style={styles.topBar}>
         <View style={styles.topBarInfo}>
           <Text style={styles.topTitle} numberOfLines={1}>{classTitle}</Text>
-          <Text style={styles.topParticipantCount}>{totalInRoom} in room</Text>
+          <Text style={styles.topSub}>{totalInRoom} in room</Text>
         </View>
         <Pressable style={styles.leaveBtnTop} onPress={onLeave}>
           <Text style={styles.leaveBtnTopText}>Leave</Text>
         </Pressable>
       </View>
 
-      {/* Main content: large instructor focus + participant strip */}
-      <View style={styles.mainContent}>
-        {/* Instructor focus tile */}
-        <View style={styles.focusTile}>
-          {instructorParticipant ? (
-            instructorTrack ? (
-              <VideoTrack
-                trackRef={instructorTrack as any}
-                style={Platform.OS === "web"
-                  ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" } as any
+      {/* Instructor focus tile — fills remaining space */}
+      <View style={styles.focusTile}>
+        {instructorParticipant ? (
+          instructorTrack ? (
+            <VideoTrack
+              trackRef={instructorTrack as any}
+              style={
+                Platform.OS === "web"
+                  ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
                   : StyleSheet.absoluteFill
-                }
-              />
-            ) : (
-              <View style={styles.focusAvatar}>
-                <Text style={styles.focusInitials}>
-                  {getInitials(instructorParticipant.name ?? "Instructor")}
-                </Text>
-              </View>
-            )
+              }
+            />
           ) : (
-            <View style={styles.focusWaiting}>
-              <MaterialCommunityIcons name="account-clock-outline" size={48} color="#444444" />
-              <Text style={styles.focusWaitingText}>Waiting for instructor…</Text>
-            </View>
-          )}
-          {/* Name overlay */}
-          {instructorParticipant && (
-            <View style={styles.focusNameBar}>
-              <Text style={styles.focusName} numberOfLines={1}>
-                {instructorParticipant.name ?? "Instructor"}
+            <View style={styles.focusAvatar}>
+              <Text style={styles.focusInitials}>
+                {getInitials(instructorParticipant.name ?? "Instructor")}
               </Text>
-              <View style={styles.hostBadge}>
-                <Text style={styles.hostBadgeText}>Host</Text>
-              </View>
+              <Text style={styles.focusAvatarSub}>Camera off</Text>
             </View>
-          )}
-        </View>
-
-        {/* Participant strip */}
-        {stripItems.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.strip}
-            contentContainerStyle={styles.stripContent}
-          >
-            {stripItems.map(({ key, participant, trackRef, isSelf }) => (
-              <SmallTile
-                key={key}
-                participant={participant as any}
-                trackRef={trackRef as any}
-                isSelf={isSelf}
-              />
-            ))}
-          </ScrollView>
+          )
+        ) : (
+          <View style={styles.focusWaiting}>
+            <MaterialCommunityIcons name="account-clock-outline" size={52} color="#444444" />
+            <Text style={styles.focusWaitingText}>Waiting for instructor…</Text>
+          </View>
+        )}
+        {instructorParticipant && (
+          <View style={styles.focusNameBar}>
+            <Text style={styles.focusName} numberOfLines={1}>
+              {instructorParticipant.name ?? "Instructor"}
+            </Text>
+            <View style={styles.hostBadge}>
+              <Text style={styles.hostBadgeText}>Host</Text>
+            </View>
+          </View>
         )}
       </View>
 
-      {/* Bottom controls */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
+      {/* Participant strip — fixed 140px, horizontally scrollable */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.strip}
+        contentContainerStyle={styles.stripContent}
+      >
+        {stripItems.map(({ key, trackRef, label }) => (
+          <SmallTile key={key} trackRef={trackRef} label={label} />
+        ))}
+      </ScrollView>
+
+      {/* Controls */}
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
         <ControlButton
           icon={isMicrophoneEnabled ? "microphone" : "microphone-off"}
           label={isMicrophoneEnabled ? "Mute" : "Unmute"}
@@ -299,38 +283,29 @@ function RoomUI({
   );
 }
 
-// ─── Small tile for strip ─────────────────────────────────────────────────────
+// ─── Small tile ───────────────────────────────────────────────────────────────
 
-function SmallTile({
-  participant,
-  trackRef,
-  isSelf,
-}: {
-  participant: any;
-  trackRef: any;
-  isSelf: boolean;
-}) {
-  const initials = getInitials(participant.name ?? participant.identity ?? "?");
+function SmallTile({ trackRef, label }: { trackRef: any; label: string }) {
+  const initials = getInitials(label);
   return (
     <View style={styles.smallTile}>
-      <View style={styles.smallTileInner}>
-        {trackRef ? (
-          <VideoTrack
-            trackRef={trackRef}
-            style={Platform.OS === "web"
+      {trackRef ? (
+        <VideoTrack
+          trackRef={trackRef}
+          style={
+            Platform.OS === "web"
               ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
               : StyleSheet.absoluteFill
-            }
-          />
-        ) : (
-          <View style={styles.smallTileAvatar}>
-            <Text style={styles.smallTileInitials}>{initials}</Text>
-          </View>
-        )}
+          }
+        />
+      ) : (
+        <View style={styles.smallTileAvatar}>
+          <Text style={styles.smallTileInitials}>{initials}</Text>
+        </View>
+      )}
+      <View style={styles.smallTileNameBar}>
+        <Text style={styles.smallTileName} numberOfLines={1}>{label}</Text>
       </View>
-      <Text style={styles.smallTileName} numberOfLines={1}>
-        {isSelf ? "You" : (participant.name ?? "Student")}
-      </Text>
     </View>
   );
 }
@@ -338,15 +313,9 @@ function SmallTile({
 // ─── Control button ───────────────────────────────────────────────────────────
 
 function ControlButton({
-  icon,
-  label,
-  onPress,
-  active,
+  icon, label, onPress, active,
 }: {
-  icon: string;
-  label: string;
-  onPress: () => void;
-  active: boolean;
+  icon: string; label: string; onPress: () => void; active: boolean;
 }) {
   return (
     <Pressable
@@ -357,11 +326,7 @@ function ControlButton({
       ]}
       onPress={onPress}
     >
-      <MaterialCommunityIcons
-        name={icon as never}
-        size={22}
-        color={active ? "#FFFFFF" : "#888888"}
-      />
+      <MaterialCommunityIcons name={icon as never} size={22} color={active ? "#FFFFFF" : "#888888"} />
       <Text style={[styles.controlLabel, !active && styles.controlLabelOff]}>{label}</Text>
     </Pressable>
   );
@@ -401,120 +366,79 @@ function getInitials(name: string): string {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0A0A0A" },
+  root: { flex: 1, backgroundColor: "#0A0A0A", overflow: "hidden" },
 
+  // Top bar
   topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A1A1A",
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: "#1A1A1A",
   },
   topBarInfo: { flex: 1, gap: 2, marginRight: 12 },
   topTitle: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
-  topParticipantCount: { fontSize: 12, color: "#888888" },
+  topSub: { fontSize: 12, color: "#888888" },
   leaveBtnTop: {
-    backgroundColor: "#333333",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: "#333333", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
   },
   leaveBtnTopText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
 
-  // ── Focus layout ──────────────────────────────────────────────────────────────
-  mainContent: { flex: 1, minHeight: 0 },
-
+  // Focus tile — fills remaining space between top bar and strip
   focusTile: {
-    flex: 1,
-    backgroundColor: "#1A1A1A",
-    position: "relative",
-    overflow: "hidden",
+    flex: 1, minHeight: 0,
+    backgroundColor: "#111111", overflow: "hidden", position: "relative",
   },
   focusAvatar: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#252525",
+    flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: "#1A1A1A",
   },
-  focusInitials: { fontSize: 56, fontWeight: "700", color: colors.primary },
+  focusInitials: { fontSize: 64, fontWeight: "700", color: colors.primary },
+  focusAvatarSub: { fontSize: 13, color: "#555555" },
   focusWaiting: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    backgroundColor: "#111111",
+    flex: 1, alignItems: "center", justifyContent: "center", gap: 16, backgroundColor: "#111111",
   },
   focusWaitingText: { fontSize: 15, color: "#555555", textAlign: "center" },
   focusNameBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 14, paddingVertical: 10,
     backgroundColor: "rgba(0,0,0,0.6)",
   },
   focusName: { fontSize: 14, fontWeight: "600", color: "#FFFFFF", flex: 1 },
   hostBadge: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4,
   },
   hostBadgeText: { fontSize: 10, fontWeight: "700", color: "#FFFFFF" },
 
-  // ── Participant strip ─────────────────────────────────────────────────────────
+  // Participant strip — fixed 140px height
   strip: {
-    height: 90,
-    backgroundColor: "#0D0D0D",
-    borderTopWidth: 1,
-    borderTopColor: "#1A1A1A",
+    height: 140, backgroundColor: "#0D0D0D",
+    borderTopWidth: 1, borderTopColor: "#1A1A1A",
   },
   stripContent: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    gap: 8,
-    alignItems: "center",
+    paddingHorizontal: 8, paddingVertical: 12, gap: 8, alignItems: "center",
   },
+
+  // Small tile (112×112 square)
   smallTile: {
-    width: 64,
-    alignItems: "center",
-    gap: 4,
-  },
-  smallTileInner: {
-    width: 64,
-    height: 56,
-    borderRadius: 8,
-    overflow: "hidden",
+    width: 112, height: 112,
+    borderRadius: 8, overflow: "hidden",
     backgroundColor: "#252525",
-    borderWidth: 1.5,
-    borderColor: "#333333",
+    borderWidth: 1.5, borderColor: "#333333",
     position: "relative",
   },
-  smallTileAvatar: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  smallTileAvatar: { flex: 1, alignItems: "center", justifyContent: "center" },
+  smallTileInitials: { fontSize: 22, fontWeight: "700", color: colors.primary },
+  smallTileNameBar: {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    paddingHorizontal: 6, paddingVertical: 4,
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
-  smallTileInitials: { fontSize: 16, fontWeight: "700", color: colors.primary },
-  smallTileName: { fontSize: 10, color: "#AAAAAA", fontWeight: "500", textAlign: "center" },
+  smallTileName: { fontSize: 10, fontWeight: "600", color: "#FFFFFF", textAlign: "center" },
 
-  // ── Controls ──────────────────────────────────────────────────────────────────
+  // Controls
   bottomBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
-    backgroundColor: "#111111",
-    paddingTop: 10,
-    paddingHorizontal: 12,
-    gap: 4,
-    borderTopWidth: 1,
-    borderTopColor: "#1A1A1A",
+    flexDirection: "row", alignItems: "center", justifyContent: "space-around",
+    backgroundColor: "#111111", paddingTop: 10, paddingHorizontal: 12, gap: 4,
+    borderTopWidth: 1, borderTopColor: "#1A1A1A",
   },
   controlBtn: {
     alignItems: "center", gap: 4,
@@ -527,26 +451,23 @@ const styles = StyleSheet.create({
   controlLabelOff: { color: "#888888" },
   leaveBtn: {
     flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#EF4444",
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: "#EF4444", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
   },
   leaveBtnText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
   participantBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 10, paddingVertical: 8,
+    flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 8,
   },
   participantCount: { fontSize: 13, fontWeight: "600", color: "#CCCCCC" },
 
+  // Loading / error
   fullCenter: {
     flex: 1, backgroundColor: "#0A0A0A",
-    alignItems: "center", justifyContent: "center",
-    gap: 16, padding: 32,
+    alignItems: "center", justifyContent: "center", gap: 16, padding: 32,
   },
   connectingText: { fontSize: 15, color: "#888888" },
   errorText: { fontSize: 14, color: "#888888", textAlign: "center" },
   backBtn: {
-    backgroundColor: "#1A1A1A", borderRadius: 10,
-    paddingHorizontal: 20, paddingVertical: 12,
+    backgroundColor: "#1A1A1A", borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12,
   },
   backBtnText: { fontSize: 14, fontWeight: "600", color: colors.primary },
 });
