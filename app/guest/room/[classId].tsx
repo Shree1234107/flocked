@@ -1,6 +1,7 @@
 import { colors } from "../../../lib/colors";
 import { useCallback, useEffect, useState } from "react";
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -93,6 +94,13 @@ export default function GuestRoomScreen() {
             connect={true}
             video={true}
             audio={true}
+            options={{
+              videoCaptureDefaults: {
+                resolution: { width: 1280, height: 720, frameRate: 30 },
+                facingMode: "user",
+              },
+            } as any}
+            onError={(err: any) => console.error("[GuestRoom] LiveKit error:", err?.message ?? err)}
             onDisconnected={handleLeave}
           >
             <RoomAudioRenderer />
@@ -147,12 +155,32 @@ function RoomUI({
 
   const totalInRoom = remoteParticipants.length + 1;
 
+  useEffect(() => {
+    console.log(
+      "[GuestRoomUI] track state —",
+      "participants:", participants.length,
+      "| camTracks:", cameraTracks.length,
+      "| isCamOn:", isCameraEnabled,
+      "| isMicOn:", isMicrophoneEnabled,
+      "| hasLocalCam:", !!localCameraTrack,
+      "| hasInstructorTrack:", !!instructorTrack,
+    );
+  }, [participants.length, cameraTracks.length, isCameraEnabled, isMicrophoneEnabled]);
+
   const toggleMic = useCallback(async () => {
-    await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled);
+    try {
+      await localParticipant?.setMicrophoneEnabled(!isMicrophoneEnabled);
+    } catch (err: any) {
+      console.error("[GuestRoomUI] setMicrophoneEnabled failed:", err?.message ?? err);
+    }
   }, [localParticipant, isMicrophoneEnabled]);
 
   const toggleCamera = useCallback(async () => {
-    await localParticipant?.setCameraEnabled(!isCameraEnabled);
+    try {
+      await localParticipant?.setCameraEnabled(!isCameraEnabled);
+    } catch (err: any) {
+      console.error("[GuestRoomUI] setCameraEnabled failed:", err?.message ?? err);
+    }
   }, [localParticipant, isCameraEnabled]);
 
   // Show strip when there are other students or self to display alongside instructor
@@ -187,7 +215,13 @@ function RoomUI({
         <View style={styles.focusTile}>
           {instructorParticipant ? (
             instructorTrack ? (
-              <VideoTrack trackRef={instructorTrack as any} style={StyleSheet.absoluteFill} />
+              <VideoTrack
+                trackRef={instructorTrack as any}
+                style={Platform.OS === "web"
+                  ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "contain" } as any
+                  : StyleSheet.absoluteFill
+                }
+              />
             ) : (
               <View style={styles.focusAvatar}>
                 <Text style={styles.focusInitials}>
@@ -277,7 +311,13 @@ function SmallTile({
     <View style={styles.smallTile}>
       <View style={styles.smallTileInner}>
         {trackRef ? (
-          <VideoTrack trackRef={trackRef} style={StyleSheet.absoluteFill} />
+          <VideoTrack
+            trackRef={trackRef}
+            style={Platform.OS === "web"
+              ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
+              : StyleSheet.absoluteFill
+            }
+          />
         ) : (
           <View style={styles.smallTileAvatar}>
             <Text style={styles.smallTileInitials}>{initials}</Text>
@@ -380,7 +420,7 @@ const styles = StyleSheet.create({
   leaveBtnTopText: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
 
   // ── Focus layout ──────────────────────────────────────────────────────────────
-  mainContent: { flex: 1 },
+  mainContent: { flex: 1, minHeight: 0 },
 
   focusTile: {
     flex: 1,

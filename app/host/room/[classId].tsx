@@ -88,6 +88,13 @@ export default function HostRoomScreen() {
               connect={true}
               video={true}
               audio={true}
+              options={{
+                videoCaptureDefaults: {
+                  resolution: { width: 1280, height: 720, frameRate: 30 },
+                  facingMode: "user",
+                },
+              } as any}
+              onError={(err: any) => console.error("[HostRoom] LiveKit error:", err?.message ?? err)}
               onDisconnected={handleEnd}
             >
               <RoomAudioRenderer />
@@ -184,7 +191,13 @@ function RoomUI({
       <View style={[styles.selfPreview, { bottom: insets.bottom + 72 }]}>
         <View style={styles.selfVideoWrap}>
           {isCameraEnabled && localCameraTrack ? (
-            <VideoTrack trackRef={localCameraTrack as any} style={StyleSheet.absoluteFill} />
+            <VideoTrack
+              trackRef={localCameraTrack as any}
+              style={Platform.OS === "web"
+                ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
+                : StyleSheet.absoluteFill
+              }
+            />
           ) : (
             <View style={styles.selfCamOff}>
               <MaterialCommunityIcons name="video-off-outline" size={18} color="#666666" />
@@ -238,7 +251,13 @@ function ParticipantTile({
     <View style={[styles.tile, isDesktop && styles.tileDesktop]}>
       <View style={styles.tileInner}>
         {trackRef ? (
-          <VideoTrack trackRef={trackRef} style={StyleSheet.absoluteFill} />
+          <VideoTrack
+            trackRef={trackRef}
+            style={Platform.OS === "web"
+              ? { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" } as any
+              : StyleSheet.absoluteFill
+            }
+          />
         ) : (
           <View style={styles.tileAvatar}>
             <Text style={styles.tileInitials}>{initials}</Text>
