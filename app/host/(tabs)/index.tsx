@@ -105,7 +105,7 @@ export default function InstructorHomeTab() {
 
   const now = new Date();
   const upcoming = classes.filter(
-    (c) => new Date(c.scheduled_at) >= now && c.status !== "cancelled" && c.status !== "completed"
+    (c) => (new Date(c.scheduled_at) >= now || c.status === "live") && c.status !== "cancelled" && c.status !== "completed"
   ).sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
 
   const past = classes.filter(
@@ -301,7 +301,7 @@ export default function InstructorHomeTab() {
                           onPress={() => router.push(`/host/room/${cls.id}` as never)}
                           activeOpacity={0.85}
                         >
-                          <Text style={styles.startBtnText}>Start</Text>
+                          <Text style={styles.startBtnText}>{cls.status === "live" ? "Rejoin" : "Start"}</Text>
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -363,7 +363,7 @@ export default function InstructorHomeTab() {
                           onPress={() => router.push(`/host/room/${cls.id}` as never)}
                           activeOpacity={0.85}
                         >
-                          <Text style={styles.startBtnText}>Start</Text>
+                          <Text style={styles.startBtnText}>{cls.status === "live" ? "Rejoin" : "Start"}</Text>
                         </TouchableOpacity>
                       )}
                     </View>

@@ -73,6 +73,11 @@ export default function HostRoomScreen() {
     router.replace("/host/(tabs)/index" as never);
   }, [classId, router]);
 
+  // Navigate back without marking class completed — used for unintentional disconnects
+  const handleDisconnected = useCallback(() => {
+    router.replace("/host/(tabs)/index" as never);
+  }, [router]);
+
   return (
     <AuthGate>
       <RoleGuard requiredRole="host">
@@ -95,7 +100,7 @@ export default function HostRoomScreen() {
                 },
               } as any}
               onError={(err: any) => console.error("[HostRoom] LiveKit error:", err?.message ?? err)}
-              onDisconnected={handleEnd}
+              onDisconnected={handleDisconnected}
             >
               <RoomAudioRenderer />
               <RoomUI classTitle={classTitle} classId={classId} onEnd={handleEnd} />

@@ -788,7 +788,7 @@ app.post("/api/livekit/token", requireAuth, async (req, res) => {
     .eq("id", roomId)
     .maybeSingle();
 
-  if (cls && cls.host_id === userId && cls.status !== "live" && cls.status !== "completed" && cls.status !== "cancelled") {
+  if (cls && cls.host_id === userId && cls.status !== "live" && cls.status !== "cancelled") {
     const { error: statusErr } = await supabase
       .from("scheduled_classes")
       .update({ status: "live" })
@@ -1262,7 +1262,7 @@ app.get("/api/classes", requireAuth, async (req, res) => {
     let query = supabase
       .from("scheduled_classes")
       .select("*")
-      .in("status", ["upcoming", "scheduled"])
+      .in("status", ["upcoming", "scheduled", "live"])
       .order("scheduled_at", { ascending: true })
       .limit(500);
 
@@ -1416,7 +1416,7 @@ app.get("/api/classes/following", requireAuth, async (req, res) => {
     const { data: classes, error } = await supabase
       .from("scheduled_classes")
       .select("*")
-      .in("status", ["upcoming", "scheduled"])
+      .in("status", ["upcoming", "scheduled", "live"])
       .in("host_id", hostIds)
       .order("scheduled_at", { ascending: true })
       .limit(200);

@@ -1,5 +1,5 @@
 import { colors } from "../../../lib/colors";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,7 +18,6 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { AuthGate } from "../../../components/AuthGate";
-import { RoleGuard } from "../../../components/RoleGuard";
 import { ClassChat } from "../../../components/ClassChat";
 import { getClass, getSeries, joinClass, enrollInSeries, joinWaitlist } from "../../../lib/api";
 import type { ScheduledClass, ClassSeries } from "../../../lib/types";
@@ -54,6 +53,37 @@ function formatSmartDate(iso: string): string {
 function formatShortDate(iso: string): string {
   const d = new Date(iso);
   return `${DAYS_ABB[d.getDay()]}, ${MONTHS_ABB[d.getMonth()]} ${d.getDate()}`;
+}
+
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; message: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(err: unknown) {
+    const message = err instanceof Error ? err.message : "Something went wrong.";
+    return { hasError: true, message };
+  }
+
+  componentDidCatch(err: unknown, info: unknown) {
+    console.error("[ClassDetail] render error:", err, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.centered}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#B0B0B0" />
+          <Text style={styles.errorMsg}>{this.state.message}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function StarRow({ rating, count }: { rating: number; count: number }) {
@@ -206,11 +236,9 @@ export default function ClassDetailScreen() {
   if (loading) {
     return (
       <AuthGate>
-        <RoleGuard requiredRole="guest">
-          <View style={styles.centered}>
-            <ActivityIndicator color="#0F0F0F" />
-          </View>
-        </RoleGuard>
+        <View style={styles.centered}>
+          <ActivityIndicator color="#0F0F0F" />
+        </View>
       </AuthGate>
     );
   }
@@ -218,14 +246,12 @@ export default function ClassDetailScreen() {
   if (error || !cls) {
     return (
       <AuthGate>
-        <RoleGuard requiredRole="guest">
-          <View style={styles.centered}>
-            <Text style={styles.errorMsg}>{error ?? "Class not found."}</Text>
-            <TouchableOpacity style={styles.retryBtn} onPress={loadData} activeOpacity={0.7}>
-              <Text style={styles.retryText}>Try again</Text>
-            </TouchableOpacity>
-          </View>
-        </RoleGuard>
+        <View style={styles.centered}>
+          <Text style={styles.errorMsg}>{error ?? "Class not found."}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadData} activeOpacity={0.7}>
+            <Text style={styles.retryText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
       </AuthGate>
     );
   }
@@ -246,7 +272,7 @@ export default function ClassDetailScreen() {
 
   return (
     <AuthGate>
-      <RoleGuard requiredRole="guest">
+      <ErrorBoundary>
         <View style={[styles.container, { paddingTop: insets.top }]}>
           {/* Header */}
           <View style={styles.topBar}>
@@ -583,10 +609,24 @@ export default function ClassDetailScreen() {
                   </Text>
                 )}
               </TouchableOpacity>
-            ) : null}
+            ) : (
+              /* ── Series-enrolled, class upcoming ── */
+              <View style={styles.enrolledUpcomingWrap}>
+                <View style={styles.joinedConfirmed}>
+                  <MaterialCommunityIcons name="check-circle" size={18} color="#0F7B6B" />
+                  <Text style={styles.joinedConfirmedText}>
+                    You're enrolled — {formatSmartDate(cls.scheduled_at)}
+                  </Text>
+                </View>
+                <View style={styles.joinWhenLiveBtn}>
+                  <MaterialCommunityIcons name="video-outline" size={15} color="#B0B0B0" />
+                  <Text style={styles.joinWhenLiveBtnText}>Join when live</Text>
+                </View>
+              </View>
+            )}
           </View>
         </View>
-      </RoleGuard>
+      </ErrorBoundary>
     </AuthGate>
   );
 }
