@@ -96,13 +96,13 @@ export default function RootLayout() {
                     <Stack.Screen name="index" options={{ headerShown: false }} />
                     <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
                     <Stack.Screen name="login" options={{ headerShown: false }} />
-                    <Stack.Screen name="login/customer" options={{ headerShown: false }} />
-                    <Stack.Screen name="login/pro" options={{ headerShown: false }} />
                     <Stack.Screen name="login/guest" options={{ headerShown: false }} />
                     <Stack.Screen name="login/instructor" options={{ headerShown: false }} />
                     <Stack.Screen name="login/host" options={{ headerShown: false }} />
                     <Stack.Screen name="host" options={{ headerShown: false }} />
                     <Stack.Screen name="guest" options={{ headerShown: false }} />
+                    <Stack.Screen name="instructor-apply" options={{ headerShown: false }} />
+                    <Stack.Screen name="instructor-pending" options={{ headerShown: false }} />
                     <Stack.Screen name="onboarding" options={{ headerShown: false }} />
                     <Stack.Screen name="notification-permission" options={{ headerShown: false }} />
                     <Stack.Screen name="notifications" options={{ title: "Notifications", headerShown: true }} />
