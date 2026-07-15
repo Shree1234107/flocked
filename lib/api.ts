@@ -13,15 +13,24 @@ import {
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  console.log("[api] session:", session ? "found" : "null", "token:", session?.access_token?.slice(0, 20));
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) return {};
+
+  // If the token expires within 60 seconds, proactively refresh it before sending.
+  // autoRefreshToken fires ~60s before expiry but won't run while the app is backgrounded,
+  // so this window can be missed. Refreshing here prevents sending a stale token.
+  const expiresAt = session.expires_at;
+  if (expiresAt !== undefined && expiresAt < Date.now() / 1000 + 60) {
+    const { data: refreshed } = await supabase.auth.refreshSession().catch(() => ({ data: { session: null } }));
+    if (refreshed.session?.access_token) {
+      return { Authorization: `Bearer ${refreshed.session.access_token}` };
+    }
+  }
+
   return { Authorization: `Bearer ${session.access_token}` };
 }
 
-async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+async function apiFetch<T>(path: string, options?: RequestInit, _retried = false): Promise<T> {
   const authHeaders = await getAuthHeaders();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
@@ -38,6 +47,14 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const body = await response
     .json()
     .catch(() => ({ ok: false, message: "Invalid server response." }));
+
+  // On a 401 the access token may have just expired (e.g. the app was backgrounded and
+  // the auto-refresh timer never fired). Force a refresh and retry once so the user
+  // never sees a spurious "session expired" error when their refresh token is still valid.
+  if (!body.ok && response.status === 401 && !_retried) {
+    await supabase.auth.refreshSession().catch(() => {});
+    return apiFetch<T>(path, options, true);
+  }
 
   if (!body.ok) {
     throw new Error(body.message || "Request failed");
