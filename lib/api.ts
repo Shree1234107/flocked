@@ -492,6 +492,51 @@ export async function rejectInstructorApplication(id: string): Promise<Instructo
   return data.application;
 }
 
+// ─── Instructor follow ────────────────────────────────────────────────────────
+
+export type InstructorPublicProfile = {
+  user_id: string;
+  display_name: string | null;
+  bio: string | null;
+  interest_tags: string[];
+  photo_url: string | null;
+  avg_rating: number | null;
+  total_reviews: number;
+  upcoming_classes: number;
+};
+
+export async function getInstructorPublicProfile(
+  instructorId: string
+): Promise<InstructorPublicProfile> {
+  return apiFetch<InstructorPublicProfile>(
+    `/api/instructors/${encodeURIComponent(instructorId)}/public-profile`
+  );
+}
+
+export async function getFollowStatus(
+  instructorId: string
+): Promise<{ following: boolean; follower_count: number }> {
+  return apiFetch(`/api/instructors/${encodeURIComponent(instructorId)}/follow-status`);
+}
+
+export async function followInstructor(instructorId: string): Promise<void> {
+  await apiFetch(`/api/instructors/${encodeURIComponent(instructorId)}/follow`, {
+    method: "POST",
+  });
+}
+
+export async function unfollowInstructor(instructorId: string): Promise<void> {
+  await apiFetch(`/api/instructors/${encodeURIComponent(instructorId)}/follow`, {
+    method: "DELETE",
+  });
+}
+
+export async function getHostFollowers(): Promise<
+  { user_id: string; display_name: string | null; created_at: string }[]
+> {
+  return apiFetch("/api/me/followers");
+}
+
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
 export type ChatMessage = {

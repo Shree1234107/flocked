@@ -49,7 +49,7 @@ export default function FollowersScreen() {
 
   return (
     <AuthGate>
-      <RoleGuard role="host">
+      <RoleGuard requiredRole="host">
         <ScrollView
           style={styles.root}
           contentContainerStyle={[

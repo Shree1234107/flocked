@@ -100,6 +100,7 @@ export default function RootLayout() {
                     <Stack.Screen name="login/pro" options={{ headerShown: false }} />
                     <Stack.Screen name="login/guest" options={{ headerShown: false }} />
                     <Stack.Screen name="login/instructor" options={{ headerShown: false }} />
+                    <Stack.Screen name="login/host" options={{ headerShown: false }} />
                     <Stack.Screen name="host" options={{ headerShown: false }} />
                     <Stack.Screen name="guest" options={{ headerShown: false }} />
                     <Stack.Screen name="onboarding" options={{ headerShown: false }} />

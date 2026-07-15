@@ -121,7 +121,7 @@ export default function EarningsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FDFBF7",
   },
   content: {
     paddingHorizontal: 20,

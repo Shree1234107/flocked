@@ -2280,6 +2280,145 @@ app.post("/api/instructor-applications/:id/reject", requireAuth, requireAdmin, a
   return ok(res, { application: data });
 });
 
+// ─── Instructor public profile & follow ───────────────────────────────────────
+
+app.get("/api/instructors/:id/public-profile", requireAuth, async (req, res) => {
+  const { id } = req.params;
+
+  const [profileRes, reviewsRes, classesRes] = await Promise.all([
+    supabase
+      .from("host_profiles")
+      .select("user_id, display_name, bio, interest_tags, photo_url")
+      .eq("user_id", id)
+      .single(),
+    supabase
+      .from("class_reviews")
+      .select("rating")
+      .eq("instructor_id", id),
+    supabase
+      .from("scheduled_classes")
+      .select("id", { count: "exact", head: true })
+      .eq("host_id", id)
+      .in("status", ["upcoming", "live"])
+      .gte("scheduled_at", new Date().toISOString()),
+  ]);
+
+  if (profileRes.error || !profileRes.data) return fail(res, "Instructor not found.", 404);
+
+  const profile = profileRes.data;
+  const reviews = reviewsRes.data ?? [];
+  const avgRating = reviews.length
+    ? reviews.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviews.length
+    : null;
+
+  const tags: string[] = profile.interest_tags
+    ? profile.interest_tags.split(",").map((t: string) => t.trim()).filter(Boolean)
+    : [];
+
+  return ok(res, {
+    user_id: profile.user_id,
+    display_name: profile.display_name,
+    bio: profile.bio,
+    interest_tags: tags,
+    photo_url: profile.photo_url,
+    avg_rating: avgRating !== null ? Math.round(avgRating * 10) / 10 : null,
+    total_reviews: reviews.length,
+    upcoming_classes: classesRes.count ?? 0,
+  });
+});
+
+app.get("/api/instructors/:id/follow-status", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const [followRes, countRes] = await Promise.all([
+    supabase
+      .from("user_follows")
+      .select("follower_id")
+      .eq("follower_id", userId)
+      .eq("host_id", id)
+      .maybeSingle(),
+    supabase
+      .from("user_follows")
+      .select("*", { count: "exact", head: true })
+      .eq("host_id", id),
+  ]);
+
+  return ok(res, {
+    following: !!followRes.data,
+    follower_count: countRes.count ?? 0,
+  });
+});
+
+app.post("/api/instructors/:id/follow", requireAuth, requireUserRole(["guest"]), async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  if (userId === id) return fail(res, "You cannot follow yourself.");
+
+  const { error } = await supabase
+    .from("user_follows")
+    .upsert({ follower_id: userId, host_id: id }, { onConflict: "follower_id,host_id" });
+
+  if (error) {
+    console.error("[POST /api/instructors/:id/follow]", error.message);
+    return fail(res, "Failed to follow instructor.", 500);
+  }
+
+  return ok(res, { followed: true });
+});
+
+app.delete("/api/instructors/:id/follow", requireAuth, requireUserRole(["guest"]), async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const { error } = await supabase
+    .from("user_follows")
+    .delete()
+    .eq("follower_id", userId)
+    .eq("host_id", id);
+
+  if (error) {
+    console.error("[DELETE /api/instructors/:id/follow]", error.message);
+    return fail(res, "Failed to unfollow instructor.", 500);
+  }
+
+  return ok(res, { unfollowed: true });
+});
+
+app.get("/api/me/followers", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const { data: follows, error } = await supabase
+    .from("user_follows")
+    .select("follower_id, created_at")
+    .eq("host_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[GET /api/me/followers]", error.message);
+    return fail(res, "Failed to load followers.", 500);
+  }
+
+  if (!follows || follows.length === 0) return ok(res, []);
+
+  const followerIds = follows.map((f) => f.follower_id);
+  const { data: profiles } = await supabase
+    .from("user_profiles")
+    .select("user_id, display_name")
+    .in("user_id", followerIds);
+
+  const profileMap = Object.fromEntries(
+    (profiles ?? []).map((p) => [p.user_id, p.display_name])
+  );
+
+  return ok(res, follows.map((f) => ({
+    user_id: f.follower_id,
+    display_name: profileMap[f.follower_id] ?? null,
+    created_at: f.created_at,
+  })));
+});
+
 // ─── Health check ─────────────────────────────────────────────────────────────
 
 app.get("/health", (_req, res) => {

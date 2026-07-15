@@ -185,7 +185,7 @@ export default function GuestDiscoverTab() {
         }),
         listFollowingClasses().catch((err) => {
           console.error("[Discover] GET", `${base}/api/classes/following`, "→", err);
-          throw err;
+          return [] as ScheduledClass[];
         }),
         getStreak().catch(() => null),
       ]);

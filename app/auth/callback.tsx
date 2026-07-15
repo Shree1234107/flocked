@@ -7,6 +7,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useRole } from "../../lib/role";
+import { getUserRole } from "../../lib/api";
 
 function getWebParams(): Record<string, string> {
   if (Platform.OS !== "web" || typeof window === "undefined") return {};
@@ -49,7 +50,15 @@ export default function AuthCallbackScreen() {
       const persist =
         metaRole === "host" || metaRole === "guest"
           ? setRole(metaRole).catch(() => {})
-          : Promise.resolve();
+          : getUserRole()
+              .then((backendRole) => {
+                const resolved =
+                  backendRole === "host" || backendRole === "guest"
+                    ? backendRole
+                    : "guest";
+                return setRole(resolved).catch(() => {});
+              })
+              .catch(() => setRole("guest").catch(() => {}));
       persist.then(() => {
         console.log("[auth/callback] role persisted, navigating to /");
         router.replace("/");

@@ -91,6 +91,9 @@ export default function HostLayout() {
         <Stack.Screen name="edit/fee" options={{ headerShown: false }} />
         <Stack.Screen name="schedule" options={{ title: "Schedule a Class" }} />
         <Stack.Screen name="earnings" options={{ title: "Earnings" }} />
+        <Stack.Screen name="followers" options={{ headerShown: false }} />
+        <Stack.Screen name="analytics" options={{ headerShown: false }} />
+        <Stack.Screen name="room/[classId]" options={{ headerShown: false }} />
       </Stack>
     );
   }
@@ -138,6 +141,9 @@ export default function HostLayout() {
       <Stack.Screen name="edit/fee" options={{ headerShown: false }} />
       <Stack.Screen name="schedule" options={{ title: "Schedule a Class" }} />
       <Stack.Screen name="earnings" options={{ title: "Earnings" }} />
+      <Stack.Screen name="followers" options={{ headerShown: false }} />
+      <Stack.Screen name="analytics" options={{ headerShown: false }} />
+      <Stack.Screen name="room/[classId]" options={{ headerShown: false }} />
     </Stack>
   );
 }
