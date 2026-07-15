@@ -74,7 +74,7 @@ export default function LoginScreen() {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
-        options: { emailRedirectTo: getAuthRedirectUri() },
+        options: { emailRedirectTo: getAuthRedirectUri(), data: { role: "guest" } },
       });
       if (error) throw error;
       setSent(true);

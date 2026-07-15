@@ -8,6 +8,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../lib/auth";
 import { useRole } from "../../lib/role";
 import { getUserRole } from "../../lib/api";
+import * as SecureStore from "../../lib/secure-store";
 
 function getWebParams(): Record<string, string> {
   if (Platform.OS !== "web" || typeof window === "undefined") return {};
@@ -43,26 +44,35 @@ export default function AuthCallbackScreen() {
     if (!exchangeDone || errorMsg || didNavigate.current) return;
     if (session) {
       didNavigate.current = true;
-      // If the signup flow embedded a role in user_metadata (via signInWithOtp data:{}),
-      // persist it to SecureStore + backend before navigating so app/index.tsx sees it.
-      const metaRole = session.user.user_metadata?.role as string | undefined;
-      console.log("[auth/callback] user_metadata.role:", metaRole);
-      const persist =
-        metaRole === "host" || metaRole === "guest"
-          ? setRole(metaRole).catch(() => {})
-          : getUserRole()
-              .then((backendRole) => {
-                const resolved =
-                  backendRole === "host" || backendRole === "guest"
-                    ? backendRole
-                    : "guest";
-                return setRole(resolved).catch(() => {});
-              })
-              .catch(() => setRole("guest").catch(() => {}));
-      persist.then(() => {
+      const resolveAndNavigate = async () => {
+        // pending_role is stored by LoginForm before the OTP is sent, so it
+        // reflects what the user *actually chose* at login time — use it over
+        // user_metadata.role which Supabase ignores for existing accounts.
+        const pendingRole = await SecureStore.getItemAsync("flocked.pending_role").catch(() => null);
+        await SecureStore.deleteItemAsync("flocked.pending_role").catch(() => {});
+        console.log("[auth/callback] pendingRole:", pendingRole, "user_metadata.role:", session.user.user_metadata?.role);
+
+        const chosenRole =
+          pendingRole === "host" || pendingRole === "guest"
+            ? pendingRole
+            : (session.user.user_metadata?.role as string | undefined);
+
+        const persist =
+          chosenRole === "host" || chosenRole === "guest"
+            ? setRole(chosenRole).catch(() => {})
+            : getUserRole()
+                .then((backendRole) => {
+                  const resolved =
+                    backendRole === "host" || backendRole === "guest" ? backendRole : "guest";
+                  return setRole(resolved).catch(() => {});
+                })
+                .catch(() => setRole("guest").catch(() => {}));
+
+        await persist;
         console.log("[auth/callback] role persisted, navigating to /");
         router.replace("/");
-      });
+      };
+      resolveAndNavigate();
       return;
     }
     // Safety net: if session never arrives after 4 s, show an error

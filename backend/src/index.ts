@@ -465,7 +465,17 @@ app.post("/api/auth/role", requireAuth, async (req, res) => {
     .maybeSingle();
 
   if (existing) {
-    return ok(res, { role: existing.role });
+    if (existing.role !== role) {
+      const { error: updateError } = await supabase
+        .from("user_profiles")
+        .update({ role })
+        .eq("user_id", userId);
+      if (updateError) {
+        console.error("[POST /api/auth/role] update", updateError.message);
+        return fail(res, "Failed to update account type.", 500);
+      }
+    }
+    return ok(res, { role });
   }
 
   const { error } = await supabase.from("user_profiles").insert({ user_id: userId, role });
