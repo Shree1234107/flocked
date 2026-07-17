@@ -554,6 +554,32 @@ export async function getHostFollowers(): Promise<
   return apiFetch("/api/me/followers");
 }
 
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type AppNotification = {
+  id: string;
+  type: "new_class" | "class_reminder" | "welcome";
+  title: string;
+  body: string;
+  class_id: string | null;
+  instructor_id: string | null;
+  read: boolean;
+  created_at: string;
+};
+
+export async function getNotifications(): Promise<AppNotification[]> {
+  return apiFetch<AppNotification[]>("/api/notifications");
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const data = await apiFetch<{ count: number }>("/api/notifications/unread-count");
+  return data.count;
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await apiFetch("/api/notifications/read-all", { method: "PATCH" });
+}
+
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
 export type ChatMessage = {

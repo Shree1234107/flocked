@@ -1505,6 +1505,43 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
     return fail(res, "Failed to create class.", 500);
   }
 
+  // Notify followers — best-effort, never blocks the response
+  (async () => {
+    try {
+      const { data: followers } = await supabase
+        .from("user_follows")
+        .select("follower_id")
+        .eq("host_id", userId);
+
+      if (!followers || followers.length === 0) return;
+
+      const { data: hostProf } = await supabase
+        .from("host_profiles")
+        .select("display_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const instructorName = hostProf?.display_name ?? "An instructor you follow";
+      const scheduledDate = new Date(scheduledAt).toLocaleDateString("en-US", {
+        weekday: "short", month: "short", day: "numeric",
+      });
+
+      const notifs = followers.map((f) => ({
+        user_id: f.follower_id,
+        type: "new_class",
+        title: `New class from ${instructorName}`,
+        body: `"${title}" — ${scheduledDate}`,
+        class_id: cls.id,
+        instructor_id: userId,
+      }));
+
+      const { error: notifErr } = await supabase.from("notifications").insert(notifs);
+      if (notifErr) console.error("[POST /api/classes] notification insert:", notifErr.message);
+    } catch (notifErr) {
+      console.error("[POST /api/classes] notification dispatch:", notifErr);
+    }
+  })();
+
   return ok(res, cls, 201);
 });
 
@@ -2354,13 +2391,18 @@ app.get("/api/instructors/:id/follow-status", requireAuth, async (req, res) => {
       .eq("host_id", id),
   ]);
 
+  if (followRes.error) console.error("[GET /api/instructors/:id/follow-status] follow check:", followRes.error.message);
+  if (countRes.error) console.error("[GET /api/instructors/:id/follow-status] count:", countRes.error.message);
+
   return ok(res, {
     following: !!followRes.data,
     follower_count: countRes.count ?? 0,
   });
 });
 
-app.post("/api/instructors/:id/follow", requireAuth, requireUserRole(["guest"]), async (req, res) => {
+// Any authenticated user can follow/unfollow an instructor (no guest-only gate —
+// requireUserRole would block users whose user_profiles row hasn't been created yet)
+app.post("/api/instructors/:id/follow", requireAuth, async (req, res) => {
   const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
 
@@ -2378,7 +2420,7 @@ app.post("/api/instructors/:id/follow", requireAuth, requireUserRole(["guest"]),
   return ok(res, { followed: true });
 });
 
-app.delete("/api/instructors/:id/follow", requireAuth, requireUserRole(["guest"]), async (req, res) => {
+app.delete("/api/instructors/:id/follow", requireAuth, async (req, res) => {
   const { id } = req.params;
   const userId = (req as AuthedRequest).userId;
 
@@ -2395,6 +2437,56 @@ app.delete("/api/instructors/:id/follow", requireAuth, requireUserRole(["guest"]
 
   return ok(res, { unfollowed: true });
 });
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+app.get("/api/notifications", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("[GET /api/notifications]", error.message);
+    return fail(res, "Failed to load notifications.", 500);
+  }
+  return ok(res, data ?? []);
+});
+
+app.get("/api/notifications/unread-count", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("read", false);
+
+  if (error) {
+    console.error("[GET /api/notifications/unread-count]", error.message);
+    return ok(res, { count: 0 });
+  }
+  return ok(res, { count: count ?? 0 });
+});
+
+app.patch("/api/notifications/read-all", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", userId)
+    .eq("read", false);
+
+  if (error) {
+    console.error("[PATCH /api/notifications/read-all]", error.message);
+    return fail(res, "Failed to mark notifications read.", 500);
+  }
+  return ok(res, { marked: true });
+});
+
+// ─── Host followers ───────────────────────────────────────────────────────────
 
 app.get("/api/me/followers", requireAuth, requireUserRole(["host"]), async (req, res) => {
   const userId = (req as AuthedRequest).userId;

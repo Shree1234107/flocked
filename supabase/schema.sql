@@ -209,6 +209,29 @@ CREATE POLICY "user_follows: users manage own follows" ON user_follows
 CREATE POLICY "user_follows: read follower counts" ON user_follows
   FOR SELECT TO authenticated USING (true);
 
+-- In-app notifications (e.g. new class from followed instructor)
+CREATE TABLE IF NOT EXISTS notifications (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type          text NOT NULL DEFAULT 'new_class',
+  title         text NOT NULL,
+  body          text NOT NULL,
+  class_id      uuid REFERENCES scheduled_classes(id) ON DELETE SET NULL,
+  instructor_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  read          boolean NOT NULL DEFAULT false,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_user_created_idx ON notifications(user_id, created_at DESC);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "notifications: users read own" ON notifications
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "notifications: users update own" ON notifications
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+
 -- ─── Series support ───────────────────────────────────────────────────────────
 
 -- Must be created before alter table scheduled_classes references it
