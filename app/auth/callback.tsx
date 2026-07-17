@@ -52,6 +52,19 @@ export default function AuthCallbackScreen() {
         await SecureStore.deleteItemAsync("flocked.pending_role").catch(() => {});
         console.log("[auth/callback] pendingRole:", pendingRole, "user_metadata.role:", session.user.user_metadata?.role);
 
+        // Generic email form uses "select" as a sentinel (no role pre-chosen).
+        // Route returning users to their existing dashboard; new users to /select-role.
+        if (pendingRole === "select") {
+          const existingRole = await getUserRole().catch(() => null);
+          if (existingRole === "host" || existingRole === "guest") {
+            await setRole(existingRole).catch(() => {});
+            router.replace("/");
+          } else {
+            router.replace("/select-role" as never);
+          }
+          return;
+        }
+
         const chosenRole =
           pendingRole === "host" || pendingRole === "guest"
             ? pendingRole

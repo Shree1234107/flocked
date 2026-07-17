@@ -73,10 +73,12 @@ export default function LoginScreen() {
     setErrorMsg(null);
     setSending(true);
     try {
-      await SecureStore.setItemAsync("flocked.pending_role", "guest").catch(() => {});
+      // "select" is a sentinel meaning "no role chosen yet" — the callback will
+      // route new users to /select-role instead of defaulting them to guest or host.
+      await SecureStore.setItemAsync("flocked.pending_role", "select").catch(() => {});
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
-        options: { emailRedirectTo: getAuthRedirectUri(), data: { role: "guest" } },
+        options: { emailRedirectTo: getAuthRedirectUri() },
       });
       if (error) throw error;
       setSent(true);
