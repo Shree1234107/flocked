@@ -2413,7 +2413,8 @@ app.post("/api/instructors/:id/follow", requireAuth, async (req, res) => {
     .upsert({ follower_id: userId, host_id: id }, { onConflict: "follower_id,host_id" });
 
   if (error) {
-    console.error("[POST /api/instructors/:id/follow]", error.message);
+    console.error("[POST /api/instructors/:id/follow] code=%s message=%s details=%s hint=%s",
+      error.code, error.message, error.details, error.hint);
     return fail(res, "Failed to follow instructor.", 500);
   }
 
