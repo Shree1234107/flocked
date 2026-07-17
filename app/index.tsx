@@ -264,9 +264,13 @@ function LandingPage() {
     classesScrollRef.current?.scrollTo({ x: next, animated: true });
   };
 
+  const PRICE_PER_STUDENT = 15;
+  const INSTRUCTOR_SHARE = 0.80;
+  const EARN_PER_STUDENT = PRICE_PER_STUDENT * INSTRUCTOR_SHARE; // $12
+
   const [students, setStudents] = useState(10);
   const [classesPerWeek, setClassesPerWeek] = useState(3);
-  const monthlyEarnings = Math.round(students * classesPerWeek * 4 * 10 * 0.8);
+  const monthlyEarnings = Math.round(students * classesPerWeek * 4 * EARN_PER_STUDENT);
 
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -698,6 +702,7 @@ function LandingPage() {
 
               <View style={s.calcCard}>
                 <Text style={s.calcLabel}>Projected monthly earnings</Text>
+                <Text style={s.calcSubLabel}>$15/student · you keep 80%</Text>
 
                 <View style={s.calcRow}>
                   <Text style={s.calcRowLabel}>Students per class</Text>
@@ -1514,6 +1519,7 @@ const s = StyleSheet.create({
     elevation: 3,
   },
   calcLabel: { fontSize: 12, fontFamily: fonts.regular, color: "#6B6B6B", letterSpacing: 0.5 },
+  calcSubLabel: { fontSize: 11, fontFamily: fonts.regular, color: "#00B4A6", marginTop: 2, marginBottom: 4 },
   calcRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   calcRowLabel: { fontSize: 14, fontFamily: fonts.regular, color: colors.navy },
   stepper: {
