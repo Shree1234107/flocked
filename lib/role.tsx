@@ -30,12 +30,18 @@ export function RoleProvider({ children }: PropsWithChildren) {
         if (cached) setRoleState(cached as Role);
         setLoading(false);
       }
-      // Sync with server in background to fix any stale cache
+      // Sync with server in background to fix any stale cache.
+      // Use a functional updater so we never overwrite a role that setRole()
+      // has already applied (e.g. the auth callback setting "guest" while this
+      // request is in-flight with a stale "host" value from the server).
       getUserRole().then((serverRole) => {
         if (!isMounted || !serverRole) return;
         if (serverRole !== cached) {
-          SecureStore.setItemAsync(ROLE_KEY, serverRole);
-          if (isMounted) setRoleState(serverRole);
+          setRoleState((current) => {
+            if (current !== cached) return current; // setRole() already moved it — don't overwrite
+            SecureStore.setItemAsync(ROLE_KEY, serverRole);
+            return serverRole as Role;
+          });
         }
       }).catch(() => {/* network unavailable — local value is fine */});
     };

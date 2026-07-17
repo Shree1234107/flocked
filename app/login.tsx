@@ -20,6 +20,7 @@ import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri } from "../lib/auth-helpers";
 import { fonts } from "../lib/fonts";
+import * as SecureStore from "../lib/secure-store";
 
 // ─── Error helper (unchanged) ─────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export default function LoginScreen() {
     setErrorMsg(null);
     setSending(true);
     try {
+      await SecureStore.setItemAsync("flocked.pending_role", "guest").catch(() => {});
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: { emailRedirectTo: getAuthRedirectUri(), data: { role: "guest" } },
