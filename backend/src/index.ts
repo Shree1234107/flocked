@@ -1428,9 +1428,9 @@ app.get("/api/classes/following", requireAuth, async (req, res) => {
     const userId = (req as AuthedRequest).userId;
 
     const { data: follows, error: followsError } = await supabase
-      .from("user_follows")
+      .from("instructor_follows")
       .select("host_id")
-      .eq("follower_id", userId);
+      .eq("student_id", userId);
 
     if (followsError) {
       // Table may not exist yet — return empty list gracefully
@@ -1509,8 +1509,8 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
   (async () => {
     try {
       const { data: followers } = await supabase
-        .from("user_follows")
-        .select("follower_id")
+        .from("instructor_follows")
+        .select("student_id")
         .eq("host_id", userId);
 
       if (!followers || followers.length === 0) return;
@@ -1527,7 +1527,7 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
       });
 
       const notifs = followers.map((f) => ({
-        user_id: f.follower_id,
+        user_id: f.student_id,
         type: "new_class",
         title: `New class from ${instructorName}`,
         body: `"${title}" — ${scheduledDate}`,
@@ -2380,13 +2380,13 @@ app.get("/api/instructors/:id/follow-status", requireAuth, async (req, res) => {
 
   const [followRes, countRes] = await Promise.all([
     supabase
-      .from("user_follows")
-      .select("follower_id")
-      .eq("follower_id", userId)
+      .from("instructor_follows")
+      .select("student_id")
+      .eq("student_id", userId)
       .eq("host_id", id)
       .maybeSingle(),
     supabase
-      .from("user_follows")
+      .from("instructor_follows")
       .select("*", { count: "exact", head: true })
       .eq("host_id", id),
   ]);
@@ -2409,8 +2409,8 @@ app.post("/api/instructors/:id/follow", requireAuth, async (req, res) => {
   if (userId === id) return fail(res, "You cannot follow yourself.");
 
   const { error } = await supabase
-    .from("user_follows")
-    .upsert({ follower_id: userId, host_id: id }, { onConflict: "follower_id,host_id" });
+    .from("instructor_follows")
+    .upsert({ student_id: userId, host_id: id }, { onConflict: "student_id,host_id" });
 
   if (error) {
     console.error("[POST /api/instructors/:id/follow] code=%s message=%s details=%s hint=%s",
@@ -2426,9 +2426,9 @@ app.delete("/api/instructors/:id/follow", requireAuth, async (req, res) => {
   const userId = (req as AuthedRequest).userId;
 
   const { error } = await supabase
-    .from("user_follows")
+    .from("instructor_follows")
     .delete()
-    .eq("follower_id", userId)
+    .eq("student_id", userId)
     .eq("host_id", id);
 
   if (error) {
@@ -2493,8 +2493,8 @@ app.get("/api/me/followers", requireAuth, requireUserRole(["host"]), async (req,
   const userId = (req as AuthedRequest).userId;
 
   const { data: follows, error } = await supabase
-    .from("user_follows")
-    .select("follower_id, created_at")
+    .from("instructor_follows")
+    .select("student_id, created_at")
     .eq("host_id", userId)
     .order("created_at", { ascending: false });
 
@@ -2505,7 +2505,7 @@ app.get("/api/me/followers", requireAuth, requireUserRole(["host"]), async (req,
 
   if (!follows || follows.length === 0) return ok(res, []);
 
-  const followerIds = follows.map((f) => f.follower_id);
+  const followerIds = follows.map((f) => f.student_id);
   const { data: profiles } = await supabase
     .from("user_profiles")
     .select("user_id, display_name")
@@ -2516,8 +2516,8 @@ app.get("/api/me/followers", requireAuth, requireUserRole(["host"]), async (req,
   );
 
   return ok(res, follows.map((f) => ({
-    user_id: f.follower_id,
-    display_name: profileMap[f.follower_id] ?? null,
+    user_id: f.student_id,
+    display_name: profileMap[f.student_id] ?? null,
     created_at: f.created_at,
   })));
 });
