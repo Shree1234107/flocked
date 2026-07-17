@@ -6,8 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { AuthGate } from "../../components/AuthGate";
-import { RoleGuard } from "../../components/RoleGuard";
 import { getHostFollowers } from "../../lib/api";
 
 type Follower = {
@@ -48,73 +46,69 @@ export default function FollowersScreen() {
   );
 
   return (
-    <AuthGate>
-      <RoleGuard requiredRole="host">
-        <ScrollView
-          style={styles.root}
-          contentContainerStyle={[
-            styles.content,
-            { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 32 },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-              <MaterialCommunityIcons name="arrow-left" size={22} color="#333" />
-            </TouchableOpacity>
-            <View>
-              <Text style={styles.title}>My Followers</Text>
-              {!loading && (
-                <Text style={styles.subtitle}>{followers.length} follower{followers.length !== 1 ? "s" : ""}</Text>
-              )}
-            </View>
-            <View style={{ width: 36 }} />
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 32 },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <MaterialCommunityIcons name="arrow-left" size={22} color="#333" />
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.title}>My Followers</Text>
+          {!loading && (
+            <Text style={styles.subtitle}>{followers.length} follower{followers.length !== 1 ? "s" : ""}</Text>
+          )}
+        </View>
+        <View style={{ width: 36 }} />
+      </View>
+
+      {loading && (
+        <View style={styles.centerBox}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      )}
+
+      {error && !loading && (
+        <View style={styles.centerBox}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#FF6B6B" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {!loading && !error && followers.length === 0 && (
+        <View style={styles.emptyBox}>
+          <MaterialCommunityIcons name="account-heart-outline" size={48} color="#D0D0D0" />
+          <Text style={styles.emptyTitle}>No followers yet</Text>
+          <Text style={styles.emptyBody}>
+            Share your profile to grow your audience!
+          </Text>
+        </View>
+      )}
+
+      {!loading && !error && followers.map((f) => (
+        <View key={f.user_id} style={styles.row}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials(f.display_name)}</Text>
           </View>
-
-          {loading && (
-            <View style={styles.centerBox}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          )}
-
-          {error && !loading && (
-            <View style={styles.centerBox}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color={colors.primaryTint} />
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          {!loading && !error && followers.length === 0 && (
-            <View style={styles.emptyBox}>
-              <MaterialCommunityIcons name="account-heart-outline" size={48} color="#D0D0D0" />
-              <Text style={styles.emptyTitle}>No followers yet</Text>
-              <Text style={styles.emptyBody}>
-                Share your profile to grow your audience!
-              </Text>
-            </View>
-          )}
-
-          {!loading && followers.map((f) => (
-            <View key={f.user_id} style={styles.row}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials(f.display_name)}</Text>
-              </View>
-              <View style={styles.rowInfo}>
-                <Text style={styles.rowName}>{f.display_name ?? "Flocked User"}</Text>
-                <Text style={styles.rowDate}>{formatFollowDate(f.created_at)}</Text>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      </RoleGuard>
-    </AuthGate>
+          <View style={styles.rowInfo}>
+            <Text style={styles.rowName}>{f.display_name ?? "Flocked User"}</Text>
+            <Text style={styles.rowDate}>{formatFollowDate(f.created_at)}</Text>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FAFAF8" },
-  content: { paddingHorizontal: 20 },
+  content: { paddingHorizontal: 20, flexGrow: 1 },
   header: {
     flexDirection: "row", alignItems: "center",
     justifyContent: "space-between", marginBottom: 24,
