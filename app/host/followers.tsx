@@ -113,7 +113,7 @@ export default function FollowersScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FAFAF8" },
+  root: { flex: 1, backgroundColor: colors.cream },
   content: { paddingHorizontal: 20 },
   header: {
     flexDirection: "row", alignItems: "center",

@@ -170,7 +170,7 @@ export default function FiltersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
   },
   handleRow: {
     alignItems: "center",

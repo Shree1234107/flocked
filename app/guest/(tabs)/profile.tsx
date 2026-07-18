@@ -290,7 +290,7 @@ export default function GuestProfileTab() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
   },
   centered: {
     alignItems: "center",

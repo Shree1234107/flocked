@@ -652,8 +652,8 @@ function InfoRow({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: "#FFFFFF" },
+  container: { flex: 1, backgroundColor: colors.cream },
+  centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: colors.cream },
   errorMsg: { fontSize: 14, fontFamily: fonts.regular, color: "#6B6B6B", textAlign: "center", paddingHorizontal: 32 },
   retryBtn: {
     borderWidth: 1,

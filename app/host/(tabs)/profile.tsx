@@ -233,7 +233,7 @@ export default function InstructorProfileTab() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
   },
   centered: {
     position: "absolute",

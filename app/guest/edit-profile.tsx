@@ -203,7 +203,7 @@ export default function StudentEditProfile() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: "#FFFFFF" },
+  flex: { flex: 1, backgroundColor: colors.cream },
   content: { paddingHorizontal: 24, gap: 28 },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 60 },
   avatarSection: { alignItems: "center", gap: 10 },

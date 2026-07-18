@@ -280,7 +280,7 @@ export default function InstructorProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FAFAF8" },
+  root: { flex: 1, backgroundColor: colors.cream },
   content: { paddingHorizontal: 20 },
   backBtn: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: "#F0F0F0",

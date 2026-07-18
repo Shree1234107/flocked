@@ -128,7 +128,7 @@ export default function ReviewScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     paddingHorizontal: 24,
     gap: 28,
   },

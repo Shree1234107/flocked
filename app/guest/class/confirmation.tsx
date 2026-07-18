@@ -112,7 +112,7 @@ export default function ConfirmationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",

@@ -327,13 +327,13 @@ function PendingStep({ number, text }: { number: string; text: string }) {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
   },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
   },
 
   // Questionnaire
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   // Pending
   pendingContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.cream,
     alignItems: "center",
     paddingHorizontal: 32,
     gap: 16,
