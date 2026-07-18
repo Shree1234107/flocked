@@ -18,7 +18,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { AuthGate } from "../../../components/AuthGate";
 import { RoleGuard } from "../../../components/RoleGuard";
 import { useFilters } from "../../../lib/filtersContext";
-import { listClasses, listFollowingClasses, getStreak, StreakData } from "../../../lib/api";
+import { listClasses, listFollowingClasses, getStreak, getUnreadNotificationCount, StreakData } from "../../../lib/api";
 import { useBreakpoint } from "../../../lib/useBreakpoint";
 import type { ScheduledClass } from "../../../lib/types";
 import { fonts } from "../../../lib/fonts";
@@ -168,6 +168,7 @@ export default function GuestDiscoverTab() {
   const [forYouClasses, setForYouClasses] = useState<ScheduledClass[]>([]);
   const [followingClasses, setFollowingClasses] = useState<ScheduledClass[]>([]);
   const [streak, setStreak] = useState<StreakData | null>(null);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -178,20 +179,22 @@ export default function GuestDiscoverTab() {
     const base = process.env.EXPO_PUBLIC_API_BASE_URL ?? "(no API_BASE_URL set)";
     console.log("[Discover] loadData — API_BASE_URL:", base);
     try {
-      const [forYou, following, streakData] = await Promise.all([
+      const [forYou, following, streakData, unreadCount] = await Promise.all([
         listClasses().catch((err) => {
           console.error("[Discover] GET", `${base}/api/classes`, "→", err);
           throw err;
         }),
         listFollowingClasses().catch((err) => {
           console.error("[Discover] GET", `${base}/api/classes/following`, "→", err);
-          throw err;
+          return [] as ScheduledClass[];
         }),
         getStreak().catch(() => null),
+        getUnreadNotificationCount().catch(() => 0),
       ]);
       setForYouClasses(forYou);
       setFollowingClasses(following);
       setStreak(streakData);
+      setUnreadNotifs(unreadCount);
     } catch (err) {
       console.error("[Discover] loadData failed:", err);
       setError(err instanceof Error ? err.message : "Failed to load classes.");
@@ -363,10 +366,17 @@ export default function GuestDiscoverTab() {
             </Text>
             <TouchableOpacity
               style={styles.bellBtn}
-              onPress={() => router.push("/notifications")}
+              onPress={() => { router.push("/notifications"); setUnreadNotifs(0); }}
               activeOpacity={0.7}
             >
               <MaterialCommunityIcons name="bell-outline" size={20} color="#0F0F0F" />
+              {unreadNotifs > 0 && (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>
+                    {unreadNotifs > 9 ? "9+" : String(unreadNotifs)}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -636,6 +646,19 @@ const styles = StyleSheet.create({
   },
   headerTitleDesktop: { fontSize: 28, letterSpacing: -0.5 },
   bellBtn: { padding: 4 },
+  bellBadge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#EF4444",
+    borderRadius: 999,
+    minWidth: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  bellBadgeText: { fontSize: 9, fontWeight: "700", color: "#FFFFFF" },
 
   // ── Streak banner ────────────────────────────────────────────────────────────
   streakBanner: {

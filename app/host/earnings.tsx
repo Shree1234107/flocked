@@ -18,9 +18,9 @@ const MOCK_CLASSES = [
   { id: "8", title: "Stretch & Recover", students: 0, status: "scheduled", date: "Jun 19" },
 ];
 
-const RATE_PER_STUDENT = 15;
-const PLATFORM_CUT = 0.85;
-const TOTAL_PROJECTED = 127.5;
+const PRICE_PER_STUDENT = 15;
+const INSTRUCTOR_SHARE = 0.80;   // platform keeps 20%
+const EARN_PER_STUDENT = PRICE_PER_STUDENT * INSTRUCTOR_SHARE; // $12
 const PAYOUT_DATE = "July 1, 2026";
 
 export default function EarningsScreen() {
@@ -29,6 +29,7 @@ export default function EarningsScreen() {
   const completed = MOCK_CLASSES.filter((c) => c.status === "completed");
   const scheduled = MOCK_CLASSES.filter((c) => c.status === "scheduled");
   const totalStudents = completed.reduce((sum, c) => sum + c.students, 0);
+  const totalProjected = totalStudents * EARN_PER_STUDENT;
 
   return (
     <AuthGate>
@@ -40,7 +41,7 @@ export default function EarningsScreen() {
           {/* Projected earnings card */}
           <View style={styles.projectedCard}>
             <Text style={styles.projectedLabel}>Projected This Month</Text>
-            <Text style={styles.projectedAmount}>${TOTAL_PROJECTED.toFixed(2)}</Text>
+            <Text style={styles.projectedAmount}>${totalProjected.toFixed(2)}</Text>
             <Text style={styles.projectedSub}>Based on {completed.length} completed classes</Text>
 
             <View style={styles.cardDivider} />
@@ -48,7 +49,7 @@ export default function EarningsScreen() {
             <View style={styles.formulaRow}>
               <MaterialCommunityIcons name="information-outline" size={13} color={colors.primary} />
               <Text style={styles.formulaText}>
-                avg. students × ${RATE_PER_STUDENT}/seat × {Math.round(PLATFORM_CUT * 100)}% = earnings per class
+                ${PRICE_PER_STUDENT}/class · you keep {Math.round(INSTRUCTOR_SHARE * 100)}% (${EARN_PER_STUDENT}/student) · platform fee: {Math.round((1 - INSTRUCTOR_SHARE) * 100)}%
               </Text>
             </View>
           </View>
@@ -89,7 +90,7 @@ export default function EarningsScreen() {
           <Text style={styles.sectionTitle}>Completed Classes</Text>
           <View style={styles.classList}>
             {completed.map((cls) => {
-              const earn = cls.students * RATE_PER_STUDENT * PLATFORM_CUT;
+              const earn = cls.students * EARN_PER_STUDENT;
               return (
                 <View key={cls.id} style={styles.classRow}>
                   <View style={styles.classLeft}>
@@ -130,10 +131,10 @@ const styles = StyleSheet.create({
   },
   projectedCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     alignItems: "center",
     gap: 6,
     shadowColor: "#000",
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   projectedLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#888888",
+    color: "#6B6B6B",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -158,11 +159,11 @@ const styles = StyleSheet.create({
   },
   projectedSub: {
     fontSize: 13,
-    color: "#888888",
+    color: "#6B6B6B",
   },
   cardDivider: {
     height: 1,
-    backgroundColor: "#EEEEEE",
+    backgroundColor: "#F0EDE5",
     alignSelf: "stretch",
     marginVertical: 12,
   },
@@ -174,15 +175,15 @@ const styles = StyleSheet.create({
   formulaText: {
     flex: 1,
     fontSize: 12,
-    color: "#888888",
+    color: "#6B6B6B",
     lineHeight: 18,
   },
   statsRow: {
     flexDirection: "row",
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     paddingVertical: 18,
   },
   statCell: {
@@ -198,18 +199,18 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: "#888888",
+    color: "#6B6B6B",
     fontWeight: "500",
     textAlign: "center",
   },
   statDivider: {
     width: 1,
-    backgroundColor: "#EEEEEE",
+    backgroundColor: "#F0EDE5",
     marginVertical: 6,
   },
   payoutCard: {
     backgroundColor: colors.primaryTint,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#D4E8CC",
     padding: 14,
@@ -262,9 +263,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     padding: 14,
     gap: 12,
     shadowColor: "#000",
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
   },
   classMeta: {
     fontSize: 12,
-    color: "#888888",
+    color: "#6B6B6B",
   },
   classEarn: {
     fontSize: 16,

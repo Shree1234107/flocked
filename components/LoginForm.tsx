@@ -17,6 +17,7 @@ import { useAuth } from "../lib/auth";
 import { useRole, Role } from "../lib/role";
 import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri, signInWithGoogle } from "../lib/auth-helpers";
+import * as SecureStore from "../lib/secure-store";
 
 type Props = {
   role: Role;
@@ -59,6 +60,7 @@ export function LoginForm({ role, title, subtitle }: Props) {
     setErrorMsg(null);
     setSending(true);
     try {
+      await SecureStore.setItemAsync("flocked.pending_role", role).catch(() => {});
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: {

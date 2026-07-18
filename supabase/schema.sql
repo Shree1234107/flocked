@@ -190,24 +190,49 @@ CREATE POLICY "class_waitlist: authenticated all" ON class_waitlist
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS display_name text;
 ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS photo_url text;
 
--- User follows: tracks which guests follow which hosts
-CREATE TABLE IF NOT EXISTS user_follows (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  follower_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  host_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (follower_id, host_id)
+-- Instructor follows: tracks which students follow which instructors
+-- Note: the live Supabase project uses "instructor_follows" as the real table.
+-- "user_follows" (if present) is a view aliasing this table.
+CREATE TABLE IF NOT EXISTS instructor_follows (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  host_id    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (student_id, host_id)
 );
 
-ALTER TABLE user_follows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE instructor_follows ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "user_follows: users manage own follows" ON user_follows
+CREATE POLICY "instructor_follows: users manage own follows" ON instructor_follows
   FOR ALL TO authenticated
-  USING (auth.uid() = follower_id)
-  WITH CHECK (auth.uid() = follower_id);
+  USING (auth.uid() = student_id)
+  WITH CHECK (auth.uid() = student_id);
 
-CREATE POLICY "user_follows: read follower counts" ON user_follows
+CREATE POLICY "instructor_follows: read follower counts" ON instructor_follows
   FOR SELECT TO authenticated USING (true);
+
+-- In-app notifications (e.g. new class from followed instructor)
+CREATE TABLE IF NOT EXISTS notifications (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type          text NOT NULL DEFAULT 'new_class',
+  title         text NOT NULL,
+  body          text NOT NULL,
+  class_id      uuid REFERENCES scheduled_classes(id) ON DELETE SET NULL,
+  instructor_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  read          boolean NOT NULL DEFAULT false,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_user_created_idx ON notifications(user_id, created_at DESC);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "notifications: users read own" ON notifications
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+CREATE POLICY "notifications: users update own" ON notifications
+  FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
 -- ─── Series support ───────────────────────────────────────────────────────────
 

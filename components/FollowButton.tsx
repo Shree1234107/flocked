@@ -1,6 +1,6 @@
 import { colors } from "../lib/colors";
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { followInstructor, unfollowInstructor } from "../lib/api";
 
@@ -24,9 +24,8 @@ export function FollowButton({
   const [loading, setLoading] = useState(false);
 
   const handlePress = async () => {
-    if (loading) return;
+    if (!hostId || loading) return;
     const next = !following;
-    // Optimistic update
     setFollowing(next);
     setCount((c) => c + (next ? 1 : -1));
     setLoading(true);
@@ -37,10 +36,13 @@ export function FollowButton({
         await unfollowInstructor(hostId);
       }
       onFollowChange?.(next);
-    } catch {
-      // Revert on error
+    } catch (err) {
       setFollowing(!next);
       setCount((c) => c + (next ? -1 : 1));
+      Alert.alert(
+        "Oops",
+        err instanceof Error ? err.message : `Failed to ${next ? "follow" : "unfollow"}. Please try again.`
+      );
     } finally {
       setLoading(false);
     }

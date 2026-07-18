@@ -20,6 +20,7 @@ import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
 import { getAuthRedirectUri } from "../lib/auth-helpers";
 import { fonts } from "../lib/fonts";
+import * as SecureStore from "../lib/secure-store";
 
 // ─── Error helper (unchanged) ─────────────────────────────────────────────────
 
@@ -72,6 +73,9 @@ export default function LoginScreen() {
     setErrorMsg(null);
     setSending(true);
     try {
+      // "select" is a sentinel meaning "no role chosen yet" — the callback will
+      // route new users to /select-role instead of defaulting them to guest or host.
+      await SecureStore.setItemAsync("flocked.pending_role", "select").catch(() => {});
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: { emailRedirectTo: getAuthRedirectUri() },

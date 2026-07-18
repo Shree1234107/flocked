@@ -465,7 +465,17 @@ app.post("/api/auth/role", requireAuth, async (req, res) => {
     .maybeSingle();
 
   if (existing) {
-    return ok(res, { role: existing.role });
+    if (existing.role !== role) {
+      const { error: updateError } = await supabase
+        .from("user_profiles")
+        .update({ role })
+        .eq("user_id", userId);
+      if (updateError) {
+        console.error("[POST /api/auth/role] update", updateError.message);
+        return fail(res, "Failed to update account type.", 500);
+      }
+    }
+    return ok(res, { role });
   }
 
   const { error } = await supabase.from("user_profiles").insert({ user_id: userId, role });
@@ -1418,9 +1428,9 @@ app.get("/api/classes/following", requireAuth, async (req, res) => {
     const userId = (req as AuthedRequest).userId;
 
     const { data: follows, error: followsError } = await supabase
-      .from("user_follows")
+      .from("instructor_follows")
       .select("host_id")
-      .eq("follower_id", userId);
+      .eq("student_id", userId);
 
     if (followsError) {
       // Table may not exist yet — return empty list gracefully
@@ -1494,6 +1504,43 @@ app.post("/api/classes", requireAuth, requireUserRole(["host"]), async (req, res
     console.error("[POST /api/classes]", error.message);
     return fail(res, "Failed to create class.", 500);
   }
+
+  // Notify followers — best-effort, never blocks the response
+  (async () => {
+    try {
+      const { data: followers } = await supabase
+        .from("instructor_follows")
+        .select("student_id")
+        .eq("host_id", userId);
+
+      if (!followers || followers.length === 0) return;
+
+      const { data: hostProf } = await supabase
+        .from("host_profiles")
+        .select("display_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const instructorName = hostProf?.display_name ?? "An instructor you follow";
+      const scheduledDate = new Date(scheduledAt).toLocaleDateString("en-US", {
+        weekday: "short", month: "short", day: "numeric",
+      });
+
+      const notifs = followers.map((f) => ({
+        user_id: f.student_id,
+        type: "new_class",
+        title: `New class from ${instructorName}`,
+        body: `"${title}" — ${scheduledDate}`,
+        class_id: cls.id,
+        instructor_id: userId,
+      }));
+
+      const { error: notifErr } = await supabase.from("notifications").insert(notifs);
+      if (notifErr) console.error("[POST /api/classes] notification insert:", notifErr.message);
+    } catch (notifErr) {
+      console.error("[POST /api/classes] notification dispatch:", notifErr);
+    }
+  })();
 
   return ok(res, cls, 201);
 });
@@ -2278,6 +2325,201 @@ app.post("/api/instructor-applications/:id/reject", requireAuth, requireAdmin, a
 
   if (error) return fail(res, error.message, 500);
   return ok(res, { application: data });
+});
+
+// ─── Instructor public profile & follow ───────────────────────────────────────
+
+app.get("/api/instructors/:id/public-profile", requireAuth, async (req, res) => {
+  const { id } = req.params;
+
+  const [profileRes, reviewsRes, classesRes] = await Promise.all([
+    supabase
+      .from("host_profiles")
+      .select("user_id, display_name, bio, interest_tags, photo_url")
+      .eq("user_id", id)
+      .single(),
+    supabase
+      .from("class_reviews")
+      .select("rating")
+      .eq("instructor_id", id),
+    supabase
+      .from("scheduled_classes")
+      .select("id", { count: "exact", head: true })
+      .eq("host_id", id)
+      .in("status", ["upcoming", "live"])
+      .gte("scheduled_at", new Date().toISOString()),
+  ]);
+
+  if (profileRes.error || !profileRes.data) return fail(res, "Instructor not found.", 404);
+
+  const profile = profileRes.data;
+  const reviews = reviewsRes.data ?? [];
+  const avgRating = reviews.length
+    ? reviews.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / reviews.length
+    : null;
+
+  const tags: string[] = profile.interest_tags
+    ? profile.interest_tags.split(",").map((t: string) => t.trim()).filter(Boolean)
+    : [];
+
+  return ok(res, {
+    user_id: profile.user_id,
+    display_name: profile.display_name,
+    bio: profile.bio,
+    interest_tags: tags,
+    photo_url: profile.photo_url,
+    avg_rating: avgRating !== null ? Math.round(avgRating * 10) / 10 : null,
+    total_reviews: reviews.length,
+    upcoming_classes: classesRes.count ?? 0,
+  });
+});
+
+app.get("/api/instructors/:id/follow-status", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const [followRes, countRes] = await Promise.all([
+    supabase
+      .from("instructor_follows")
+      .select("student_id")
+      .eq("student_id", userId)
+      .eq("host_id", id)
+      .maybeSingle(),
+    supabase
+      .from("instructor_follows")
+      .select("*", { count: "exact", head: true })
+      .eq("host_id", id),
+  ]);
+
+  if (followRes.error) console.error("[GET /api/instructors/:id/follow-status] follow check:", followRes.error.message);
+  if (countRes.error) console.error("[GET /api/instructors/:id/follow-status] count:", countRes.error.message);
+
+  return ok(res, {
+    following: !!followRes.data,
+    follower_count: countRes.count ?? 0,
+  });
+});
+
+// Any authenticated user can follow/unfollow an instructor (no guest-only gate —
+// requireUserRole would block users whose user_profiles row hasn't been created yet)
+app.post("/api/instructors/:id/follow", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  if (userId === id) return fail(res, "You cannot follow yourself.");
+
+  const { error } = await supabase
+    .from("instructor_follows")
+    .upsert({ student_id: userId, host_id: id }, { onConflict: "student_id,host_id" });
+
+  if (error) {
+    console.error("[POST /api/instructors/:id/follow] code=%s message=%s details=%s hint=%s",
+      error.code, error.message, error.details, error.hint);
+    return fail(res, "Failed to follow instructor.", 500);
+  }
+
+  return ok(res, { followed: true });
+});
+
+app.delete("/api/instructors/:id/follow", requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const userId = (req as AuthedRequest).userId;
+
+  const { error } = await supabase
+    .from("instructor_follows")
+    .delete()
+    .eq("student_id", userId)
+    .eq("host_id", id);
+
+  if (error) {
+    console.error("[DELETE /api/instructors/:id/follow]", error.message);
+    return fail(res, "Failed to unfollow instructor.", 500);
+  }
+
+  return ok(res, { unfollowed: true });
+});
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+app.get("/api/notifications", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error("[GET /api/notifications]", error.message);
+    return fail(res, "Failed to load notifications.", 500);
+  }
+  return ok(res, data ?? []);
+});
+
+app.get("/api/notifications/unread-count", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("read", false);
+
+  if (error) {
+    console.error("[GET /api/notifications/unread-count]", error.message);
+    return ok(res, { count: 0 });
+  }
+  return ok(res, { count: count ?? 0 });
+});
+
+app.patch("/api/notifications/read-all", requireAuth, async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", userId)
+    .eq("read", false);
+
+  if (error) {
+    console.error("[PATCH /api/notifications/read-all]", error.message);
+    return fail(res, "Failed to mark notifications read.", 500);
+  }
+  return ok(res, { marked: true });
+});
+
+// ─── Host followers ───────────────────────────────────────────────────────────
+
+app.get("/api/me/followers", requireAuth, requireUserRole(["host"]), async (req, res) => {
+  const userId = (req as AuthedRequest).userId;
+
+  const { data: follows, error } = await supabase
+    .from("instructor_follows")
+    .select("student_id, created_at")
+    .eq("host_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[GET /api/me/followers]", error.message);
+    return fail(res, "Failed to load followers.", 500);
+  }
+
+  if (!follows || follows.length === 0) return ok(res, []);
+
+  const followerIds = follows.map((f) => f.student_id);
+  const { data: profiles } = await supabase
+    .from("user_profiles")
+    .select("user_id, display_name")
+    .in("user_id", followerIds);
+
+  const profileMap = Object.fromEntries(
+    (profiles ?? []).map((p) => [p.user_id, p.display_name])
+  );
+
+  return ok(res, follows.map((f) => ({
+    user_id: f.student_id,
+    display_name: profileMap[f.student_id] ?? null,
+    created_at: f.created_at,
+  })));
 });
 
 // ─── Health check ─────────────────────────────────────────────────────────────

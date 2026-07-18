@@ -84,7 +84,7 @@ export default function InstructorProfileScreen() {
           if (!active) return;
           setProfile(prof);
           setFollowing(followStatus.following);
-          setfollowerCount(followStatus.follower_count);
+          setFollowerCount(followStatus.follower_count);
           setReviews(reviewData.reviews.slice(0, 5));
           setTotalReviews(reviewData.total);
           const now = new Date();

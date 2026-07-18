@@ -16,6 +16,10 @@ export default function GuestLayout() {
       <Stack.Screen name="class/confirmation" options={{ headerShown: false }} />
       <Stack.Screen name="class/review" options={{ headerShown: false }} />
       <Stack.Screen name="edit-profile" options={{ title: "Edit Profile", headerBackTitle: "Profile" }} />
+      <Stack.Screen name="instructor/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="room/[classId]" options={{ headerShown: false }} />
+      <Stack.Screen name="analytics" options={{ headerShown: false }} />
+      <Stack.Screen name="rating-prompt" options={{ headerShown: false }} />
       <Stack.Screen
         name="filters"
         options={{

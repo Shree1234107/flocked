@@ -17,7 +17,7 @@ import type { StudentProfile, ScheduledClass } from "../../../lib/types";
 function MenuRow({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.menuRow} onPress={onPress} activeOpacity={0.7}>
-      <MaterialCommunityIcons name={icon as never} size={18} color="#888888" />
+      <MaterialCommunityIcons name={icon as never} size={18} color="#6B6B6B" />
       <Text style={styles.menuRowLabel}>{label}</Text>
       <MaterialCommunityIcons name="chevron-right" size={18} color="#D0D0D0" />
     </TouchableOpacity>
@@ -225,7 +225,7 @@ export default function GuestProfileTab() {
             ) : (
               <View style={styles.classList}>
                 {enrolledClasses.map((cls) => {
-                  const categoryColors = CATEGORY_COLORS[cls.category] ?? { bg: "#F9F9F9", text: "#888888", dot: "#C0C0C0" };
+                  const categoryColors = CATEGORY_COLORS[cls.category] ?? { bg: "#F5F0E8", text: "#6B6B6B", dot: "#C0B9A8" };
                   return (
                     <View key={cls.id} style={styles.classCard}>
                       <View style={[styles.classCardAccent, { backgroundColor: categoryColors.dot }]} />
@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
-    backgroundColor: "#F9F9F9",
+    borderColor: "#F0EDE5",
+    backgroundColor: "#FFFFFF",
   },
   editBtnText: {
     fontSize: 13,
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontSize: 14,
-    color: "#888888",
+    color: "#6B6B6B",
   },
   memberBadge: {
     flexDirection: "row",
@@ -379,10 +379,10 @@ const styles = StyleSheet.create({
   statsCard: {
     flexDirection: "row",
     marginHorizontal: 20,
-    backgroundColor: "#F9F9F9",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     paddingVertical: 18,
     marginBottom: 24,
   },
@@ -399,12 +399,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: "#888888",
+    color: "#6B6B6B",
     textAlign: "center",
   },
   statDivider: {
     width: 1,
-    backgroundColor: "#EEEEEE",
+    backgroundColor: "#F0EDE5",
     marginVertical: 6,
   },
   section: {
@@ -426,9 +426,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     padding: 12,
     gap: 12,
   },
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   savedTeaches: {
     fontSize: 12,
-    color: "#888888",
+    color: "#6B6B6B",
   },
   heartBtn: {
     padding: 4,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 13,
-    color: "#888888",
+    color: "#6B6B6B",
     textAlign: "center",
   },
   classList: {
@@ -485,9 +485,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     overflow: "hidden",
   },
   classCardAccent: {
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   },
   classDate: {
     fontSize: 11,
-    color: "#888888",
+    color: "#6B6B6B",
     fontWeight: "500",
   },
   catBadge: {
@@ -525,16 +525,16 @@ const styles = StyleSheet.create({
   },
   classMeta: {
     fontSize: 12,
-    color: "#888888",
+    color: "#6B6B6B",
   },
   checkWrap: {
     padding: 14,
   },
   menuCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EEEEEE",
+    borderColor: "#F0EDE5",
     overflow: "hidden",
   },
   menuRow: {
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   },
   menuDivider: {
     height: 1,
-    backgroundColor: "#EEEEEE",
+    backgroundColor: "#F0EDE5",
     marginLeft: 44,
   },
   footerSection: {
