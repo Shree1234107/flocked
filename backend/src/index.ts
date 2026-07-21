@@ -275,37 +275,39 @@ async function sendEmail(params: {
 }
 
 async function sendAdminApplicationEmail(params: {
+  fullName: string;
   applicantEmail: string;
-  whatToTeach: string;
+  categories: string[];
+  experience: string;
   whyTeach: string;
-  qualifications: string;
+  availability?: string | null;
 }): Promise<void> {
-  const { applicantEmail, whatToTeach, whyTeach, qualifications } = params;
+  const { fullName, applicantEmail, categories, experience, whyTeach, availability } = params;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #87A878;">New Instructor Application — Flocked</h2>
-      <p><strong>Applicant:</strong> ${applicantEmail}</p>
+      <p><strong>Name:</strong> ${fullName}</p>
+      <p><strong>Email:</strong> ${applicantEmail}</p>
+      <p><strong>Teaches:</strong> ${categories.join(", ") || "—"}</p>
       <hr/>
-      <h3>What they want to teach:</h3>
-      <p>${whatToTeach}</p>
-      <h3>Why they want to teach this:</h3>
+      <h3>Background &amp; qualifications:</h3>
+      <p>${experience}</p>
+      <h3>Why they want to teach on Flocked:</h3>
       <p>${whyTeach}</p>
-      <h3>What qualifies them:</h3>
-      <p>${qualifications}</p>
+      ${availability ? `<h3>Availability:</h3><p>${availability}</p>` : ""}
       <hr/>
       <p style="color: #888; font-size: 13px;">
-        To approve: set <code>host_profiles.is_approved = true</code> for this user in Supabase,
-        or use the admin endpoint <code>PATCH /api/admin/hosts/:userId/approve</code>.
+        Review &amp; approve at: <a href="https://flocked1.netlify.app/admin/applications">Admin Dashboard</a>
       </p>
     </div>
   `;
 
   await sendEmail({
     to: ADMIN_EMAIL,
-    subject: "New Instructor Application — Flocked",
+    subject: `New Instructor Application — ${fullName} (${applicantEmail})`,
     html,
-    text: `New Instructor Application\n\nApplicant: ${applicantEmail}\n\nWhat to teach:\n${whatToTeach}\n\nWhy:\n${whyTeach}\n\nQualifications:\n${qualifications}`,
+    text: `New Instructor Application\n\nName: ${fullName}\nEmail: ${applicantEmail}\nTeaches: ${categories.join(", ")}\n\nBackground:\n${experience}\n\nWhy Flocked:\n${whyTeach}${availability ? `\n\nAvailability:\n${availability}` : ""}\n\nReview at: https://flocked1.netlify.app/admin/applications`,
   });
 }
 
@@ -2272,6 +2274,16 @@ app.post("/api/instructor-applications", requireAuth, async (req, res) => {
     .single();
 
   if (error) return fail(res, error.message, 500);
+
+  sendAdminApplicationEmail({
+    fullName,
+    applicantEmail: email,
+    categories,
+    experience,
+    whyTeach,
+    availability: availability ?? null,
+  }).catch((err) => console.error("[Email] Admin notify failed:", err));
+
   return ok(res, { application: data }, 201);
 });
 
