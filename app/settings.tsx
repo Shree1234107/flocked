@@ -1,13 +1,21 @@
 import { colors } from "../lib/colors";
 import { ScrollView, StyleSheet, Switch, TouchableOpacity, View } from "react-native";
-import { Text } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
+import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
 import { supabase } from "../lib/supabase";
+
+const FOUNDER_EMAILS = [
+  "shreevegesna@gmail.com",
+  "cooper.wathen@gmail.com",
+  "saniajoshi05@gmail.com",
+  "chengqianglin512@gmail.com",
+];
 
 function MenuRow({
   icon,
@@ -48,12 +56,28 @@ function MenuRow({
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { clearRole } = useRole();
+  const { session } = useAuth();
+  const { role, setRole, clearRole } = useRole();
 
   const [classReminders, setClassReminders] = useState(true);
   const [newInstructorAlerts, setNewInstructorAlerts] = useState(true);
   const [promotions, setPromotions] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
+
+  const userEmail = session?.user?.email?.toLowerCase() ?? "";
+  const isFounder = FOUNDER_EMAILS.includes(userEmail);
+  const targetRole = role === "host" ? "guest" : "host";
+
+  const handleSwitchRole = async () => {
+    setSwitchingRole(true);
+    try {
+      await setRole(targetRole);
+      router.replace("/");
+    } finally {
+      setSwitchingRole(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -184,6 +208,39 @@ export default function SettingsScreen() {
         <MenuRow icon="file-document-outline" label="Terms of Service" onPress={() => {}} />
       </View>
 
+      {/* Founder tools — only visible to FOUNDER_EMAILS */}
+      {isFounder && (
+        <>
+          <Text style={styles.sectionHeader}>Founder Tools</Text>
+          <View style={styles.card}>
+            <View style={styles.menuRow}>
+              <MaterialCommunityIcons name="swap-horizontal" size={18} color="#888888" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.menuRowLabel}>
+                  Current view: {role === "host" ? "Instructor" : "Student"}
+                </Text>
+                <Text style={styles.founderRoleSub}>
+                  Switch to test the other experience
+                </Text>
+              </View>
+              {switchingRole ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <TouchableOpacity
+                  style={styles.founderSwitchBtn}
+                  onPress={handleSwitchRole}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.founderSwitchBtnText}>
+                    {targetRole === "host" ? "Instructor View" : "Student View"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </>
+      )}
+
       {/* Sign out */}
       <View style={styles.signOutCard}>
         <MenuRow icon="logout" label="Sign Out" onPress={handleSignOut} destructive />
@@ -275,5 +332,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#C0C0C0",
     marginTop: 24,
+  },
+  founderRoleSub: {
+    fontSize: 11,
+    color: "#9B9B9B",
+    marginTop: 1,
+  },
+  founderSwitchBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  founderSwitchBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

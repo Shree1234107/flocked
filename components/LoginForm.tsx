@@ -1,5 +1,5 @@
 import { colors } from "../lib/colors";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -48,9 +48,6 @@ export function LoginForm({ role, title, subtitle }: Props) {
   const [sent, setSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Prevent the session useEffect from racing against dev bypass navigation
-  const devBypassActive = useRef(false);
-
   const handleSendMagicLink = async () => {
     const trimmed = email.trim();
     if (!trimmed || !trimmed.includes("@")) {
@@ -85,27 +82,6 @@ export function LoginForm({ role, title, subtitle }: Props) {
     } catch (err) {
       Alert.alert("Sign-in failed", friendlyAuthError(err));
     } finally {
-      setSending(false);
-    }
-  };
-
-  const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
-  const devCredentials =
-    role === "guest"
-      ? { email: "student@flockd.test", password: "devbypass123" }
-      : { email: "instructor@flockd.test", password: "devbypass123" };
-
-  const handleDevBypass = async () => {
-    devBypassActive.current = true;
-    setSending(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword(devCredentials);
-      if (error) throw error;
-      await setRole(role);
-      router.replace(role === "host" ? "/host" : "/guest");
-    } catch (err) {
-      devBypassActive.current = false;
-      Alert.alert("Dev bypass failed", friendlyAuthError(err));
       setSending(false);
     }
   };
@@ -199,27 +175,6 @@ export function LoginForm({ role, title, subtitle }: Props) {
             </Text>
           </TouchableOpacity>
 
-          {/* Dev bypass — only shown when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set */}
-          {devEmail && (
-            <View style={styles.devSection}>
-              <View style={styles.devDividerRow}>
-                <View style={styles.devDividerLine} />
-                <Text style={styles.devDividerText}>dev</Text>
-                <View style={styles.devDividerLine} />
-              </View>
-              <TouchableOpacity
-                style={[styles.devBtn, sending && styles.btnDisabled]}
-                onPress={handleDevBypass}
-                disabled={sending}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons name="code-tags" size={13} color={colors.primary} />
-                <Text style={styles.devBtnText}>
-                  {role === "host" ? "Enter as Instructor (Dev)" : "Enter as Student (Dev)"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       )}
       </View>
@@ -321,16 +276,4 @@ const styles = StyleSheet.create({
   resendBtn: { paddingVertical: 6, paddingHorizontal: 12, marginTop: 4 },
   resendText: { fontSize: 14, fontWeight: "500", color: colors.primary },
 
-  devSection: { gap: 4 },
-  devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 2 },
-  devDividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
-  devDividerText: { fontSize: 10, color: "#C0C0C0", letterSpacing: 0.5, textTransform: "uppercase" },
-  devBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-  },
-  devBtnText: { fontSize: 12, color: colors.primary, fontWeight: "500" },
 });

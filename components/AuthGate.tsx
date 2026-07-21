@@ -6,11 +6,6 @@ import { Screen } from "./Screen";
 import { useAuth } from "../lib/auth";
 
 export function AuthGate({ children }: PropsWithChildren) {
-  // TODO: re-enable auth before launch
-  if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) {
-    return <>{children}</>;
-  }
-
   const { session, loading } = useAuth();
 
   if (loading) {

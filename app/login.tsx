@@ -56,7 +56,7 @@ export default function LoginScreen() {
   const isDesktop = Platform.OS === "web" && width >= 768;
 
   const { session, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading, setRole } = useRole();
+  const { role, loading: roleLoading } = useRole();
 
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -90,34 +90,6 @@ export default function LoginScreen() {
   };
 
   const resetForm = () => { setSent(false); setEmail(""); setErrorMsg(null); };
-
-  // Dev bypass — only when EXPO_PUBLIC_DEV_BYPASS_EMAIL is set
-  const devEmail = process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL;
-
-  const handleDevBypass = async (targetRole: "guest" | "host") => {
-    const credentials =
-      targetRole === "guest"
-        ? { email: "student@flockd.test", password: "devbypass123" }
-        : { email: "instructor@flockd.test", password: "devbypass123" };
-
-    setSending(true);
-    const { data, error } = await supabase.auth.signInWithPassword(credentials);
-    if (error) { setSending(false); return; }
-
-    await setRole(targetRole);
-
-    const apiBase = process.env.EXPO_PUBLIC_API_BASE_URL ?? "http://localhost:3000";
-    fetch(`${apiBase}/api/auth/role`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${data.session!.access_token}`,
-      },
-      body: JSON.stringify({ role: targetRole }),
-    }).catch(() => {});
-
-    router.replace(targetRole === "guest" ? "/guest/(tabs)/index" : "/host/(tabs)/index");
-  };
 
   if (!authLoading && !roleLoading && session && role) {
     return <Redirect href="/" />;
@@ -230,25 +202,6 @@ export default function LoginScreen() {
         <Text style={s.roleChevron}>›</Text>
       </TouchableOpacity>
 
-      {/* Dev bypass */}
-      {devEmail && (
-        <View style={s.devSection}>
-          <View style={s.devDividerRow}>
-            <View style={s.devDividerLine} />
-            <Text style={s.devDividerText}>dev</Text>
-            <View style={s.devDividerLine} />
-          </View>
-          <View style={s.devLinks}>
-            <TouchableOpacity onPress={() => handleDevBypass("guest")} disabled={sending} activeOpacity={0.7}>
-              <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Student</Text>
-            </TouchableOpacity>
-            <Text style={s.devLinkSep}>·</Text>
-            <TouchableOpacity onPress={() => handleDevBypass("host")} disabled={sending} activeOpacity={0.7}>
-              <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Instructor</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </View>
   );
 
@@ -435,24 +388,6 @@ export default function LoginScreen() {
               <Text style={s.roleChevron}>›</Text>
             </TouchableOpacity>
 
-            {devEmail && (
-              <View style={s.devSection}>
-                <View style={s.devDividerRow}>
-                  <View style={s.devDividerLine} />
-                  <Text style={s.devDividerText}>dev</Text>
-                  <View style={s.devDividerLine} />
-                </View>
-                <View style={s.devLinks}>
-                  <TouchableOpacity onPress={() => handleDevBypass("guest")} disabled={sending} activeOpacity={0.7}>
-                    <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Student</Text>
-                  </TouchableOpacity>
-                  <Text style={s.devLinkSep}>·</Text>
-                  <TouchableOpacity onPress={() => handleDevBypass("host")} disabled={sending} activeOpacity={0.7}>
-                    <Text style={[s.devLink, sending && s.devLinkDisabled]}>Enter as Instructor</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
           </View>
         )}
       </ScrollView>
@@ -805,29 +740,4 @@ const s = StyleSheet.create({
     color: colors.primary,
   },
 
-  // ── Dev bypass ────────────────────────────────────────────────────────────────
-  devSection: { gap: 6, width: "100%", marginTop: 8 },
-  devDividerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  devDividerLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
-  devDividerText: {
-    fontSize: 10,
-    fontFamily: fonts.regular,
-    color: "#C8C8C8",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  devLinks: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-  devLink: {
-    fontSize: 11,
-    fontFamily: fonts.regular,
-    color: "#C0C0C0",
-    textDecorationLine: "underline",
-  },
-  devLinkDisabled: { opacity: 0.4 },
-  devLinkSep: { fontSize: 11, color: "#D8D8D8" },
 });

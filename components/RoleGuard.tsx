@@ -10,11 +10,6 @@ type RoleGuardProps = PropsWithChildren<{
 }>;
 
 export function RoleGuard({ requiredRole, children }: RoleGuardProps) {
-  // TODO: re-enable auth before launch
-  if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) {
-    return <>{children}</>;
-  }
-
   const { role, loading } = useRole();
 
   if (loading) {

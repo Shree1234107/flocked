@@ -35,12 +35,6 @@ export default function HostLayout() {
       return;
     }
 
-    if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) {
-      console.log("[host layout] DEV BYPASS active → setAppState(approved)");
-      setAppState("approved");
-      return;
-    }
-
     if (!session || role !== "host") {
       console.log("[host layout] no session or wrong role, returning early");
       return;
@@ -73,30 +67,6 @@ export default function HostLayout() {
       Alert.alert("Oops", "Sign out failed. Please try again.");
     }
   };
-
-  // Dev bypass — skip all state/auth checks, render the host Stack immediately
-  if (process.env.EXPO_PUBLIC_DEV_BYPASS_EMAIL) {
-    return (
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: "#FFFFFF" },
-          headerTintColor: colors.navy,
-          headerTitleAlign: "center",
-          headerTitleStyle: { fontWeight: "700" as const },
-          headerShadowVisible: false,
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="edit/profile" options={{ headerShown: false }} />
-        <Stack.Screen name="edit/fee" options={{ headerShown: false }} />
-        <Stack.Screen name="schedule" options={{ title: "Schedule a Class" }} />
-        <Stack.Screen name="earnings" options={{ title: "Earnings" }} />
-        <Stack.Screen name="followers" options={{ headerShown: false }} />
-        <Stack.Screen name="analytics" options={{ headerShown: false }} />
-        <Stack.Screen name="room/[classId]" options={{ headerShown: false }} />
-      </Stack>
-    );
-  }
 
   if (appState === "loading") {
     return (
