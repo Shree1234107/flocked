@@ -18,24 +18,47 @@ import { Screen } from "../components/Screen";
 import { useAuth } from "../lib/auth";
 import { useRole } from "../lib/role";
 import { fonts } from "../lib/fonts";
-import { signUpForNewsletter, getMyInstructorApplication } from "../lib/api";
+import { signUpForNewsletter, getMyInstructorApplication, getUserRole } from "../lib/api";
 
 // ─── Auth redirect logic ───────────────────────────────────────────────────────
 
+const FOUNDER_EMAILS = [
+  "shreevegesna@gmail.com",
+  "cooper.wathen@gmail.com",
+  "saniajoshi05@gmail.com",
+  "chengqianglin512@gmail.com",
+];
+
 export default function Index() {
   const { session, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading } = useRole();
+  const { role, loading: roleLoading, setRole } = useRole();
   const [appStatus, setAppStatus] = useState<
     "loading" | "none" | "pending" | "approved" | "rejected" | null
   >(null);
 
   useEffect(() => {
-    if (session && role === "host" && !roleLoading) {
-      setAppStatus("loading");
-      getMyInstructorApplication()
-        .then((app) => setAppStatus(app ? app.status : "none"))
-        .catch(() => setAppStatus("approved")); // fail open — don't lock out existing hosts
+    if (!session || role !== "host" || roleLoading) {
+      if (!session || role !== "host") setAppStatus(null);
+      return;
     }
+    // Founders can always access host view — skip application check
+    const userEmail = session.user?.email?.toLowerCase() ?? "";
+    if (FOUNDER_EMAILS.includes(userEmail)) {
+      setAppStatus("approved");
+      return;
+    }
+    setAppStatus("loading");
+    Promise.all([getMyInstructorApplication(), getUserRole()])
+      .then(([app, serverRole]) => {
+        // If the server disagrees about our role, correct the cache and don't redirect
+        if (serverRole !== null && serverRole !== "host") {
+          setRole(serverRole);
+          setAppStatus(null);
+          return;
+        }
+        setAppStatus(app ? app.status : "none");
+      })
+      .catch(() => setAppStatus("approved")); // fail open — don't lock out existing hosts
   }, [session, role, roleLoading]);
 
   if (authLoading) {

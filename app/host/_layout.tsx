@@ -19,6 +19,13 @@ import { useRole } from "../../lib/role";
 import { getInstructorApplication, submitInstructorApplication } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 
+const FOUNDER_EMAILS = [
+  "shreevegesna@gmail.com",
+  "cooper.wathen@gmail.com",
+  "saniajoshi05@gmail.com",
+  "chengqianglin512@gmail.com",
+];
+
 type AppState = "loading" | "apply" | "pending" | "approved";
 
 export default function HostLayout() {
@@ -29,21 +36,18 @@ export default function HostLayout() {
   const [appState, setAppState] = useState<AppState>("loading");
 
   useEffect(() => {
-    console.log("[host layout] useEffect fired — authLoading:", authLoading, "roleLoading:", roleLoading, "session:", !!session, "role:", role);
-    if (authLoading || roleLoading) {
-      console.log("[host layout] still loading, returning early");
+    if (authLoading || roleLoading) return;
+    if (!session || role !== "host") return;
+
+    // Founders bypass the application check — always show host dashboard
+    const userEmail = session.user?.email?.toLowerCase() ?? "";
+    if (FOUNDER_EMAILS.includes(userEmail)) {
+      setAppState("approved");
       return;
     }
 
-    if (!session || role !== "host") {
-      console.log("[host layout] no session or wrong role, returning early");
-      return;
-    }
-
-    console.log("[host layout] calling getInstructorApplication()");
     getInstructorApplication()
       .then((result) => {
-        console.log("[host layout] getInstructorApplication result:", result);
         if (result.is_approved) {
           setAppState("approved");
         } else if (result.submitted) {
@@ -52,10 +56,7 @@ export default function HostLayout() {
           setAppState("apply");
         }
       })
-      .catch((err) => {
-        console.log("[host layout] getInstructorApplication ERROR:", err);
-        setAppState("apply");
-      });
+      .catch(() => setAppState("apply"));
   }, [session, role, authLoading, roleLoading]);
 
   const handleSignOut = async () => {
