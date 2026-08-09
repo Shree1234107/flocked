@@ -1,6 +1,7 @@
 import { colors } from "../lib/colors";
 import { useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -217,9 +218,10 @@ export default function LoginScreen() {
           >
             {/* Logo */}
             <View style={s.leftLogo}>
-              <View style={[s.logoBadge, s.logoBadgeOnColor]}>
-                <Text style={s.logoBadgeF}>F</Text>
-              </View>
+              <Image
+                source={require("../assets/logo.png")}
+                style={s.logoImage}
+              />
               <Text style={s.leftLogoText}>Flocked</Text>
             </View>
 
@@ -279,9 +281,10 @@ export default function LoginScreen() {
             {/* Form card */}
             <View style={s.rightCard}>
               {/* Logo badge */}
-              <View style={s.rightLogoBadge}>
-                <Text style={s.rightLogoBadgeF}>F</Text>
-              </View>
+              <Image
+                source={require("../assets/logo.png")}
+                style={s.rightLogoImage}
+              />
 
               <Text style={s.welcomeTitle}>Sign in to Flocked</Text>
               <Text style={s.welcomeSub}>Enter your email to get started</Text>
@@ -308,9 +311,10 @@ export default function LoginScreen() {
       >
         {/* Logo */}
         <View style={s.mobileLogo}>
-          <View style={s.logoBadge}>
-            <Text style={s.logoBadgeF}>F</Text>
-          </View>
+          <Image
+            source={require("../assets/logo.png")}
+            style={s.logoImage}
+          />
           <Text style={s.mobileLogoText}>Flocked</Text>
         </View>
 
@@ -398,23 +402,10 @@ export default function LoginScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  // ── Shared logo badge ────────────────────────────────────────────────────────
-  logoBadge: {
+  // ── Shared logo image ────────────────────────────────────────────────────────
+  logoImage: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoBadgeOnColor: {
-    backgroundColor: "rgba(255,255,255,0.25)",
-  },
-  logoBadgeF: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
 
   // ── Web root ─────────────────────────────────────────────────────────────────
@@ -538,20 +529,10 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 0,
   },
-  rightLogoBadge: {
+  rightLogoImage: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 16,
-  },
-  rightLogoBadgeF: {
-    fontSize: 18,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
 
   // ── Mobile root ───────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { colors } from "../lib/colors";
-import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
@@ -45,6 +45,10 @@ export function WebSidebar({ role }: { role: Role }) {
     <View style={styles.sidebar}>
       {/* Logo */}
       <View style={styles.logoRow}>
+        <Image
+          source={require("../assets/logo.png")}
+          style={styles.logoImage}
+        />
         <Text style={styles.logoText}>Flocked</Text>
         <View style={styles.betaBadge}>
           <Text style={styles.betaText}>BETA</Text>
@@ -114,6 +118,11 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+  },
+  logoImage: {
+    width: 24,
+    height: 24,
   },
   logoText: {
     fontSize: 16,

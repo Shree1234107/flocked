@@ -1,6 +1,7 @@
 import { colors } from "../lib/colors";
 import { useEffect, useRef, useState } from "react";
 import {
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -318,9 +319,10 @@ function LandingPage() {
             onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
             activeOpacity={0.8}
           >
-            <View style={s.logoBadge}>
-              <Text style={s.logoBadgeF}>F</Text>
-            </View>
+            <Image
+              source={require("../assets/logo.png")}
+              style={s.logoImage}
+            />
             <Text style={s.logoWordmark}>Flocked</Text>
           </TouchableOpacity>
 
@@ -843,9 +845,10 @@ function LandingPage() {
           <View style={[s.footerTop, isDesktop && s.footerTopDesktop]}>
             <View style={[s.footerBrand, isDesktop && s.footerBrandDesktop]}>
               <View style={s.footerLogoRow}>
-                <View style={s.logoBadge}>
-                  <Text style={s.logoBadgeF}>F</Text>
-                </View>
+                <Image
+                  source={require("../assets/logo.png")}
+                  style={s.logoImage}
+                />
                 <Text style={s.footerLogoText}>Flocked</Text>
               </View>
               <Text style={s.footerTagline}>
@@ -924,19 +927,9 @@ const s = StyleSheet.create({
   },
   navInnerMobile: { paddingHorizontal: 20 },
   navBrand: { flexDirection: "row", alignItems: "center", gap: 10, cursor: "pointer" },
-  logoBadge: {
+  logoImage: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoBadgeF: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
   logoWordmark: {
     fontSize: 17,

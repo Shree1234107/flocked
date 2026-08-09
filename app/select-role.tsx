@@ -1,6 +1,6 @@
 import { colors } from "../lib/colors";
 import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -31,9 +31,10 @@ export default function SelectRoleScreen() {
         { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 32 },
       ]}
     >
-      <View style={styles.logoBadge}>
-        <Text style={styles.logoF}>F</Text>
-      </View>
+      <Image
+        source={require("../assets/logo.png")}
+        style={styles.logoImage}
+      />
 
       <Text style={styles.heading}>What brings you to Flocked?</Text>
       <Text style={styles.sub}>Choose how you'd like to use the app.</Text>
@@ -88,19 +89,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 28,
   },
-  logoBadge: {
+  logoImage: {
     width: 52,
     height: 52,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 28,
-  },
-  logoF: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#fff",
   },
   heading: {
     fontSize: 24,

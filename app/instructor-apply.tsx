@@ -2,6 +2,7 @@ import { colors } from "../lib/colors";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -115,9 +116,10 @@ export default function InstructorApplyScreen() {
       >
         {/* Header */}
         <View style={s.header}>
-          <View style={s.logoBadge}>
-            <Text style={s.logoBadgeF}>F</Text>
-          </View>
+          <Image
+            source={require("../assets/logo.png")}
+            style={s.logoImage}
+          />
           {isReapply && (
             <View style={s.reapplyBanner}>
               <MaterialCommunityIcons name="information-outline" size={15} color="#92400E" />
@@ -264,20 +266,10 @@ const s = StyleSheet.create({
   },
 
   header: { gap: 12 },
-  logoBadge: {
+  logoImage: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 4,
-  },
-  logoBadgeF: {
-    fontSize: 18,
-    fontFamily: fonts.bold,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
   reapplyBanner: {
     flexDirection: "row",
